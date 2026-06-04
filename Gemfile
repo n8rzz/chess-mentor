@@ -32,7 +32,7 @@ gem "bootsnap", require: false
 gem "kamal", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 2.0"
 gem "ulid", "~> 1.4"
 gem "redis", "~> 5.4"
 gem "sidekiq", "~> 8.1"
