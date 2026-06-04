@@ -1,0 +1,21 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+  port: <%= ENV.fetch("DATABASE_PORT", 5432) %>
+  username: <%= ENV.fetch("DATABASE_USERNAME", "chess_mentor") %>
+  password: <%= ENV.fetch("DATABASE_PASSWORD", "chess_mentor") %>
+
+development:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME", "chess_mentor_development") %>
+
+test:
+  <<: *default
+  database: chess_mentor_test
+
+production:
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME", "chess_mentor_production") %>
+  password: <%= ENV["DATABASE_PASSWORD"] %>

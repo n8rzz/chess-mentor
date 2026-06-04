@@ -1,6 +1,6 @@
 ---
 title: Phase 1 MVP — Task List
-last_modified: 2026-06-01
+last_modified: 2026-06-03
 tags:
   - mvp
   - tasks
@@ -14,7 +14,7 @@ tags:
 
 ### Rails app bootstrap
 
-- [ ] Generate Rails app:
+- [x] Generate Rails app:
 
 ```bash
 rails new $PROJECT_NAME \
@@ -29,19 +29,22 @@ rails new $PROJECT_NAME \
   --skip-devcontainer
 ```
 
-- [ ] Docker Compose
-  - [ ] Create `.env`
-  - [ ] Add `dotenv-rails`
-  - [ ] Update `database.yml` to use env vars for Docker
-- [ ] Testing stack
-  - [ ] RSpec
-  - [ ] Factory Bot
-  - [ ] Capybara
-  - [ ] shoulda-matchers
-  - [ ] database_cleaner
-  - [ ] selenium-webdriver
-- [ ] ULID id generators
-- [ ] `annotaterb` gem
+- [x] Docker Compose
+  - [x] Create `.env` (Rails) and `.env.worker` (Python worker)
+  - [x] Add `dotenv-rails`
+  - [x] Update `database.yml` to use env vars for Docker
+- [x] Redis
+  - [x] Update Docker Compose
+  - [x] Sidekiq
+- [x] Testing stack
+  - [x] RSpec
+  - [x] Factory Bot
+  - [x] Capybara
+  - [x] shoulda-matchers
+  - [x] database_cleaner
+  - [x] selenium-webdriver
+- [x] `annotaterb` gem
+- [x] ULID id generators
 - [ ] Devise (email + password: username, email, password, role, confirmable)
   - [ ] Generate Devise views
   - [ ] letter_opener
@@ -49,16 +52,13 @@ rails new $PROJECT_NAME \
   - [ ] User model specs
   - [ ] Basic user flow system specs
   - [ ] Test user seeds
-- [ ] Redis
-  - [ ] Update Docker Compose
-  - [ ] Sidekiq
 - [ ] `SystemJob` model (or equivalent) for Python worker coordination and UI status
 
 ### Python analysis service
 
-- [ ] Python project layout (worker, DB access, config)
-- [ ] Shared DB connection contract (reads/writes same PostgreSQL as Rails)
-- [ ] Stockfish binary/path configuration
+- [x] Python project layout (worker, DB access, config)
+- [x] Shared DB connection contract (reads/writes same PostgreSQL as Rails)
+- [x] Stockfish binary/path configuration
 - [ ] Worker loop: claim `SystemJob` → process → update status/result/errors
 - [ ] Document DB contract (status enums, payload/result JSON shapes) so Rails never depends on Python internals
 
