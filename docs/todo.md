@@ -45,13 +45,13 @@ rails new $PROJECT_NAME \
   - [x] selenium-webdriver
 - [x] `annotaterb` gem
 - [x] ULID id generators
-- [ ] Devise (email + password: username, email, password, role, confirmable)
-  - [ ] Generate Devise views
-  - [ ] letter_opener
-  - [ ] Dev + test mailer config
-  - [ ] User model specs
-  - [ ] Basic user flow system specs
-  - [ ] Test user seeds
+- [x] Devise (email + password: username, email, password, role, confirmable)
+  - [x] Generate Devise views
+  - [x] letter_opener
+  - [x] Dev + test mailer config
+  - [x] User model specs
+  - [x] Basic user flow system specs
+  - [x] Test user seeds
 - [ ] `SystemJob` model (or equivalent) for Python worker coordination and UI status
 
 ### Python analysis service

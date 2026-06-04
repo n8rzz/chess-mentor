@@ -36,6 +36,7 @@ gem "image_processing", "~> 1.2"
 gem "ulid", "~> 1.4"
 gem "redis", "~> 5.4"
 gem "sidekiq", "~> 8.1"
+gem "devise", "~> 5.0"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -63,6 +64,5 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
   gem "annotaterb", "~> 4.22"
-  gem "devise", "~> 5.0"
   gem "letter_opener", "~> 1.10"
 end
