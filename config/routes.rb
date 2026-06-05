@@ -1,6 +1,11 @@
 Rails.application.routes.draw do
-  devise_for :users
-  draw :sidekiq
+  devise_for :users, controllers: { omniauth_callbacks: "users/omniauth_callbacks" }
+
+  authenticated :user do
+    root "dashboard#show", as: :authenticated_root
+  end
+
+  resource :dashboard, only: :show, controller: "dashboard"
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -12,5 +17,6 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  draw :sidekiq
   root "home#index"
 end

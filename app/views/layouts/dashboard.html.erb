@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Dashboard — Chess Mentor" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="bg-gray-50 min-h-screen">
+    <% if notice.present? %>
+      <p class="notice bg-green-100 text-green-800 px-5 py-2" role="status"><%= notice %></p>
+    <% end %>
+    <% if alert.present? %>
+      <p class="alert bg-red-100 text-red-800 px-5 py-2" role="alert"><%= alert %></p>
+    <% end %>
+
+    <header class="bg-white border-b border-gray-200">
+      <div class="container mx-auto px-5 py-4 flex items-center justify-between">
+        <div>
+          <p class="text-xl font-bold text-gray-900">Chess Mentor</p>
+          <p class="text-sm text-gray-500">Signed in as <strong><%= current_user.username %></strong></p>
+        </div>
+        <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "text-sm underline text-gray-700" %>
+      </div>
+    </header>
+
+    <div class="container mx-auto px-5 py-8 flex gap-8">
+      <nav class="w-48 shrink-0">
+        <ul class="space-y-2 text-sm">
+          <li><%= link_to "Dashboard", dashboard_path, class: "font-semibold text-gray-900" %></li>
+          <li><span class="text-gray-400">Providers <span class="text-xs">(soon)</span></span></li>
+          <li><span class="text-gray-400">Imports <span class="text-xs">(soon)</span></span></li>
+          <li><span class="text-gray-400">Analysis <span class="text-xs">(soon)</span></span></li>
+          <li><span class="text-gray-400">Training <span class="text-xs">(soon)</span></span></li>
+        </ul>
+      </nav>
+
+      <main class="flex-1">
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

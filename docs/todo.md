@@ -69,9 +69,18 @@ rails new $PROJECT_NAME \
 
 Prerequisite: Devise and user flows from Milestone 0.
 
-- [ ] Google OAuth (OmniAuth) — optional for Phase 1; Lichess is the critical provider path
-- [ ] Lichess OAuth (OmniAuth) — **MVP**
-- [ ] Session/dashboard shell after login
+- [x] Lichess OAuth (OmniAuth) — **MVP**
+- [x] Session/dashboard shell after login
+- [ ] **Before production:** encrypt `ProviderAccount` OAuth tokens at rest (Active Record encryption or lockbox) — M1 stores `access_token` plaintext
+
+### Tests (M1 workflows)
+
+- [x] Email sign-up/sign-in → `/dashboard` (system spec)
+- [x] Sign out → public `/` landing (system spec)
+- [x] Lichess OAuth → new user + linked account on dashboard (service + request + system specs)
+- [x] Signed in → Connect Lichess → linked without new user (service + request specs)
+- [x] Link Lichess already tied to another user → error (service + request + system specs)
+- [x] Unauthenticated `GET /dashboard` → redirect to sign-in (request spec)
 
 ---
 
@@ -94,6 +103,7 @@ Per-model tasks (repeat pattern):
 
 - [x] `SystemJob` — migration, model, factories, model specs, integration contract specs
 - [x] `SystemJob` — lifecycle enums (`pending` → `claimed` → `processing` → terminal)
+- [x] `ProviderAccount` — migration, model, factories, model specs (minimal OAuth fields; pulled forward from M1)
 - [ ] Migration + model + factories + model specs (remaining models)
 - [ ] State machine / enum for lifecycle fields (`ImportBatch`, `AnalysisRun`, `WeaknessCycle`, `TrainingPlan`, `TrainingAssignment`)
 - [ ] `AnalysisRun` — `engine_version`, `analysis_version` on migration; treat runs as immutable (required before M4)

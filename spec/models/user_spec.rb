@@ -31,6 +31,7 @@ RSpec.describe User, type: :model do
 
   describe "associations" do
     it { is_expected.to have_many(:system_jobs).dependent(:destroy) }
+    it { is_expected.to have_many(:provider_accounts).dependent(:destroy) }
     it { is_expected.to define_enum_for(:role).with_values(member: 0, admin: 1).backed_by_column_of_type(:integer) }
 
     it "destroys associated system jobs when the user is destroyed" do

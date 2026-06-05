@@ -26,9 +26,11 @@
 #
 class User < ApplicationRecord
   has_many :system_jobs, dependent: :destroy
+  has_many :provider_accounts, dependent: :destroy
 
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable, :confirmable
+         :recoverable, :rememberable, :validatable, :confirmable,
+         :omniauthable, omniauth_providers: [ :lichess ]
 
   enum :role, { member: 0, admin: 1 }, default: :member, validate: true
 
@@ -37,4 +39,12 @@ class User < ApplicationRecord
             uniqueness: { case_sensitive: false },
             length: { minimum: 3, maximum: 30 },
             format: { with: /\A[a-zA-Z0-9_]+\z/, message: "only allows letters, numbers, and underscores" }
+
+  def password_required?
+    super && provider_accounts.none?
+  end
+
+  def lichess_account
+    provider_accounts.find_by(provider: :lichess)
+  end
 end

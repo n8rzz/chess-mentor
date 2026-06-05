@@ -1,7 +1,9 @@
+# frozen_string_literal: true
+
 require "rails_helper"
 
 RSpec.describe "User authentication", type: :system do
-  it "signs up, confirms email, signs in, and signs out" do
+  it "signs up, lands on the dashboard, confirms email, and signs out" do
     visit root_path
     click_link "Sign up"
 
@@ -11,18 +13,15 @@ RSpec.describe "User authentication", type: :system do
     fill_in "Password confirmation", with: "password123"
     click_button "Sign up"
 
-    expect(page).to have_text("confirmation link")
+    expect(page).to have_current_path(dashboard_path)
+    expect(page).to have_text("Signed in as")
+    expect(page).to have_text("newplayer")
 
     visit confirmation_path_for("newplayer@example.com")
 
     expect(page).to have_text("confirmed")
 
-    sign_in_unless_signed_in(
-      email: "newplayer@example.com",
-      password: "password123"
-    )
-
-    expect(page).to have_text("Signed in as")
+    visit dashboard_path
     expect(page).to have_text("newplayer")
 
     click_button "Sign out"
@@ -38,6 +37,7 @@ RSpec.describe "User authentication", type: :system do
     fill_in "Password", with: "password123"
     click_button "Log in"
 
+    expect(page).to have_current_path(dashboard_path)
     expect(page).to have_text("Signed in as")
     expect(page).to have_text("existing")
   end
@@ -51,14 +51,5 @@ RSpec.describe "User authentication", type: :system do
     body = email.html_part&.body&.decoded || email.body.decoded
     uri = URI.parse(Capybara.string(body).find_link("Confirm my account")[:href])
     uri.request_uri
-  end
-
-  def sign_in_unless_signed_in(email:, password:)
-    return if page.has_text?("Signed in as", wait: 0)
-
-    visit new_user_session_path
-    fill_in "Email", with: email
-    fill_in "Password", with: password
-    click_button "Log in"
   end
 end

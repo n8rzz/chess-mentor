@@ -10,9 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_04_135529) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_05_021101) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "provider_accounts", id: :string, force: :cascade do |t|
+    t.text "access_token"
+    t.datetime "created_at", null: false
+    t.integer "provider", default: 0, null: false
+    t.string "provider_user_id", null: false
+    t.string "provider_username", null: false
+    t.datetime "token_expires_at"
+    t.datetime "updated_at", null: false
+    t.string "user_id", null: false
+    t.index ["provider", "provider_user_id"], name: "index_provider_accounts_on_provider_and_provider_user_id", unique: true
+    t.index ["user_id", "provider"], name: "index_provider_accounts_on_user_id_and_provider", unique: true
+    t.index ["user_id"], name: "index_provider_accounts_on_user_id"
+  end
 
   create_table "system_jobs", id: :string, force: :cascade do |t|
     t.integer "attempts_count", default: 0, null: false
@@ -53,5 +67,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_135529) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
+  add_foreign_key "provider_accounts", "users", on_delete: :cascade
   add_foreign_key "system_jobs", "users", on_delete: :cascade
 end

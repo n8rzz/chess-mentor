@@ -4,5 +4,6 @@ require "sidekiq/web"
 Sidekiq::Web.use ActionDispatch::Cookies
 Sidekiq::Web.use ActionDispatch::Session::CookieStore, key: "_chess_mentor_session"
 
-# Open for now; restrict with Devise once authentication is in place.
-mount Sidekiq::Web => "/jobs"
+authenticate :user, ->(user) { user.admin? } do
+  mount Sidekiq::Web => "/jobs"
+end

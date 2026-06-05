@@ -1,12 +1,12 @@
-<h1 class="text-3xl font-bold">Chess Mentor</h1>
+<div class="max-w-2xl">
+  <h1 class="text-4xl font-bold">Chess Mentor</h1>
 
-<% if user_signed_in? %>
-  <p class="mt-4">Signed in as <strong><%= current_user.username %></strong> (<%= current_user.email %>).</p>
-  <%= button_to "Sign out", destroy_user_session_path, method: :delete, class: "mt-4 underline" %>
-<% else %>
-  <p class="mt-4">
-    <%= link_to "Sign in", new_user_session_path, class: "underline" %>
-    or
-    <%= link_to "Sign up", new_user_registration_path, class: "underline" %>
+  <p class="mt-4 text-lg text-gray-700">
+    Analyze your games, find recurring weaknesses, and train with a focused plan.
   </p>
-<% end %>
+
+  <div class="mt-8 flex flex-wrap gap-4">
+    <%= link_to "Sign in", new_user_session_path, class: "rounded-lg bg-gray-900 px-5 py-2.5 font-medium text-white" %>
+    <%= link_to "Sign up", new_user_registration_path, class: "rounded-lg border border-gray-300 px-5 py-2.5 font-medium text-gray-900" %>
+  </div>
+</div>
