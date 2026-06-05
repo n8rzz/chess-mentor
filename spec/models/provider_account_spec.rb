@@ -6,8 +6,10 @@
 #
 #  id                :string           not null, primary key
 #  access_token      :text
+#  last_imported_at  :datetime
 #  provider          :integer          default("lichess"), not null
 #  provider_username :string           not null
+#  refresh_token     :text
 #  token_expires_at  :datetime
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
@@ -34,7 +36,11 @@ RSpec.describe ProviderAccount, type: :model do
   end
 
   describe "enums" do
-    it { is_expected.to define_enum_for(:provider).with_values(lichess: 0).backed_by_column_of_type(:integer) }
+    it do
+      expect(provider_account).to define_enum_for(:provider)
+        .with_values(lichess: 0, chess_com: 1)
+        .backed_by_column_of_type(:integer)
+    end
   end
 
   describe "validations" do
@@ -56,6 +62,14 @@ RSpec.describe ProviderAccount, type: :model do
 
       expect(duplicate).not_to be_valid
       expect(duplicate.errors[:provider]).to include("has already been taken")
+    end
+
+    it "allows lichess and chess_com accounts for the same user" do
+      user = create(:user)
+      create(:provider_account, user: user, provider: :lichess)
+      chess_com_account = build(:provider_account, :chess_com, user: user)
+
+      expect(chess_com_account).to be_valid
     end
   end
 

@@ -6,8 +6,10 @@
 #
 #  id                :string           not null, primary key
 #  access_token      :text
+#  last_imported_at  :datetime
 #  provider          :integer          default("lichess"), not null
 #  provider_username :string           not null
+#  refresh_token     :text
 #  token_expires_at  :datetime
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
@@ -25,9 +27,11 @@
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
 #
 class ProviderAccount < ApplicationRecord
-  belongs_to :user
+  include ProviderIdentifiable
 
-  enum :provider, { lichess: 0 }, validate: true
+  belongs_to :user
+  has_many :import_batches, dependent: :destroy
+  has_many :games, dependent: :destroy
 
   validates :provider_username, presence: true
   validates :provider_user_id, presence: true

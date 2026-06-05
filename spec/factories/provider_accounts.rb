@@ -6,8 +6,10 @@
 #
 #  id                :string           not null, primary key
 #  access_token      :text
+#  last_imported_at  :datetime
 #  provider          :integer          default("lichess"), not null
 #  provider_username :string           not null
+#  refresh_token     :text
 #  token_expires_at  :datetime
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
@@ -32,5 +34,13 @@ FactoryBot.define do
     sequence(:provider_username) { |n| "lichessuser#{n}" }
     access_token { "test-access-token" }
     token_expires_at { 1.year.from_now }
+
+    trait :chess_com do
+      provider { :chess_com }
+      sequence(:provider_user_id) { |n| "chesscom-user-#{n}" }
+      sequence(:provider_username) { |n| "chesscomuser#{n}" }
+      access_token { nil }
+      token_expires_at { nil }
+    end
   end
 end

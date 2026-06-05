@@ -104,18 +104,57 @@ Per-model tasks (repeat pattern):
 - [x] `SystemJob` — migration, model, factories, model specs, integration contract specs
 - [x] `SystemJob` — lifecycle enums (`pending` → `claimed` → `processing` → terminal)
 - [x] `ProviderAccount` — migration, model, factories, model specs (minimal OAuth fields; pulled forward from M1)
-- [ ] Migration + model + factories + model specs (remaining models)
-- [ ] State machine / enum for lifecycle fields (`ImportBatch`, `AnalysisRun`, `WeaknessCycle`, `TrainingPlan`, `TrainingAssignment`)
-- [ ] `AnalysisRun` — `engine_version`, `analysis_version` on migration; treat runs as immutable (required before M4)
-- [ ] Uniqueness: one active `TrainingPlan` per user; no duplicate `ImportRecord` per provider game
-- [ ] Indexes for dashboards (user_id + played_at, weakness_cycle_id, etc.)
+- [x] Migration + model + factories + model specs (remaining models)
+- [x] State machine / enum for lifecycle fields (`ImportBatch`, `AnalysisRun`, `WeaknessCycle`, `TrainingPlan`, `TrainingAssignment`)
+- [x] `AnalysisRun` — `engine_version`, `analysis_version` on migration; treat runs as immutable (required before M4)
+- [x] Uniqueness: one active `TrainingPlan` per user; no duplicate `ImportRecord` per provider game
+- [x] Indexes for dashboards (user_id + played_at, weakness_cycle_id, etc.)
 
 ### Seeds & fixture data (during M2; puzzle content required before M6)
 
-- [ ] Curated `Puzzle` seeds — theme, difficulty, FEN, solution, source (parallel once `Puzzle` model exists)
-- [ ] Optional demo games for local import/analysis dev without provider APIs (helpful from M3–M4)
+- [x] Curated `Puzzle` seeds — theme, difficulty, FEN, solution, source (parallel once `Puzzle` model exists)
+- [x] Optional demo games for local import/analysis dev without provider APIs (helpful from M3–M4)
 
 **Domain success checkpoint:** DB can answer the 12 questions in domain-models §25 (even if UI is minimal).
+
+---
+
+## Milestone 2.5: Puzzle motifs & game phase enums
+
+M2 ships `Puzzle#motif` and `WeaknessEvent#phase` as free-form strings. Promote both to integer-backed enums so seeds, factories, and downstream Python writers share a single contract.
+
+### Schema
+
+- [x] Migration: `puzzles.motif` `string` → `integer` (nullable during backfill, then `NOT NULL`)
+- [x] Migration: `weakness_events.phase` `string` → `integer` (nullable during backfill, then `NOT NULL`)
+- [x] Data migration: map existing seed/factory string values to enum integers
+
+### Enums (Rails)
+
+- [x] `PuzzleMotifable` concern (or `Puzzle` enum) — align with [evaluation-engine §11](planning/evaluation-engine.md) tactical motifs plus positional/endgame motifs used in seeds:
+
+  `fork`, `pin`, `skewer`, `double_attack`, `discovered_attack`, `discovered_check`, `back_rank_mate`, `removal_of_defender`, `deflection`, `decoy`, `overloaded_piece`, `zwischenzug`, `mate_threat`, `undefended_piece`, `sacrifice`, `piece_activity`, `center_control`, `exposed_king`, `castling_break`, `material_loss`, `isolated_pawn`, `passed_pawn`, `king_and_pawn`, `opposition`, `one_move_win`, `forcing_line`
+
+- [x] `WeaknessEvent#phase` enum: `opening`, `middlegame`, `endgame` (per [evaluation-engine §15](planning/evaluation-engine.md))
+- [x] Leave `WeaknessEvent#explanation_key` as `string` (versioned i18n key, not an enum)
+
+### Reference updates
+
+- [x] [`app/models/puzzle.rb`](app/models/puzzle.rb) — enum + validation
+- [x] [`app/models/weakness_event.rb`](app/models/weakness_event.rb) — phase enum
+- [x] [`db/seeds/02_puzzles.rb`](db/seeds/02_puzzles.rb) — symbol motif values
+- [x] [`db/seeds/03_demo_games.rb`](db/seeds/03_demo_games.rb) — n/a (no motif/phase)
+- [x] Factories: `puzzles`, `weakness_events`
+- [x] Model specs: `puzzle_spec`, `weakness_event_spec`
+- [x] [`docs/planning/domain-models.md`](planning/domain-models.md) — document enum values for `motif` and `phase`
+
+### Tests & docs
+
+- [x] Model specs assert enum definitions and reject invalid values
+- [x] `bin/rails db:seed` idempotent after enum migration
+- [x] Note integer mappings in planning docs for Python consumers (same pattern as `system-job-contract.md`)
+
+**Checkpoint:** No free-form `motif` or `phase` strings remain in app code, seeds, or factories.
 
 ---
 
@@ -132,7 +171,6 @@ Per-model tasks (repeat pattern):
 ### Python (execution)
 
 - [ ] Lichess API import for authenticated account
-- [ ] Chess.com username-based import (no OAuth in MVP)
 - [ ] Normalize games to provider-agnostic `Game` records (PGN, opening, played_at, result, color, ratings, time control)
 - [ ] `ImportRecord` per game: imported / skipped / failed; update batch counts
 - [ ] On success: trigger `AnalysisRun` + `analyze_game` jobs (Rails or Python — pick one owner, document it)
@@ -208,7 +246,7 @@ From [weakness-classifier.md](planning/weakness-classifier.md) — **MVP themes 
 
 ### Data & content
 
-- [ ] Curated `Puzzle` seed set mapped to themes/motifs/difficulty (see M2 seeds)
+- [ ] Curated `Puzzle` seed set mapped to themes/motifs/difficulty (see M2 seeds; motif enum in M2.5)
 - [ ] Puzzle metadata: FEN, theme, difficulty, solution, source
 
 ### Python — training plan generator
@@ -317,7 +355,8 @@ Import → Analyze → Classify → (user picks plan) → Generate plan → Prog
 flowchart LR
   M0[Foundation] --> M1[Auth]
   M1 --> M2[Schema]
-  M2 --> M3[Import]
+  M2 --> M25[Motif enums]
+  M25 --> M3[Import]
   M3 --> M4[Evaluation]
   M4 --> M5[Classifier]
   M5 --> M6[Training]
@@ -328,7 +367,7 @@ flowchart LR
   M8 --> M9
 ```
 
-Parallelize where possible: **M8 (board)** can start once game/move data exists (after M4); **puzzle seeds** (M2) can land as soon as the `Puzzle` model exists.
+Parallelize where possible: **M8 (board)** can start once game/move data exists (after M4); **puzzle seeds** (M2) can land as soon as the `Puzzle` model exists; **motif/phase enums** (M2.5) should land before M6 puzzle selection logic.
 
 ---
 
@@ -337,6 +376,7 @@ Parallelize where possible: **M8 (board)** can start once game/move data exists 
 | Milestone | Focus                                        |
 | --------- | -------------------------------------------- |
 | 0–2       | ~1–2 weeks — scaffold, schema, test harness  |
+| 2.5       | ~0.5 day — motif/phase enum migration        |
 | 3         | ~1 week — provider APIs                      |
 | 4         | ~2 weeks — Stockfish pipeline (highest risk) |
 | 5         | ~1–2 weeks — classifier rules                |

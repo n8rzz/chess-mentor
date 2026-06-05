@@ -27,6 +27,11 @@
 class User < ApplicationRecord
   has_many :system_jobs, dependent: :destroy
   has_many :provider_accounts, dependent: :destroy
+  has_many :import_batches, dependent: :destroy
+  has_many :games, dependent: :destroy
+  has_many :weakness_cycles, dependent: :destroy
+  has_many :training_plans, dependent: :destroy
+  has_many :progress_snapshots, dependent: :destroy
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable,

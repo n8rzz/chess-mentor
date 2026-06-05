@@ -411,10 +411,16 @@ Represents a classified weakness occurrence.
 - primary_theme
 - secondary_theme
 - severity
-- phase
+- phase (enum: `opening`, `middlegame`, `endgame`)
 - occurred_under_time_pressure
-- explanation_key
+- explanation_key (string — versioned i18n key, not an enum)
 - metadata
+
+## Phases
+
+- opening
+- middlegame
+- endgame
 
 ## Themes
 
@@ -565,10 +571,14 @@ Represents a curated or generated puzzle.
 - fen
 - solution
 - theme
-- motif
+- motif (enum — see [puzzle-motif-contract.md](puzzle-motif-contract.md))
 - rating
 - difficulty
 - metadata
+
+## Motifs
+
+Tactical and positional motifs for curated puzzles. Integer-backed enum; full list in [puzzle-motif-contract.md](puzzle-motif-contract.md). Examples: `fork`, `pin`, `discovered_attack`, `back_rank_mate`, `passed_pawn`, `opposition`.
 
 ## Relationships
 
