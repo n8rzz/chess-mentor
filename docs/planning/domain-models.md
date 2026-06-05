@@ -608,7 +608,7 @@ Represents a point-in-time progress measurement.
 
 Optional Rails-managed work queue abstraction.
 
-This may wrap Active Job, Sidekiq, or Python worker coordination.
+This may wrap Active Job, Sidekiq, or Python worker coordination. MVP uses Postgres polling; optional Redis wake-up (job id signal only) is post–Phase 1—see PRD §15 and [todo.md](../todo.md) out-of-scope list.
 
 ## Responsibilities
 
@@ -629,7 +629,7 @@ This may wrap Active Job, Sidekiq, or Python worker coordination.
 
 - pending
 - claimed
-- running
+- processing
 - succeeded
 - failed
 - cancelled

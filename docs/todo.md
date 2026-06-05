@@ -1,6 +1,6 @@
 ---
 title: Phase 1 MVP — Task List
-last_modified: 2026-06-03
+last_modified: 2026-06-04
 tags:
   - mvp
   - tasks
@@ -52,20 +52,16 @@ rails new $PROJECT_NAME \
   - [x] User model specs
   - [x] Basic user flow system specs
   - [x] Test user seeds
-- [ ] `SystemJob` model (or equivalent) for Python worker coordination and UI status
+- [x] `SystemJob` model (or equivalent) for Python worker coordination and UI status
 
 ### Python analysis service
 
 - [x] Python project layout (worker, DB access, config)
 - [x] Shared DB connection contract (reads/writes same PostgreSQL as Rails)
 - [x] Stockfish binary/path configuration
-- [ ] Worker loop: claim `SystemJob` → process → update status/result/errors
-- [ ] Document DB contract (status enums, payload/result JSON shapes) so Rails never depends on Python internals
-
-### Cross-cutting
-
-- [ ] Analysis versioning fields on `AnalysisRun` (`engine_version`, `analysis_version`); analysis treated as immutable
-- [ ] Seeds: test user, curated puzzles (theme + difficulty + FEN + solution), optional demo games
+- [x] Worker loop: claim `SystemJob` → process → update status/result/errors
+- [x] Document DB contract (status enums, payload/result JSON shapes) so Rails never depends on Python internals — [system-job-contract.md](planning/system-job-contract.md)
+- **MVP job transport:** Postgres polling only (`system_jobs` is source of truth for status/UI). Redis is wired for Sidekiq and Action Cable, not Python wake-up yet.
 
 ---
 
@@ -96,10 +92,18 @@ Implement entities from [domain-models.md](planning/domain-models.md) with state
 
 Per-model tasks (repeat pattern):
 
-- [ ] Migration + model + factories + model specs
-- [ ] State machine / enum for lifecycle fields (`ImportBatch`, `AnalysisRun`, `WeaknessCycle`, `TrainingPlan`, `TrainingAssignment`, `SystemJob`)
+- [x] `SystemJob` — migration, model, factories, model specs, integration contract specs
+- [x] `SystemJob` — lifecycle enums (`pending` → `claimed` → `processing` → terminal)
+- [ ] Migration + model + factories + model specs (remaining models)
+- [ ] State machine / enum for lifecycle fields (`ImportBatch`, `AnalysisRun`, `WeaknessCycle`, `TrainingPlan`, `TrainingAssignment`)
+- [ ] `AnalysisRun` — `engine_version`, `analysis_version` on migration; treat runs as immutable (required before M4)
 - [ ] Uniqueness: one active `TrainingPlan` per user; no duplicate `ImportRecord` per provider game
 - [ ] Indexes for dashboards (user_id + played_at, weakness_cycle_id, etc.)
+
+### Seeds & fixture data (during M2; puzzle content required before M6)
+
+- [ ] Curated `Puzzle` seeds — theme, difficulty, FEN, solution, source (parallel once `Puzzle` model exists)
+- [ ] Optional demo games for local import/analysis dev without provider APIs (helpful from M3–M4)
 
 **Domain success checkpoint:** DB can answer the 12 questions in domain-models §25 (even if UI is minimal).
 
@@ -194,7 +198,7 @@ From [weakness-classifier.md](planning/weakness-classifier.md) — **MVP themes 
 
 ### Data & content
 
-- [ ] Curated `Puzzle` seed set mapped to themes/motifs/difficulty
+- [ ] Curated `Puzzle` seed set mapped to themes/motifs/difficulty (see M2 seeds)
 - [ ] Puzzle metadata: FEN, theme, difficulty, solution, source
 
 ### Python — training plan generator
@@ -293,6 +297,7 @@ Import → Analyze → Classify → (user picks plan) → Generate plan → Prog
 - Scheduled/automatic imports (manual import in MVP)
 - Opening family performance driving plans
 - Billing / premium features
+- **Redis job wake-up (hybrid queue):** optional signal after enqueue (e.g. `LPUSH` job id); Python worker blocks on Redis then claims in Postgres. `system_jobs` rows remain authoritative for status, retries, errors, and UI—revisit when multiple workers or poll cost matters. See PRD §15.
 
 ---
 
@@ -313,7 +318,7 @@ flowchart LR
   M8 --> M9
 ```
 
-Parallelize where possible: **M8 (board)** can start once game/move data exists (after M4); **puzzle seeds** can land during M2.
+Parallelize where possible: **M8 (board)** can start once game/move data exists (after M4); **puzzle seeds** (M2) can land as soon as the `Puzzle` model exists.
 
 ---
 

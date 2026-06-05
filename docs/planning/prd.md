@@ -484,6 +484,12 @@ React not required for MVP.
 
 # 15. Background Processing
 
+## Job coordination (MVP)
+
+Long-running work (import, analysis, classification, plan generation) is tracked in PostgreSQL as `SystemJob` records. Rails enqueues by inserting rows; the Python worker polls Postgres, claims jobs, and updates status/result/errors. Rails and the UI read job state from the database only—not from Python internals.
+
+Redis is used in MVP for **Sidekiq** (Rails-only async) and **Action Cable**, not as the cross-language work queue.
+
 ## Import Job
 
 Imports games.
@@ -502,7 +508,8 @@ Generates recommendations and assignments.
 
 ## Future
 
-Scheduled imports and automatic analysis.
+- Scheduled imports and automatic analysis
+- **Hybrid Redis signaling (optional):** after creating a `SystemJob`, push the job id to Redis so workers wake without tight Postgres polling; claim and lifecycle updates still happen in Postgres (`system_jobs` remains source of truth). Add when scaling workers or reducing DB poll load—not required for Phase 1 MVP
 
 ---
 
