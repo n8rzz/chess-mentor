@@ -96,7 +96,7 @@ RSpec.describe "Import batches", type: :request do
       expect(response).to have_http_status(:not_found)
     end
 
-    it "enqueues analysis jobs when viewing a succeeded batch" do
+    it "queues analysis reconciliation when viewing a succeeded batch" do
       account = create(:provider_account, user: user)
       batch = create(
         :import_batch,
@@ -105,23 +105,11 @@ RSpec.describe "Import batches", type: :request do
         provider_account: account,
         metadata: {}
       )
-      game = create(:game, user: user, provider_account: account, import_batch: batch)
-      create(
-        :import_record,
-        import_batch: batch,
-        provider: :lichess,
-        provider_game_id: game.provider_game_id,
-        status: :imported,
-        game: game
-      )
       sign_in user
 
-      expect do
-        get import_batch_path(batch)
-      end.to change(AnalysisRun, :count).by(1)
-        .and change(SystemJob.where(job_type: :analyze_game), :count).by(1)
+      expect(AnalysisRuns::ReconcileJob).to receive(:perform_async).with(false)
 
-      expect(batch.reload.metadata["analysis_enqueued_at"]).to be_present
+      get import_batch_path(batch)
     end
   end
 end

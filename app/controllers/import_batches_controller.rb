@@ -30,7 +30,9 @@ class ImportBatchesController < ApplicationController
   end
 
   def show
-    AnalysisRuns::BulkEnqueueForImport.call(import_batch: @import_batch)
+    if @import_batch.succeeded? || @import_batch.partially_succeeded?
+      AnalysisRuns::ReconcileJob.perform_async(false)
+    end
     @import_batch.reload
     @import_records = @import_batch.import_records.order(created_at: :desc).limit(50)
   end

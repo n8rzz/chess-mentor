@@ -37,6 +37,8 @@ services:
       DATABASE_HOST: db
       REDIS_URL: redis://redis:6379/0
       STOCKFISH_PATH: /usr/games/stockfish
+      # Clear env_file default so each container uses its own hostname (see config.py).
+      WORKER_ID: ""
     depends_on:
       db:
         condition: service_healthy

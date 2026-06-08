@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import Any, Callable
 
+from worker.analyze_handlers import analyze_game_handler
 from worker.import_handlers import import_games_handler
 from worker.jobs import SystemJobRow
 
@@ -18,7 +19,7 @@ def _stub_handler(job: SystemJobRow) -> dict[str, Any]:
 
 HANDLERS: dict[str, Handler] = {
     "import_games": import_games_handler,
-    "analyze_game": _stub_handler,
+    "analyze_game": analyze_game_handler,
     "classify_weaknesses": _stub_handler,
     "generate_training_plan": _stub_handler,
     "update_progress_snapshots": _stub_handler,

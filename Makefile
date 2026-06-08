@@ -1,6 +1,9 @@
-.PHONY: test test-rails test-python test-db-python test-db-rails
+.PHONY: test test-rails test-python test-db-python test-db-rails workers-up workers-down workers-build
+
+-include .env
 
 PYTHON_TEST_DATABASE ?= chess_mentor_python_test
+WORKER_REPLICAS ?= 1
 DATABASE_HOST ?= localhost
 DATABASE_PORT ?= 5432
 DATABASE_USERNAME ?= chess_mentor
@@ -27,3 +30,12 @@ test-python: test-db-python
 		STOCKFISH_PATH=$${STOCKFISH_PATH:-/opt/homebrew/bin/stockfish} \
 		PYTHONPATH=worker \
 		python -m pytest tests/ -q
+
+workers-up:
+	docker compose up -d --scale worker=$(WORKER_REPLICAS) worker
+
+workers-down:
+	docker compose stop worker
+
+workers-build:
+	docker compose build worker

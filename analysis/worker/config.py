@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import socket
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -38,6 +39,6 @@ def load_config() -> Config:
         database_name=os.environ["DATABASE_NAME"],
         redis_url=os.environ["REDIS_URL"],
         stockfish_path=os.environ["STOCKFISH_PATH"],
-        worker_id=os.environ.get("WORKER_ID", "worker-1"),
+        worker_id=os.environ.get("WORKER_ID") or socket.gethostname(),
         poll_interval_seconds=float(os.environ.get("WORKER_POLL_INTERVAL_SECONDS", "2")),
     )

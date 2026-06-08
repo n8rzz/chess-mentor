@@ -102,3 +102,81 @@ def seed_import_batch(
         "provider_account_id": provider_account_id,
         "import_batch_id": import_batch_id,
     }
+
+
+DEMO_BLITZ_PGN = """[Event "Demo Blitz"]
+[Site "lichess.org"]
+[Date "2026.06.01"]
+[White "starship_lichess"]
+[Black "opponent_blitz"]
+[Result "1-0"]
+[TimeControl "180+0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Be7 5. O-O O-O 6. Nc3 d6 7. Bg5 h6 8. Bxf6 Bxf6 9. Nd5 1-0"""
+
+
+def seed_game_with_analysis_run(
+    conn: psycopg.Connection,
+    *,
+    pgn: str = DEMO_BLITZ_PGN,
+    user_color: int = 0,
+    time_class: int = 1,
+) -> dict[str, str]:
+    seed = seed_import_batch(conn, batch_status=2)
+    now = datetime.now(timezone.utc)
+    game_id = new_id()
+    analysis_run_id = new_id()
+
+    conn.execute(
+        """
+        INSERT INTO games (
+          id, user_id, provider_account_id, import_batch_id, provider,
+          provider_game_id, pgn, played_at, user_color, result, time_control,
+          time_class, metadata, created_at, updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+        """,
+        (
+            game_id,
+            seed["user_id"],
+            seed["provider_account_id"],
+            seed["import_batch_id"],
+            0,
+            f"game-{game_id[-8:]}",
+            pgn,
+            now,
+            user_color,
+            0,
+            "180+0",
+            time_class,
+            json.dumps({}),
+            now,
+            now,
+        ),
+    )
+    conn.execute(
+        """
+        INSERT INTO analysis_runs (
+          id, game_id, user_id, status, engine_name, engine_version,
+          analysis_version, depth, metadata, created_at, updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+        """,
+        (
+            analysis_run_id,
+            game_id,
+            seed["user_id"],
+            0,
+            "Stockfish",
+            "16.1",
+            "1.0.0",
+            15,
+            json.dumps({}),
+            now,
+            now,
+        ),
+    )
+
+    return {
+        **seed,
+        "game_id": game_id,
+        "analysis_run_id": analysis_run_id,
+    }

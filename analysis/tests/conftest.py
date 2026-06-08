@@ -7,6 +7,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "worker"))
+sys.path.insert(0, str(ROOT / "tests"))
 
 # Dedicated Postgres database for Python tests (separate from chess_mentor_test).
 os.environ.setdefault("DATABASE_HOST", "localhost")
@@ -38,6 +39,9 @@ def db_conn():
             conn.execute(
                 """
                 TRUNCATE TABLE
+                  candidate_events,
+                  move_evaluations,
+                  moves,
                   import_records,
                   games,
                   analysis_runs,
@@ -55,6 +59,9 @@ def db_conn():
                 conn.execute(
                     """
                     TRUNCATE TABLE
+                      candidate_events,
+                      move_evaluations,
+                      moves,
                       import_records,
                       games,
                       analysis_runs,

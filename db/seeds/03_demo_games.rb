@@ -44,7 +44,7 @@ demo_games = [
       [ECO "C20"]
       [Opening "King's Pawn Game"]
 
-      1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Bc5 5. O-O O-O 6. Nc3 d6 7. Bg5 h6 8. Bh4 g5 9. Bg3 Nh5 10. Qxh5 1-0
+      1. e4 e5 2. Nf3 Nc6 3. Bc4 Nf6 4. d3 Be7 5. O-O O-O 6. Nc3 d6 7. Bg5 h6 8. Bxf6 Bxf6 9. Nd5 1-0
     PGN
     played_at: 3.days.ago,
     user_color: :white,

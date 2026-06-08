@@ -188,26 +188,30 @@ M2 ships `Puzzle#motif` and `WeaknessEvent#phase` as free-form strings. Promote 
 
 Pipeline from [evaluation-engine.md](planning/evaluation-engine.md):
 
-- [ ] **Game parser** — PGN → moves, user color, clocks/metadata when present
-- [ ] **Position generator** — FEN before/after per move
-- [ ] **Engine evaluator** — Stockfish depth 15; evaluate **user moves only**
-- [ ] **MoveEvaluation** — eval before/after, centipawn loss, best move, classification (good / inaccuracy / mistake / blunder)
-- [ ] **Time control weighting** — classical/rapid 1.0, blitz 0.75, bullet 0.25 (store or apply per docs)
-- [ ] **Event detectors** (candidate events only): material, tactical, threat, king safety, pawn structure, endgame phase, time pressure
-- [ ] Persist `Move`, `MoveEvaluation`, `CandidateEvent`; mark `AnalysisRun` succeeded/failed
-- [ ] Determinism: same PGN + engine version → same artifacts
-- [ ] Error handling for corrupt PGN / engine timeout
+- [x] **Game parser** — PGN → moves, user color, clocks/metadata when present
+- [x] **Position generator** — FEN before/after per move
+- [x] **Engine evaluator** — Stockfish depth 15; evaluate **user moves only**
+- [x] **MoveEvaluation** — eval before/after, centipawn loss, best move, classification (good / inaccuracy / mistake / blunder)
+- [x] **Time control weighting** — classical/rapid 1.0, blitz 0.75, bullet 0.25 (store or apply per docs)
+- [x] **Event detectors** (candidate events only): material, tactical, threat, king safety, pawn structure, endgame phase, time pressure
+- [x] Persist `Move`, `MoveEvaluation`, `CandidateEvent`; mark `AnalysisRun` succeeded/failed
+- [x] Determinism: same PGN + engine version → same artifacts
+- [x] Error handling for corrupt PGN / engine timeout
 
 ### Rails
 
-- [ ] Games list + per-game analysis status
-- [ ] Game detail: move list with classifications (read-only)
+- [x] Games list + per-game analysis status
+- [x] Game detail: move list with classifications (read-only)
 
 ### Tests
 
-- [ ] Pytest: parser, CPL/classification, each detector
-- [ ] Integration: Stockfish on fixture PGNs
-- [ ] E2E slice: imported game → full analysis artifacts in DB
+- [x] Pytest: parser, CPL/classification, each detector
+- [x] Integration: Stockfish on fixture PGNs
+- [x] E2E slice: imported game → full analysis artifacts in DB
+
+### Docs
+
+- [x] new `docs/evaluation-engine.md` doc that outlines how it works as a whole and how each module works
 
 **PRD checkpoint:** User can analyze imported games.
 
