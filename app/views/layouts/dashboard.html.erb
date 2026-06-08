@@ -38,8 +38,8 @@
       <nav class="w-48 shrink-0">
         <ul class="space-y-2 text-sm">
           <li><%= link_to "Dashboard", dashboard_path, class: "font-semibold text-gray-900" %></li>
-          <li><span class="text-gray-400">Providers <span class="text-xs">(soon)</span></span></li>
-          <li><span class="text-gray-400">Imports <span class="text-xs">(soon)</span></span></li>
+          <li><%= link_to "Providers", settings_providers_path, class: "text-gray-700 hover:text-gray-900" %></li>
+          <li><%= link_to "Imports", import_batches_path, class: "text-gray-700 hover:text-gray-900" %></li>
           <li><span class="text-gray-400">Analysis <span class="text-xs">(soon)</span></span></li>
           <li><span class="text-gray-400">Training <span class="text-xs">(soon)</span></span></li>
         </ul>

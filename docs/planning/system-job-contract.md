@@ -96,6 +96,12 @@ SystemJobs::Create.call(user: user, job_type: :import_games, payload: { "import_
 
 Creates `pending`, `attempts_count: 0`, `payload` with string keys.
 
+## Post-import analysis enqueue (M3)
+
+Rails owns `AnalysisRun` + `analyze_game` job creation ([domain-models §20](domain-models.md)). Python only imports games.
+
+When the import status page loads a terminal batch (`succeeded` or `partially_succeeded`) and `ImportBatch.metadata["analysis_enqueued_at"]` is absent, Rails runs `AnalysisRuns::BulkEnqueueForImport` once (idempotent). This inserts pending `AnalysisRun` rows and enqueues `analyze_game` jobs. Handlers remain stubs until Milestone 4.
+
 ## Manual smoke
 
 ```bash

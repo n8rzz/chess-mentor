@@ -7,6 +7,14 @@ Rails.application.routes.draw do
 
   resource :dashboard, only: :show, controller: "dashboard"
 
+  namespace :settings do
+    resource :providers, only: :show, controller: "providers" do
+      delete :disconnect
+    end
+  end
+
+  resources :import_batches, only: %i[index show new create]
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

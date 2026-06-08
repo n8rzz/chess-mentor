@@ -1,0 +1,13 @@
+{
+  "id": "abc123game",
+  "createdAt": 1717200000000,
+  "perf": "blitz",
+  "winner": "white",
+  "pgn": "[Event \"Rated Blitz\"]\n[White \"testuser\"]\n[Black \"opponent\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 Nc6 1-0",
+  "clock": { "initial": 180, "increment": 0 },
+  "opening": { "name": "King's Pawn Game", "eco": "C20" },
+  "players": {
+    "white": { "user": { "name": "testuser", "id": "testuser" }, "rating": 1520 },
+    "black": { "user": { "name": "opponent", "id": "opponent" }, "rating": 1480 }
+  }
+}

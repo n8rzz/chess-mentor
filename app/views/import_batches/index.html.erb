@@ -1,0 +1,37 @@
+<% content_for :title, "Imports — Chess Mentor" %>
+
+<h1 class="text-3xl font-bold text-gray-900">Imports</h1>
+<p class="mt-2 text-gray-600">Recent game import batches.</p>
+
+<div class="mt-8">
+  <%= link_to "New import", new_import_batch_path, class: "rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
+</div>
+
+<% if @import_batches.any? %>
+  <div class="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Started</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Status</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Imported</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900"></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @import_batches.each do |batch| %>
+          <tr>
+            <td class="px-4 py-3 text-gray-700"><%= l(batch.created_at, format: :short) %></td>
+            <td class="px-4 py-3 capitalize text-gray-700"><%= batch.status.tr("_", " ") %></td>
+            <td class="px-4 py-3 text-gray-700"><%= batch.games_imported_count %> / <%= batch.games_found_count %></td>
+            <td class="px-4 py-3 text-right">
+              <%= link_to "View", import_batch_path(batch), class: "text-gray-900 underline" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <p class="mt-6 text-gray-500">No imports yet.</p>
+<% end %>

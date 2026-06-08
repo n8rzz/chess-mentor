@@ -162,25 +162,25 @@ M2 ships `Puzzle#motif` and `WeaknessEvent#phase` as free-form strings. Promote 
 
 ### Rails (orchestration + UI)
 
-- [ ] Provider settings UI: connect Lichess (OAuth), add Chess.com username
-- [ ] `ProviderAccount` CRUD; prevent duplicate connections
-- [ ] Import request UI: date range (7 / 14 / 30 days), time controls (bullet/blitz/rapid/classical), max 30 games
-- [ ] Create `ImportBatch` + enqueue `SystemJob` (`import_games`)
-- [ ] Import status page: running / succeeded / partial / failed + counts + errors
+- [x] Provider settings UI: connect Lichess (OAuth), disconnect
+- [x] `ProviderAccount` CRUD; prevent duplicate connections (M1 + disconnect in M3)
+- [x] Import request UI: date range (7 / 14 / 30 days), time controls (bullet/blitz/rapid/classical), max 30 games
+- [x] Create `ImportBatch` + enqueue `SystemJob` (`import_games`)
+- [x] Import status page: running / succeeded / partial / failed + counts + errors
 
 ### Python (execution)
 
-- [ ] Lichess API import for authenticated account
-- [ ] Normalize games to provider-agnostic `Game` records (PGN, opening, played_at, result, color, ratings, time control)
-- [ ] `ImportRecord` per game: imported / skipped / failed; update batch counts
-- [ ] On success: trigger `AnalysisRun` + `analyze_game` jobs (Rails or Python — pick one owner, document it)
+- [x] Lichess API import for authenticated account
+- [x] Normalize games to provider-agnostic `Game` records (PGN, opening, played_at, result, color, ratings, time control)
+- [x] `ImportRecord` per game: imported / skipped / failed; update batch counts
+- [x] On success: trigger `AnalysisRun` + `analyze_game` jobs (Rails-owned via status page; see `system-job-contract.md`)
 
 ### Tests
 
-- [ ] Rails service specs for import initiation
-- [ ] Python unit tests for API parsing; integration test with fixture responses
+- [x] Rails service specs for import initiation
+- [x] Python unit tests for API parsing; integration test with fixture responses
 
-**PRD checkpoint:** User can connect a provider and import games.
+**PRD checkpoint:** User can connect a provider and import games (Lichess only in M3; Chess.com deferred).
 
 ---
 

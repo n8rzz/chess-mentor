@@ -1,0 +1,88 @@
+<% refresh = @import_batch.pending? || @import_batch.running? %>
+<% content_for :title, "Import Status — Chess Mentor" %>
+
+<%= turbo_frame_tag "import_batch_status", data: { controller: "import-status", import_status_refresh_value: refresh } do %>
+  <h1 class="text-3xl font-bold text-gray-900">Import status</h1>
+  <p class="mt-2 text-gray-600">
+    Batch from <%= l(@import_batch.created_at, format: :long) %>
+  </p>
+
+  <section class="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div class="rounded-lg border border-gray-200 bg-white p-4">
+      <p class="text-sm text-gray-500">Status</p>
+      <p class="mt-1 text-lg font-semibold capitalize text-gray-900"><%= @import_batch.status.tr("_", " ") %></p>
+    </div>
+    <div class="rounded-lg border border-gray-200 bg-white p-4">
+      <p class="text-sm text-gray-500">Found</p>
+      <p class="mt-1 text-lg font-semibold text-gray-900"><%= @import_batch.games_found_count %></p>
+    </div>
+    <div class="rounded-lg border border-gray-200 bg-white p-4">
+      <p class="text-sm text-gray-500">Imported</p>
+      <p class="mt-1 text-lg font-semibold text-gray-900"><%= @import_batch.games_imported_count %></p>
+    </div>
+    <div class="rounded-lg border border-gray-200 bg-white p-4">
+      <p class="text-sm text-gray-500">Skipped / Failed</p>
+      <p class="mt-1 text-lg font-semibold text-gray-900">
+        <%= @import_batch.games_skipped_count %> / <%= @import_batch.games_failed_count %>
+      </p>
+    </div>
+  </section>
+
+  <section class="mt-6 rounded-lg border border-gray-200 bg-white p-6">
+    <h2 class="text-lg font-semibold text-gray-900">Filters</h2>
+    <dl class="mt-4 grid gap-2 text-sm text-gray-700 sm:grid-cols-2">
+      <div>
+        <dt class="font-medium text-gray-500">Date range</dt>
+        <dd><%= l(@import_batch.requested_since.to_date) %> – <%= l(@import_batch.requested_until.to_date) %></dd>
+      </div>
+      <div>
+        <dt class="font-medium text-gray-500">Time controls</dt>
+        <dd class="capitalize"><%= @import_batch.time_controls.join(", ") %></dd>
+      </div>
+      <div>
+        <dt class="font-medium text-gray-500">Max games</dt>
+        <dd><%= @import_batch.max_games %></dd>
+      </div>
+    </dl>
+  </section>
+
+  <% if @import_batch.error_message.present? %>
+    <section class="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
+      <h2 class="font-semibold text-red-900">Error</h2>
+      <p class="mt-2 text-sm text-red-800"><%= @import_batch.error_message %></p>
+    </section>
+  <% end %>
+
+  <% if @import_records.any? %>
+    <section class="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <h2 class="border-b border-gray-200 px-4 py-3 text-lg font-semibold text-gray-900">Games</h2>
+      <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900">Provider game ID</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900">Status</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900">Error</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          <% @import_records.each do |record| %>
+            <tr>
+              <td class="px-4 py-3 font-mono text-xs text-gray-700"><%= record.provider_game_id %></td>
+              <td class="px-4 py-3 capitalize text-gray-700"><%= record.status %></td>
+              <td class="px-4 py-3 text-gray-600"><%= record.error_message %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  <% end %>
+
+  <% if refresh %>
+    <div data-import-status-target="refresh"></div>
+  <% end %>
+
+  <div class="mt-6 flex gap-3">
+    <%= link_to "All imports", import_batches_path, class: "text-gray-900 underline" %>
+    <%= link_to "New import", new_import_batch_path, class: "text-gray-900 underline" %>
+  </div>
+<% end %>

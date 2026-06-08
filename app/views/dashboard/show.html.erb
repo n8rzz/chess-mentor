@@ -1,5 +1,5 @@
 <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-<p class="mt-2 text-gray-600">Your coaching hub. More features arrive as import and analysis land.</p>
+<p class="mt-2 text-gray-600">Your coaching hub. Import games to begin analysis.</p>
 
 <section class="mt-8 grid gap-6 md:grid-cols-2">
   <div class="rounded-lg border border-gray-200 bg-white p-6">
@@ -8,18 +8,30 @@
       <p class="mt-2 text-gray-600">
         Lichess connected as <strong>@<%= @lichess_account.provider_username %></strong>
       </p>
+      <div class="mt-4 flex flex-wrap gap-3 items-center">
+        <%= link_to "Import games", new_import_batch_path, class: "inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
+        <%= link_to "Manage providers", settings_providers_path, class: "text-sm underline text-gray-700" %>
+      </div>
     <% else %>
-      <p class="mt-2 text-gray-600">Connect your Lichess account to import games later.</p>
-      <%= button_to "Connect Lichess",
-                    omniauth_authorize_path(:user, :lichess),
-                    data: { turbo: false },
-                    class: "mt-4 inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
+      <p class="mt-2 text-gray-600">Connect your Lichess account to import games.</p>
+      <%= link_to "Connect Lichess",
+                  settings_providers_path,
+                  class: "mt-4 inline-block rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
     <% end %>
   </div>
 
   <div class="rounded-lg border border-gray-200 bg-white p-6">
-    <h2 class="text-lg font-semibold text-gray-900">Recent analysis</h2>
-    <p class="mt-2 text-gray-500">No games imported yet.</p>
+    <h2 class="text-lg font-semibold text-gray-900">Recent imports</h2>
+    <% if @latest_import_batch %>
+      <p class="mt-2 capitalize text-gray-600">
+        <%= @latest_import_batch.status.tr("_", " ") %> —
+        <%= @latest_import_batch.games_imported_count %> imported
+      </p>
+      <%= link_to "View import", import_batch_path(@latest_import_batch), class: "mt-2 inline-block text-sm underline text-gray-700" %>
+    <% else %>
+      <p class="mt-2 text-gray-500">No imports yet.</p>
+    <% end %>
+    <%= link_to "All imports", import_batches_path, class: "mt-4 inline-block text-sm underline text-gray-700" %>
   </div>
 
   <div class="rounded-lg border border-gray-200 bg-white p-6">

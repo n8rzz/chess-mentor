@@ -6,7 +6,7 @@ user.assign_attributes(
   username: "starship123",
   password: "skyd!ve",
   password_confirmation: "skyd!ve",
-  role: :member
+  role: :admin
 )
 user.skip_confirmation! if user.new_record? || !user.confirmed?
 user.save!
