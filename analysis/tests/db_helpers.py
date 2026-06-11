@@ -180,3 +180,70 @@ def seed_game_with_analysis_run(
         "game_id": game_id,
         "analysis_run_id": analysis_run_id,
     }
+
+
+def seed_partial_analysis_state(
+    conn: psycopg.Connection,
+    *,
+    evaluated_user_move_count: int = 2,
+    with_candidate_events: bool = True,
+) -> dict[str, str | int]:
+    """Game with moves and a subset of evaluations — simulates a crashed/retrying worker."""
+    from worker.eval_package.constants import USER_COLOR
+    from worker.eval_package.positions import generate_positions
+    from worker.eval_package.repository import AnalysisRepository
+
+    seed = seed_game_with_analysis_run(conn)
+    repo = AnalysisRepository(conn)
+    positions = generate_positions(DEMO_BLITZ_PGN, user_color=USER_COLOR["white"])
+    repo.insert_moves(seed["game_id"], positions)
+    user_moves = [move for move in repo.load_moves(seed["game_id"]) if move.played_by_user]
+    now = datetime.now(timezone.utc)
+
+    for index, move in enumerate(user_moves[:evaluated_user_move_count]):
+        repo.insert_move_evaluation(
+            analysis_run_id=seed["analysis_run_id"],
+            game_id=seed["game_id"],
+            move_id=move.id,
+            depth=15,
+            eval_before_cp=20,
+            eval_after_cp=0,
+            centipawn_loss=20 + index,
+            classification=1,
+            best_move_uci="e2e4",
+            best_move_san="e4",
+            principal_variation=None,
+            mate_before=None,
+            mate_after=None,
+            metadata={"seed": "partial"},
+        )
+        if with_candidate_events:
+            conn.execute(
+                """
+                INSERT INTO candidate_events (
+                  id, analysis_run_id, game_id, move_id,
+                  event_type, severity, confidence, metadata,
+                  created_at, updated_at
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+                """,
+                (
+                    new_id(),
+                    seed["analysis_run_id"],
+                    seed["game_id"],
+                    move.id,
+                    1,
+                    0.5,
+                    0.8,
+                    json.dumps({"seed": "partial"}),
+                    now,
+                    now,
+                ),
+            )
+
+    repo.mark_running(seed["analysis_run_id"])
+
+    return {
+        **seed,
+        "user_move_count": len(user_moves),
+        "partial_eval_count": min(evaluated_user_move_count, len(user_moves)),
+    }

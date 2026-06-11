@@ -79,4 +79,26 @@ RSpec.describe WeaknessCycle, type: :model do
       expect(weakness_cycle.id).to match(/\A[0-9A-HJKMNP-TV-Z]{26}\z/)
     end
   end
+
+  describe "#frequency" do
+    it "returns games affected divided by detection window games" do
+      cycle = build(:weakness_cycle, current_occurrences: 6, detection_window_games: 30)
+
+      expect(cycle.frequency).to eq(0.2)
+    end
+
+    it "prefers the stored metadata frequency when present" do
+      cycle = build(:weakness_cycle, current_occurrences: 99, detection_window_games: 12, metadata: { "frequency" => 0.5 })
+
+      expect(cycle.frequency).to eq(0.5)
+    end
+  end
+
+  describe "#severity_trend" do
+    it "returns improving when current severity is below baseline" do
+      cycle = build(:weakness_cycle, baseline_severity: 0.8, current_severity: 0.5)
+
+      expect(cycle.severity_trend).to eq(:improving)
+    end
+  end
 end

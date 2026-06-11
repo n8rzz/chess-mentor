@@ -29,6 +29,23 @@ RSpec.describe AnalysisRuns::ReconcileAll do
       expect(import_batch.reload.metadata["analysis_enqueued_at"]).to be_present
     end
 
+    it "re-enqueues analyze_game jobs for pending runs left behind by failed handlers" do
+      game = create(:game, user: user, provider_account: provider_account, import_batch: import_batch)
+      run = create(:analysis_run, game: game, user: user, status: :pending)
+      create(
+        :system_job,
+        :analyze_game,
+        :failed,
+        user: user,
+        payload: { "analysis_run_id" => run.id, "game_id" => game.id },
+        error_message: "duplicate key value violates unique constraint"
+      )
+
+      expect do
+        described_class.call
+      end.to change(SystemJob.where(job_type: :analyze_game, status: :pending), :count).by(1)
+    end
+
     it "re-enqueues analyze_game jobs for pending runs left behind by stub handlers" do
       game = create(:game, user: user, provider_account: provider_account, import_batch: import_batch)
       run = create(:analysis_run, game: game, user: user, status: :pending)

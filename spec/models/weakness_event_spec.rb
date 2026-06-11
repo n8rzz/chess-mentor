@@ -89,4 +89,13 @@ RSpec.describe WeaknessEvent, type: :model do
       expect(weakness_event.id).to match(/\A[0-9A-HJKMNP-TV-Z]{26}\z/)
     end
   end
+
+  describe "theme labels" do
+    it "returns human-readable primary and secondary theme labels" do
+      event = build(:weakness_event, primary_theme: :missed_tactics, secondary_theme: :time_pressure)
+
+      expect(event.primary_theme_label).to eq("Missed tactics")
+      expect(event.secondary_theme_label).to eq("Time pressure")
+    end
+  end
 end

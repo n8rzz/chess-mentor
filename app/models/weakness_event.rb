@@ -46,4 +46,14 @@ class WeaknessEvent < ApplicationRecord
 
   validates :severity, :phase, presence: true
   validates :severity, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 1 }
+
+  def primary_theme_label
+    WeaknessThemeable::THEME_LABELS.fetch(primary_theme.to_sym)
+  end
+
+  def secondary_theme_label
+    return if secondary_theme.blank?
+
+    WeaknessThemeable::THEME_LABELS.fetch(secondary_theme.to_sym)
+  end
 end

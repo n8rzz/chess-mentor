@@ -8,6 +8,7 @@ from typing import Any
 import psycopg
 
 from worker.eval_package.constants import ANALYSIS_RUN_STATUS
+from worker.eval_package.engine import EngineEvaluation
 from worker.import_package.ids import new_ulid
 
 
@@ -158,6 +159,93 @@ class AnalysisRepository:
             ),
         )
 
+    def analysis_run_status(self, analysis_run_id: str) -> int:
+        row = self._conn.execute(
+            "SELECT status FROM analysis_runs WHERE id = %s",
+            (analysis_run_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"analysis run not found: {analysis_run_id}")
+        return int(row[0])
+
+    def load_succeeded_summary(self, analysis_run_id: str, game_id: str) -> dict[str, Any]:
+        row = self._conn.execute(
+            "SELECT metadata FROM analysis_runs WHERE id = %s",
+            (analysis_run_id,),
+        ).fetchone()
+        metadata = row[0] if row else {}
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        metadata = dict(metadata or {})
+        return {
+            "analysis_run_id": analysis_run_id,
+            "game_id": game_id,
+            "status": "succeeded",
+            "moves_parsed": metadata.get("moves_parsed", 0),
+            "user_moves_evaluated": metadata.get("user_moves_evaluated", 0),
+            "events_detected": metadata.get("events_detected", 0),
+        }
+
+    def has_move_evaluation(self, analysis_run_id: str, move_id: str) -> bool:
+        row = self._conn.execute(
+            """
+            SELECT 1 FROM move_evaluations
+            WHERE analysis_run_id = %s AND move_id = %s
+            LIMIT 1
+            """,
+            (analysis_run_id, move_id),
+        ).fetchone()
+        return row is not None
+
+    def load_move_evaluation(
+        self,
+        analysis_run_id: str,
+        move_id: str,
+    ) -> tuple[EngineEvaluation, int] | None:
+        row = self._conn.execute(
+            """
+            SELECT
+              eval_before_cp, eval_after_cp, centipawn_loss,
+              best_move_uci, best_move_san, principal_variation,
+              mate_before, mate_after
+            FROM move_evaluations
+            WHERE analysis_run_id = %s AND move_id = %s
+            LIMIT 1
+            """,
+            (analysis_run_id, move_id),
+        ).fetchone()
+        if row is None:
+            return None
+
+        evaluation = EngineEvaluation(
+            eval_before_cp=int(row[0]),
+            eval_after_cp=int(row[1]),
+            mate_before=row[6],
+            mate_after=row[7],
+            best_move_uci=row[3],
+            best_move_san=row[4],
+            principal_variation=row[5],
+        )
+        return evaluation, int(row[2])
+
+    def move_has_candidate_events(self, analysis_run_id: str, move_id: str) -> bool:
+        row = self._conn.execute(
+            """
+            SELECT 1 FROM candidate_events
+            WHERE analysis_run_id = %s AND move_id = %s
+            LIMIT 1
+            """,
+            (analysis_run_id, move_id),
+        ).fetchone()
+        return row is not None
+
+    def count_candidate_events(self, analysis_run_id: str) -> int:
+        row = self._conn.execute(
+            "SELECT COUNT(*) FROM candidate_events WHERE analysis_run_id = %s",
+            (analysis_run_id,),
+        ).fetchone()
+        return int(row[0]) if row else 0
+
     def game_has_moves(self, game_id: str) -> bool:
         row = self._conn.execute(
             "SELECT 1 FROM moves WHERE game_id = %s LIMIT 1",
@@ -176,6 +264,7 @@ class AnalysisRepository:
                   fen_before, fen_after, played_by_user,
                   clock_before, clock_after, created_at, updated_at
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (game_id, ply) DO NOTHING
                 """,
                 (
                     new_ulid(),
@@ -260,6 +349,7 @@ class AnalysisRepository:
               %s, %s, %s, %s::jsonb,
               %s, %s
             )
+            ON CONFLICT (analysis_run_id, move_id) DO NOTHING
             """,
             (
                 new_ulid(),

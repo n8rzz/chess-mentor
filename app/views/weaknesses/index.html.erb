@@ -1,0 +1,45 @@
+<% content_for :title, "Weaknesses — Chess Mentor" %>
+
+<h1 class="text-3xl font-bold text-gray-900">Recurring weaknesses</h1>
+<p class="mt-2 text-gray-600">Patterns detected across your recently analyzed games.</p>
+
+<% if @weakness_cycles.any? %>
+  <section class="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Theme</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Status</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Games affected</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Frequency</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Severity</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Trend</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @weakness_cycles.each do |cycle| %>
+          <tr>
+            <td class="px-4 py-3">
+              <%= link_to cycle.theme_label, weakness_path(cycle), class: "font-medium text-gray-900 underline" %>
+              <% if cycle.cycle_number > 1 %>
+                <span class="text-gray-500">(cycle <%= cycle.cycle_number %>)</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 capitalize text-gray-700"><%= cycle.status %></td>
+            <td class="px-4 py-3 text-gray-700">
+              <%= cycle.games_affected %> / <%= cycle.detection_window_games %>
+            </td>
+            <td class="px-4 py-3 text-gray-700"><%= number_to_percentage(cycle.frequency * 100, precision: 0) %></td>
+            <td class="px-4 py-3 text-gray-700"><%= number_with_precision(cycle.current_severity, precision: 2) %></td>
+            <td class="px-4 py-3 capitalize text-gray-700"><%= cycle.severity_trend %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </section>
+<% else %>
+  <section class="mt-8 rounded-lg border border-gray-200 bg-white p-6">
+    <p class="text-gray-600">No recurring weaknesses detected yet. Import and analyze games to get started.</p>
+    <%= link_to "View games", games_path, class: "mt-4 inline-block text-sm underline text-gray-700" %>
+  </section>
+<% end %>

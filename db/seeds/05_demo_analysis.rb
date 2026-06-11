@@ -126,6 +126,48 @@ CandidateEvent.find_or_initialize_by(
   event.save!
 end
 
+partial_game = find_demo_game(user: user, provider_game_id: "demo-blitz-win")
+partial_run = upsert_analysis_run(
+  game: partial_game,
+  seed_key: "demo_blitz_analysis_partial",
+  status: :running,
+  started_at: 3.minutes.ago
+)
+
+partial_moves = blitz_moves.map { |attrs| upsert_move(game: partial_game, **attrs) }
+partial_user_moves = partial_moves.select(&:played_by_user?)
+
+partial_user_moves.first(3).zip(evaluation_specs.first(3)).each do |move, spec|
+  upsert_move_evaluation(analysis_run: partial_run, move: move, **spec)
+end
+
+partial_user_moves.first(2).each do |move|
+  CandidateEvent.find_or_initialize_by(
+    analysis_run: partial_run,
+    move: move,
+    event_type: :tactical
+  ).tap do |event|
+    event.assign_attributes(
+      game: partial_game,
+      severity: 0.55,
+      confidence: 0.75,
+      metadata: { "seed_key" => "demo_partial_tactical_event" }
+    )
+    event.save!
+  end
+end
+
+unless SystemJob.analyze_game.exists?([ "payload->>'analysis_run_id' = ?", partial_run.id ])
+  SystemJobs::Create.call(
+    user: user,
+    job_type: :analyze_game,
+    payload: {
+      "analysis_run_id" => partial_run.id,
+      "game_id" => partial_game.id
+    }
+  )
+end
+
 rapid_game = find_demo_game(user: user, provider_game_id: "demo-rapid-loss")
 pending_run = upsert_analysis_run(
   game: rapid_game,
@@ -159,4 +201,4 @@ import_batch.update!(
   metadata: import_batch.metadata.merge("analysis_enqueued_at" => 15.minutes.ago.iso8601)
 )
 
-puts "Seeded demo analysis for #{user.email}: succeeded (blitz), pending (rapid), failed (classical)"
+puts "Seeded demo analysis for #{user.email}: succeeded (blitz), partial/running (blitz retry), pending (rapid), failed (classical)"

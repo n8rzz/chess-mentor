@@ -15,6 +15,7 @@ Rails.application.routes.draw do
 
   resources :import_batches, only: %i[index show new create]
   resources :games, only: %i[index show]
+  resources :weaknesses, only: %i[index show]
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

@@ -49,4 +49,29 @@ class WeaknessCycle < ApplicationRecord
   }, default: :detected, validate: true
 
   validates :cycle_number, numericality: { greater_than: 0 }
+
+  def frequency
+    stored = metadata["frequency"]
+    return stored.to_f if stored.present?
+
+    return 0.0 if detection_window_games.blank? || detection_window_games.zero?
+
+    current_occurrences.to_f / detection_window_games
+  end
+
+  def games_affected
+    current_occurrences
+  end
+
+  def severity_trend
+    return :stable if baseline_severity.blank? || current_severity.blank?
+
+    if current_severity < baseline_severity
+      :improving
+    elsif current_severity > baseline_severity
+      :worsening
+    else
+      :stable
+    end
+  end
 end

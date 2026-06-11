@@ -38,6 +38,7 @@ flowchart TD
 4. Stockfish evaluates **user moves only** at the configured depth (default 15).
 5. Detectors run per move and insert `candidate_events`.
 6. On success the run is `succeeded`; structured errors mark it `failed`.
+7. A deduped `classify_weaknesses` job is enqueued for the user (see [weakness-classifier-engine.md](weakness-classifier-engine.md)).
 
 Moves are **game-scoped** (parsed once). Evaluations and candidate events are **run-scoped** (one row set per `analysis_run`).
 
@@ -125,7 +126,9 @@ Registry: `detectors/__init__.py` → `run_detectors()`.
 ### Repository (`repository.py`)
 
 - `mark_running` / `mark_succeeded` / `mark_failed` for `analysis_runs`.
-- `insert_moves` skips when the game already has move rows.
+- `insert_moves` skips when the game already has move rows; uses `ON CONFLICT (game_id, ply) DO NOTHING` so concurrent workers do not raise unique violations.
+- `insert_move_evaluation` uses `ON CONFLICT (analysis_run_id, move_id) DO NOTHING`; retries skip moves that already have evaluations and candidate events.
+- `run_analysis` returns immediately when the analysis run is already `succeeded`.
 - `insert_move_evaluation` and `insert_candidate_event` keyed by `analysis_run_id`.
 - Failures store `error_message` and structured `error_details`.
 
@@ -147,6 +150,7 @@ Registry: `detectors/__init__.py` → `run_detectors()`.
 | Layer                 | Location                                                                                                         |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | Unit                  | `analysis/tests/test_parser.py`, `test_classifier.py`, `test_detectors.py`, …                                    |
+| Idempotency           | `analysis/tests/test_analyze_idempotency.py`, `test_eval_repository.py` (partial resume, ON CONFLICT, early return) |
 | Stockfish integration | `analysis/tests/test_engine_integration.py`, `test_analyze_handler_integration.py` (skipped when binary missing) |
 | Rails E2E slice       | `spec/integration/analysis_pipeline_spec.rb` (skipped without Stockfish + Python deps)                           |
 | Request specs         | `spec/requests/games_spec.rb`                                                                                    |

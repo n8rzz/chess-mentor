@@ -221,26 +221,30 @@ Pipeline from [evaluation-engine.md](planning/evaluation-engine.md):
 
 From [weakness-classifier.md](planning/weakness-classifier.md) — **MVP themes only**:
 
-- [ ] Classify `CandidateEvent` → `WeaknessEvent` with primary (and optional secondary) theme
-- [ ] **Themes (9):** hanging pieces, missed tactics, ignored threats, opening development, king safety, bad trades (materially losing only), pawn structure (MVP signals + eval worsening), endgame technique (MVP signals), time pressure
-- [ ] **Exclude** opening family performance from training-plan targeting (not used for plans in MVP)
-- [ ] Recurring weakness logic: pattern across games, not single mistakes
-- [ ] Detection window: last 30 games / 30 days (configurable constants)
-- [ ] Frequency = occurrences / games analyzed
-- [ ] Severity model: occurrence + impact + recency
-- [ ] `WeaknessCycle` lifecycle: detected → active → improving → managed → archived
-- [ ] Enqueue/run `classify_weaknesses` job after analysis batch (or on demand)
+- [x] Classify `CandidateEvent` → `WeaknessEvent` with primary (and optional secondary) theme
+- [x] **Themes (9):** hanging pieces, missed tactics, ignored threats, opening development, king safety, bad trades (materially losing only), pawn structure (MVP signals + eval worsening), endgame technique (MVP signals), time pressure
+- [x] **Exclude** opening family performance from training-plan targeting (not used for plans in MVP)
+- [x] Recurring weakness logic: pattern across games, not single mistakes
+- [x] Detection window: last 30 games / 30 days (configurable constants)
+- [x] Frequency = games affected / games analyzed
+- [x] Severity model: occurrence + impact + recency
+- [x] `WeaknessCycle` lifecycle: detected → active → improving → managed → archived
+- [x] Enqueue/run `classify_weaknesses` job after each game analysis (deduped)
 
 ### Rails
 
-- [ ] Weakness report UI: top weaknesses, severity, trend
-- [ ] Weakness detail: linked games/moves/events
+- [x] Weakness report UI: top weaknesses, severity, trend
+- [x] Weakness detail: linked games/moves/events
 
 ### Tests
 
-- [ ] Unit tests per theme rule (fixtures from doc examples)
-- [ ] Integration: analysis artifacts → weakness events + cycles
-- [ ] Determinism tests
+- [x] Unit tests per theme rule (fixtures from doc examples)
+- [x] Integration: analysis artifacts → weakness events + cycles
+- [x] Determinism tests
+
+### Docs
+
+- [x] new `docs/weakness-classifier-engine.md` doc that outlines how it works as a whole and how each module works
 
 **PRD checkpoint:** User can view recurring weaknesses.
 
@@ -332,7 +336,7 @@ Import → Analyze → Classify → (user picks plan) → Generate plan → Prog
 1. [ ] Connect a provider
 2. [ ] Import games
 3. [ ] Analyze games
-4. [ ] View recurring weaknesses
+4. [x] View recurring weaknesses
 5. [ ] Select a training plan
 6. [ ] Complete exercises
 7. [ ] Track progress
