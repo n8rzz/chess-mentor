@@ -1,4 +1,4 @@
-.PHONY: test test-rails test-python test-db-python test-db-rails workers-up workers-down workers-build
+.PHONY: test test-rails test-python test-db-python test-db-rails db-prepare workers-up workers-down workers-build stack-up
 
 -include .env
 
@@ -31,8 +31,14 @@ test-python: test-db-python
 		PYTHONPATH=worker \
 		python -m pytest tests/ -q
 
-workers-up:
+db-prepare:
+	bundle exec rails db:prepare
+
+workers-up: db-prepare
 	docker compose up -d --scale worker=$(WORKER_REPLICAS) worker
+
+stack-up: db-prepare
+	docker compose up -d --scale worker=$(WORKER_REPLICAS)
 
 workers-down:
 	docker compose stop worker

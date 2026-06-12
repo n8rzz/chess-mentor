@@ -16,6 +16,22 @@ Rails.application.routes.draw do
   resources :import_batches, only: %i[index show new create]
   resources :games, only: %i[index show]
   resources :weaknesses, only: %i[index show]
+  resources :training_plans, only: %i[index show create] do
+    member do
+      get :today
+      post :pause
+      post :resume
+      post :complete
+      post :archive
+      post :extend
+    end
+    resources :training_assignments, only: [] do
+      member do
+        patch :complete
+        patch :skip
+      end
+    end
+  end
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

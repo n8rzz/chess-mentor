@@ -55,11 +55,12 @@ make test-python
 
 ## Python analysis workers
 
-These targets manage only the Python worker service in `docker-compose.yml`. Postgres and Redis must already be running.
+These targets manage only the Python worker service in `docker-compose.yml`. Postgres and Redis must already be running. `workers-up` and `stack-up` run `rails db:prepare` on the host first; `docker compose up` with workers also runs a one-shot `migrate` service before workers start.
 
 | Command              | What it does                                                        |
 | -------------------- | ------------------------------------------------------------------- |
-| `make workers-up`    | Start `WORKER_REPLICAS` worker containers (detached)                  |
+| `make workers-up`    | Prepare dev DB, then start `WORKER_REPLICAS` worker containers (detached) |
+| `make stack-up`      | Prepare dev DB, then start db, redis, migrate, and workers                 |
 | `make workers-down`  | Stop worker containers                                              |
 | `make workers-build` | Rebuild the worker image after `analysis/` code changes             |
 

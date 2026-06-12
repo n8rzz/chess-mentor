@@ -254,33 +254,33 @@ From [weakness-classifier.md](planning/weakness-classifier.md) — **MVP themes 
 
 ### Data & content
 
-- [ ] Curated `Puzzle` seed set mapped to themes/motifs/difficulty (see M2 seeds; motif enum in M2.5)
-- [ ] Puzzle metadata: FEN, theme, difficulty, solution, source
+- [x] Curated `Puzzle` seed set mapped to themes/motifs/difficulty (see M2 seeds; motif enum in M2.5)
+- [x] Puzzle metadata: FEN, theme, difficulty, solution, source
 
 ### Python — training plan generator
 
 From [training-plan-generator.md](planning/training-plan-generator.md):
 
-- [ ] Rank weakness cycles; surface **top 3** recommendations
-- [ ] Rule-based, deterministic plan generation (no AI chat, no adaptive scheduling)
-- [ ] On user selection: create 14-day plan targeting one `WeaknessCycle`
-- [ ] Daily assignments: **1** personal position review, **5** theme puzzles, **1** play-game assignment; theme-specific habit exercises where defined
-- [ ] Personal positions from user's `WeaknessEvent`s; puzzles from curated DB by theme
-- [ ] Progress targets: baseline vs current frequency; improving (30%) / managed (75%) thresholds
-- [ ] `generate_training_plan` job
+- [x] Rank weakness cycles; surface **top 3** recommendations
+- [x] Rule-based, deterministic plan generation (no AI chat, no adaptive scheduling)
+- [x] On user selection: create 14-day plan targeting one `WeaknessCycle`
+- [x] Daily assignments: **1** personal position review, **5** theme puzzles, **1** play-game assignment; theme-specific habit exercises where defined
+- [x] Personal positions from user's `WeaknessEvent`s; puzzles from curated DB by theme
+- [x] Progress targets: baseline vs current frequency; improving (30%) / managed (75%) thresholds
+- [x] `generate_training_plan` job
 
 ### Rails
 
-- [ ] Plan recommendation UI (top 3) → user picks one → single **active** plan
-- [ ] Plan lifecycle: start, pause, resume, complete, archive
-- [ ] Today's assignments view
-- [ ] **Manual** completion tracking (mark complete/skip) — no auto-detect for play-game in MVP
-- [ ] Plan extension when target not met after 14 days
+- [x] Plan recommendation UI (top 3) → user picks one → single **active** plan
+- [x] Plan lifecycle: start, pause, resume, complete, archive
+- [x] Today's assignments view
+- [x] **Manual** completion tracking (mark complete/skip) — no auto-detect for play-game in MVP
+- [x] Plan extension when target not met after 14 days
 
 ### Tests
 
-- [ ] Unit: assignment counts, theme mapping, determinism
-- [ ] Integration: weakness cycle → plan + assignments
+- [x] Unit: assignment counts, theme mapping, determinism
+- [x] Integration: weakness cycle → plan + assignments
 
 **PRD checkpoint:** User can select a plan and complete exercises.
 

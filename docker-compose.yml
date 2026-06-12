@@ -28,6 +28,22 @@ services:
       timeout: 5s
       retries: 5
 
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: chess_mentor
+      DATABASE_PASSWORD: chess_mentor
+      DATABASE_NAME: chess_mentor_development
+      RAILS_ENV: development
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   worker:
     build:
       context: ./analysis
@@ -44,6 +60,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:

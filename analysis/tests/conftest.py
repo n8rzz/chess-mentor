@@ -39,6 +39,9 @@ def db_conn():
             conn.execute(
                 """
                 TRUNCATE TABLE
+                  training_assignments,
+                  training_plans,
+                  puzzles,
                   weakness_events,
                   weakness_cycles,
                   candidate_events,

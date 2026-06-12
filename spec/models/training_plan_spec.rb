@@ -87,4 +87,31 @@ RSpec.describe TrainingPlan, type: :model do
       expect(training_plan.id).to match(/\A[0-9A-HJKMNP-TV-Z]{26}\z/)
     end
   end
+
+  describe "defaults and helpers" do
+    it "applies default thresholds on create" do
+      plan = create(:training_plan, improvement_threshold: nil, managed_threshold: nil)
+
+      expect(plan.improvement_threshold).to eq(0.30)
+      expect(plan.managed_threshold).to eq(0.75)
+    end
+
+    it "computes days remaining and due assignments" do
+      plan = create(:training_plan, :active, ends_at: 3.days.from_now)
+      create(:training_assignment, training_plan: plan, due_on: Date.current, status: :pending)
+      create(:training_assignment, training_plan: plan, due_on: 2.days.from_now, status: :pending)
+
+      expect(plan.days_remaining).to eq(3)
+      expect(plan.due_assignments.count).to eq(1)
+      expect(plan.generation_pending?).to be(false)
+    end
+
+    it "detects extension eligibility" do
+      eligible = build(:training_plan, :active, ends_at: 1.day.ago, progress_percentage: 20.0)
+      managed = build(:training_plan, status: :managed, ends_at: 1.day.ago, progress_percentage: 80.0)
+
+      expect(eligible.eligible_for_extension?).to be(true)
+      expect(managed.eligible_for_extension?).to be(false)
+    end
+  end
 end

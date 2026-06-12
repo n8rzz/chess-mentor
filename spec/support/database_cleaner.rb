@@ -4,12 +4,33 @@ RSpec.configure do |config|
   end
 
   config.before do |example|
-    DatabaseCleaner.strategy = example.metadata[:type] == :system ? :truncation : :transaction
+    if example.metadata[:skip_database_cleaner]
+      DatabaseCleaner.strategy = :truncation
+      DatabaseCleaner.clean
+    else
+      DatabaseCleaner.strategy =
+        if example.metadata[:type] == :system || example.metadata[:db_cleaner] == :truncation
+          :truncation
+        else
+          :transaction
+        end
+    end
+  end
+
+  config.after do |example|
+    next unless example.metadata[:skip_database_cleaner]
+
+    DatabaseCleaner.strategy = :truncation
+    DatabaseCleaner.clean
   end
 
   config.around do |example|
-    DatabaseCleaner.cleaning do
+    if example.metadata[:skip_database_cleaner]
       example.run
+    else
+      DatabaseCleaner.cleaning do
+        example.run
+      end
     end
   end
 end

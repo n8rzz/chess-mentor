@@ -51,5 +51,29 @@ RSpec.describe "Dashboard", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Analyze games to surface recurring patterns")
     end
+
+    it "shows the active training plan when one exists" do
+      user = create(:user)
+      plan = create(:training_plan, :active, user: user, theme: :king_safety, progress_percentage: 25.0)
+
+      sign_in user
+      get dashboard_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("King safety")
+      expect(response.body).to include("25%")
+      expect(response.body).to include(training_plan_path(plan))
+      expect(response.body).to include(today_training_plan_path(plan))
+    end
+
+    it "shows browse recommendations when no active plan exists" do
+      sign_in create(:user)
+
+      get dashboard_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("No active plan")
+      expect(response.body).to include("Browse recommendations")
+    end
   end
 end

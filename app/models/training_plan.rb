@@ -36,6 +36,10 @@
 class TrainingPlan < ApplicationRecord
   include WeaknessThemeable
 
+  DEFAULT_IMPROVEMENT_THRESHOLD = 0.30
+  DEFAULT_MANAGED_THRESHOLD = 0.75
+  PLAN_DURATION_DAYS = 14
+
   belongs_to :user
   belongs_to :weakness_cycle
   has_many :training_assignments, dependent: :destroy
@@ -51,9 +55,50 @@ class TrainingPlan < ApplicationRecord
     archived: 6
   }, default: :recommended, validate: true
 
+  scope :active_for, -> { where(status: :active) }
+  scope :current_for, -> { where(status: %i[active paused improving managed]) }
+
+  before_validation :apply_default_thresholds, on: :create
+
   validate :only_one_active_plan_per_user, on: :create
 
+  def reduction_percentage
+    progress_percentage.to_f
+  end
+
+  def days_remaining
+    return nil if ends_at.blank?
+
+    (ends_at.to_date - Date.current).to_i
+  end
+
+  def due_assignments
+    training_assignments.pending.where(due_on: ..Date.current)
+  end
+
+  def assignments_for_today
+    training_assignments.where(due_on: Date.current)
+  end
+
+  def generation_pending?
+    training_assignments.none?
+  end
+
+  def eligible_for_extension?
+    ends_at.present? &&
+      ends_at.to_date < Date.current &&
+      !managed? &&
+      !completed? &&
+      !archived? &&
+      (active? || improving?)
+  end
+
   private
+
+  def apply_default_thresholds
+    self.improvement_threshold ||= DEFAULT_IMPROVEMENT_THRESHOLD
+    self.managed_threshold ||= DEFAULT_MANAGED_THRESHOLD
+  end
 
   def only_one_active_plan_per_user
     return unless active?

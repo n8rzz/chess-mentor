@@ -15,5 +15,6 @@ class DashboardController < ApplicationController
       .where(status: WEAKNESS_SUMMARY_STATUSES)
       .order(current_severity: :desc, current_occurrences: :desc)
       .limit(3)
+    @active_training_plan = current_user.training_plans.current_for.order(updated_at: :desc).first
   end
 end
