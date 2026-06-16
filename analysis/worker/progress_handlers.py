@@ -7,20 +7,16 @@ import psycopg
 
 from worker.config import load_config
 from worker.jobs import SystemJobRow
-from worker.progress_package.repository import ProgressRepository
-from worker.weakness_package.handler import run_classification
+from worker.progress_package.handler import run_snapshot_update
 
 logger = logging.getLogger(__name__)
 
 
-def classify_weaknesses_handler(job: SystemJobRow) -> dict[str, Any]:
+def update_progress_snapshots_handler(job: SystemJobRow) -> dict[str, Any]:
     user_id = job.payload.get("user_id") or job.user_id
     if not user_id:
         raise ValueError("user_id is required")
 
     config = load_config()
     with psycopg.connect(config.database_url) as conn:
-        summary = run_classification(conn, user_id)
-        ProgressRepository(conn).enqueue_snapshots_if_needed(user_id)
-        conn.commit()
-        return summary
+        return run_snapshot_update(conn, user_id)

@@ -16,5 +16,11 @@ class DashboardController < ApplicationController
       .order(current_severity: :desc, current_occurrences: :desc)
       .limit(3)
     @active_training_plan = current_user.training_plans.current_for.order(updated_at: :desc).first
+    if @active_training_plan
+      TrainingPlans::SyncProgress.call(plan: @active_training_plan)
+      @active_training_plan.reload
+    end
+    @dashboard_summary = Dashboard::Summary.call(user: current_user, active_plan: @active_training_plan)
+    @dashboard_progress = Dashboard::ProgressData.call(user: current_user, active_plan: @active_training_plan)
   end
 end

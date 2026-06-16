@@ -1,0 +1,34 @@
+<% summary = @dashboard_summary %>
+<% analysis = summary.analysis_status %>
+
+<section class="mt-8 rounded-lg border border-gray-200 bg-white p-6">
+  <h2 class="text-lg font-semibold text-gray-900">Summary</h2>
+
+  <div class="mt-4">
+    <p class="text-sm font-medium text-gray-500">Current ratings</p>
+    <div class="mt-2 flex flex-wrap gap-2">
+      <% Dashboard::Summary::RATING_TIME_CLASSES.each do |time_class| %>
+        <% rating = summary.ratings_by_time_class[time_class] %>
+        <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-sm text-gray-700">
+          <span class="capitalize font-medium text-gray-900"><%= time_class %></span>
+          <span class="ml-2 tabular-nums"><%= rating.present? ? rating : "—" %></span>
+        </span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="mt-5">
+    <p class="text-sm font-medium text-gray-500">Analysis</p>
+    <p class="mt-1 text-sm text-gray-700">
+      <%= analysis.succeeded %> analyzed
+      <% if analysis.pending.positive? || analysis.running.positive? %>
+        · <%= analysis.pending + analysis.running %> pending
+      <% end %>
+      <% if analysis.failed.positive? %>
+        · <%= analysis.failed %> failed
+      <% end %>
+      <span class="text-gray-500">(<%= analysis.total_games %> games imported)</span>
+    </p>
+    <%= link_to "View games", games_path, class: "mt-2 inline-block text-sm underline text-gray-700" %>
+  </div>
+</section>

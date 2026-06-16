@@ -8,6 +8,7 @@ class TrainingAssignmentsController < ApplicationController
 
   def complete
     @assignment.update!(status: :completed, completed_at: Time.current)
+    ProgressSnapshots::Enqueue.call(user: current_user)
     redirect_to today_training_plan_path(@training_plan), notice: "Assignment marked complete."
   end
 

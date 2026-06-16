@@ -79,4 +79,46 @@ RSpec.describe "Dashboard", type: :system do
     expect(page).to have_current_path(dashboard_path)
     expect(page).to have_text("already linked to another user")
   end
+
+  it "renders chart canvases when progress snapshots exist" do
+    user = create(:user, password: password)
+    plan = create(:training_plan, :active, user: user)
+    cycle = plan.weakness_cycle
+    2.times do |index|
+      snapshot_at = (index + 1).days.ago
+      create(
+        :progress_snapshot,
+        user:,
+        time_class: :blitz,
+        rating: 1500 + (index * 20),
+        snapshot_at:,
+        metadata: { "kind" => "rating" }
+      )
+      create(
+        :progress_snapshot,
+        user:,
+        weakness_cycle: cycle,
+        weakness_frequency: 0.5,
+        snapshot_at:,
+        metadata: { "kind" => "weakness", "current_occurrences" => 3 - index }
+      )
+      create(
+        :progress_snapshot,
+        user:,
+        blunders_per_game: 0.9 - (index * 0.1),
+        average_centipawn_loss: 38.0 - index,
+        games_analyzed_count: 10,
+        snapshot_at:,
+        metadata: { "kind" => "performance" }
+      )
+    end
+
+    visit new_user_session_path
+    fill_in "Email", with: user.email
+    fill_in "Password", with: password
+    click_button "Log in"
+
+    expect(page).to have_text("Progress charts")
+    expect(page).to have_css("canvas[aria-label='Rating history chart']")
+  end
 end

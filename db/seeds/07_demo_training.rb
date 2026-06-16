@@ -9,9 +9,9 @@ return unless user
 cycle = WeaknessCycle.find_by(user: user, theme: :missed_tactics, status: :active)
 return unless cycle
 
-SEED_KEY = "demo_training_plan"
+seed_key = "demo_training_plan"
+plan = TrainingPlan.find_by("metadata->>'seed_key' = ?", seed_key)
 
-plan = TrainingPlan.find_by("metadata->>'seed_key' = ?", SEED_KEY)
 unless plan
   plan = TrainingPlan.create!(
     user: user,
@@ -25,11 +25,11 @@ unless plan
     improvement_threshold: TrainingPlan::DEFAULT_IMPROVEMENT_THRESHOLD,
     managed_threshold: TrainingPlan::DEFAULT_MANAGED_THRESHOLD,
     progress_percentage: 0.0,
-    metadata: { "seed_key" => SEED_KEY }
+    metadata: { "seed_key" => seed_key }
   )
 end
 
-if plan.training_assignments.none?
+def seed_demo_training_assignments!(plan, cycle)
   events = cycle.weakness_events.includes(:game, :move).order(created_at: :desc).to_a
   puzzles = Puzzle.curated.where(theme: plan.theme).order(:rating, :id).limit(5).to_a
   theme_label = plan.theme_label
@@ -81,4 +81,26 @@ if plan.training_assignments.none?
   end
 end
 
-puts "Seeded demo training plan for #{user.email}: #{plan.theme_label} (#{plan.training_assignments.count} assignments)"
+stale_plan = plan.archived? || plan.completed? || plan.ends_at&.past? || plan.assignments_for_today.none?
+
+if stale_plan
+  plan.training_assignments.destroy_all
+  plan.update!(
+    weakness_cycle: cycle,
+    theme: cycle.theme,
+    status: :active,
+    completed_at: nil,
+    starts_at: Time.current.beginning_of_day,
+    ends_at: 14.days.from_now.end_of_day,
+    baseline_occurrences: cycle.baseline_occurrences,
+    current_occurrences: cycle.current_occurrences,
+    improvement_threshold: TrainingPlan::DEFAULT_IMPROVEMENT_THRESHOLD,
+    managed_threshold: TrainingPlan::DEFAULT_MANAGED_THRESHOLD,
+    progress_percentage: 0.0
+  )
+  seed_demo_training_assignments!(plan, cycle)
+elsif plan.training_assignments.none?
+  seed_demo_training_assignments!(plan, cycle)
+end
+
+puts "Seeded demo training plan for #{user.email}: #{plan.theme_label} (#{plan.training_assignments.count} assignments, #{plan.assignments_for_today.count} due today)"

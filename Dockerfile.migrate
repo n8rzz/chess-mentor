@@ -14,4 +14,4 @@ COPY . .
 
 ENV RAILS_ENV=development
 
-CMD ["bin/rails", "db:prepare"]
+CMD ["bin/rails", "db:migrate"]

@@ -442,6 +442,8 @@ Displays:
 
 ## Charts
 
+Rendered with **Chart.js** (importmap + Stimulus `chart_controller`).
+
 ### Rating History
 
 By time control.

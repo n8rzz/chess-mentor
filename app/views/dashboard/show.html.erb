@@ -1,6 +1,8 @@
 <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
 <p class="mt-2 text-gray-600">Your coaching hub. Import games to begin analysis.</p>
 
+<%= render "summary" %>
+
 <section class="mt-8 grid gap-6 md:grid-cols-2">
   <div class="rounded-lg border border-gray-200 bg-white p-6">
     <h2 class="text-lg font-semibold text-gray-900">Providers</h2>
@@ -35,25 +37,7 @@
     <%= link_to "All imports", import_batches_path, class: "mt-4 inline-block text-sm underline text-gray-700" %>
   </div>
 
-  <div class="rounded-lg border border-gray-200 bg-white p-6">
-    <h2 class="text-lg font-semibold text-gray-900">Training plan</h2>
-    <% if @active_training_plan %>
-      <p class="mt-2 text-gray-700">
-        <strong><%= @active_training_plan.theme_label %></strong>
-        <span class="capitalize text-gray-500">· <%= @active_training_plan.status %></span>
-      </p>
-      <p class="mt-1 text-sm text-gray-600">
-        <%= number_to_percentage(@active_training_plan.progress_percentage || 0, precision: 0) %> progress
-      </p>
-      <div class="mt-4 flex flex-wrap gap-3">
-        <%= link_to "View plan", training_plan_path(@active_training_plan), class: "inline-block text-sm underline text-gray-700" %>
-        <%= link_to "Today's assignments", today_training_plan_path(@active_training_plan), class: "inline-block text-sm underline text-gray-700" %>
-      </div>
-    <% else %>
-      <p class="mt-2 text-gray-500">No active plan.</p>
-      <%= link_to "Browse recommendations", training_plans_path, class: "mt-4 inline-block text-sm underline text-gray-700" %>
-    <% end %>
-  </div>
+  <%= render "training_progress" %>
 
   <div class="rounded-lg border border-gray-200 bg-white p-6">
     <h2 class="text-lg font-semibold text-gray-900">Recurring weaknesses</h2>
@@ -75,9 +59,6 @@
       <%= link_to "View games", games_path, class: "mt-4 inline-block text-sm underline text-gray-700" %>
     <% end %>
   </div>
-
-  <div class="rounded-lg border border-gray-200 bg-white p-6">
-    <h2 class="text-lg font-semibold text-gray-900">Progress</h2>
-    <p class="mt-2 text-gray-500">Check back after your first analysis.</p>
-  </div>
 </section>
+
+<%= render "charts" %>

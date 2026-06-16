@@ -288,11 +288,11 @@ From [training-plan-generator.md](planning/training-plan-generator.md):
 
 ## Milestone 7: Dashboard & progress tracking
 
-- [ ] **Summary:** ratings by time class, active plan, recent analysis status
-- [ ] **Progress snapshots** job (`update_progress_snapshots`): rating, weakness frequency/severity, blunders/game, avg CPL, training completion %
-- [ ] **Charts:** rating history, weakness trend, blunders per game, avg CPL (per PRD §13)
-- [ ] Retain all imported games/analysis; no re-analysis of historical games when engine version changes
-- [ ] Training plan progress panel: objective, daily tasks, % toward improving/managed
+- [x] **Summary:** ratings by time class, active plan, recent analysis status
+- [x] **Progress snapshots** job (`update_progress_snapshots`): rating, weakness frequency/severity, blunders/game, avg CPL, training completion %
+- [x] **Charts:** rating history, weakness trend, blunders per game, avg CPL (per PRD §13)
+- [x] Retain all imported games/analysis; no re-analysis of historical games when engine version changes
+- [x] Training plan progress panel: objective, daily tasks, % toward improving/managed
 
 **PRD checkpoint:** User can track progress over time.
 
@@ -339,7 +339,7 @@ Import → Analyze → Classify → (user picks plan) → Generate plan → Prog
 4. [x] View recurring weaknesses
 5. [ ] Select a training plan
 6. [ ] Complete exercises
-7. [ ] Track progress
+7. [x] Track progress
 8. [ ] Demonstrate measurable reduction in targeted weakness frequency
 
 ---
