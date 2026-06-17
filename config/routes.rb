@@ -25,7 +25,7 @@ Rails.application.routes.draw do
       post :archive
       post :extend
     end
-    resources :training_assignments, only: [] do
+    resources :training_assignments, only: %i[show] do
       member do
         patch :complete
         patch :skip

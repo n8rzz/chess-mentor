@@ -41,38 +41,108 @@
   </section>
 <% end %>
 
-<section class="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
-  <h2 class="border-b border-gray-200 px-4 py-3 text-lg font-semibold text-gray-900">Moves</h2>
-  <table class="min-w-full divide-y divide-gray-200 text-sm">
-    <thead class="bg-gray-50">
-      <tr>
-        <th class="px-4 py-3 text-left font-semibold text-gray-900">#</th>
-        <th class="px-4 py-3 text-left font-semibold text-gray-900">Move</th>
-        <th class="px-4 py-3 text-left font-semibold text-gray-900">Classification</th>
-        <th class="px-4 py-3 text-left font-semibold text-gray-900">CPL</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-200">
-      <% @moves.each do |move| %>
-        <% evaluation = @evaluations_by_move_id[move.id] %>
-        <tr class="<%= move.played_by_user? ? "bg-amber-50/40" : "" %>">
-          <td class="px-4 py-3 text-gray-700"><%= move.move_number %><%= move.white? ? "." : "..." %></td>
-          <td class="px-4 py-3 font-mono text-gray-900"><%= move.san %></td>
-          <td class="px-4 py-3 capitalize text-gray-700">
-            <% if evaluation %>
-              <%= evaluation.classification %>
-            <% elsif move.played_by_user? %>
-              <span class="text-gray-500">Pending</span>
-            <% end %>
-          </td>
-          <td class="px-4 py-3 text-gray-700">
-            <%= evaluation&.centipawn_loss %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-</section>
+<% if @moves.any? %>
+  <% game_review = ChessBoardHelper.game_review_data(@moves, @evaluations_by_move_id) %>
+  <section class="mt-6"
+           data-controller="game-review"
+           data-game-review-review-value="<%= game_review.to_json %>"
+           data-game-review-initial-ply-value="<%= params[:ply].to_i %>">
+    <div class="grid gap-6 lg:grid-cols-[minmax(0,28rem)_1fr]">
+      <div data-game-review-target="board">
+        <%= render "shared/chess_board",
+                   fen: game_review[:starting_fen],
+                   orientation: "white",
+                   interactive: false %>
+      </div>
+
+      <div class="space-y-4">
+        <div class="flex flex-wrap gap-2">
+          <button type="button"
+                  class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900"
+                  data-action="game-review#prevMove">
+            ← Prev
+          </button>
+          <button type="button"
+                  class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-900"
+                  data-action="game-review#nextMove">
+            Next →
+          </button>
+        </div>
+
+        <% if @evaluations_by_move_id.any? %>
+          <div class="space-y-2">
+            <p class="text-sm font-semibold text-gray-900">Mistake review</p>
+            <div class="flex flex-wrap gap-2">
+              <% %w[inaccuracy mistake blunder].each do |classification| %>
+                <button type="button"
+                        class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium capitalize text-gray-900"
+                        data-action="game-review#filterMistakes"
+                        data-game-review-classification-param="<%= classification %>">
+                  <%= classification %>
+                </button>
+              <% end %>
+              <button type="button"
+                      class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-900"
+                      data-action="game-review#prevMistake">
+                ← Prev mistake
+              </button>
+              <button type="button"
+                      class="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-900"
+                      data-action="game-review#nextMistake">
+                Next mistake →
+              </button>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="hidden rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-800"
+             data-game-review-target="comparison"></div>
+      </div>
+    </div>
+
+    <section class="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <h2 class="border-b border-gray-200 px-4 py-3 text-lg font-semibold text-gray-900">Moves</h2>
+      <table class="min-w-full divide-y divide-gray-200 text-sm">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900">#</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900">Move</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900">Classification</th>
+            <th class="px-4 py-3 text-left font-semibold text-gray-900">CPL</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          <% @moves.each do |move| %>
+            <% evaluation = @evaluations_by_move_id[move.id] %>
+            <tr class="<%= move.played_by_user? ? "bg-amber-50/40" : "" %> cursor-pointer hover:bg-gray-50"
+                data-game-review-target="moveRow"
+                data-ply="<%= move.ply %>"
+                data-action="click->game-review#jumpToPly"
+                data-game-review-ply-param="<%= move.ply %>">
+              <td class="px-4 py-3 text-gray-700"><%= move.move_number %><%= move.white? ? "." : "..." %></td>
+              <td class="px-4 py-3 font-mono text-gray-900"><%= move.san %></td>
+              <td class="px-4 py-3 capitalize text-gray-700">
+                <% if evaluation %>
+                  <%= evaluation.classification %>
+                <% elsif move.played_by_user? %>
+                  <span class="text-gray-500">Pending</span>
+                <% end %>
+              </td>
+              <td class="px-4 py-3 text-gray-700">
+                <%= evaluation&.centipawn_loss %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </section>
+  </section>
+<% else %>
+  <section class="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <h2 class="border-b border-gray-200 px-4 py-3 text-lg font-semibold text-gray-900">Moves</h2>
+    <p class="px-4 py-6 text-gray-600">No moves recorded for this game.</p>
+  </section>
+<% end %>
 
 <div class="mt-6 flex gap-3">
   <%= link_to "All games", games_path, class: "text-gray-900 underline" %>

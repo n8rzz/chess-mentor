@@ -1,21 +1,30 @@
-import { Controller } from "@hotwired/stimulus"
+import { Controller } from "@hotwired/stimulus";
 
 export default class extends Controller {
   static values = {
     type: { type: String, default: "line" },
     series: Object,
-    label: String
-  }
+    label: String,
+  };
 
   async connect() {
-    if (!this.hasSeriesValue || !this.seriesValue?.datasets?.length) return
+    if (!this.hasSeriesValue || !this.seriesValue?.datasets?.length) {
+      return;
+    }
 
-    await import("chart.js")
-    const Chart = window.Chart
-    if (!Chart) return
+    await import("chart.js");
 
-    const canvas = this.element.querySelector("canvas")
-    if (!canvas) return
+    const Chart = window.Chart;
+
+    if (!Chart) {
+      return;
+    }
+
+    const canvas = this.element.querySelector("canvas");
+
+    if (!canvas) {
+      return;
+    }
 
     this.chart = new Chart(canvas.getContext("2d"), {
       type: this.typeValue,
@@ -26,23 +35,23 @@ export default class extends Controller {
         plugins: {
           legend: {
             display: this.seriesValue.datasets.length > 1,
-            position: "bottom"
+            position: "bottom",
           },
-          tooltip: { mode: "index", intersect: false }
+          tooltip: { mode: "index", intersect: false },
         },
         scales: {
           x: {
-            ticks: { maxTicksLimit: 6, maxRotation: 0 }
+            ticks: { maxTicksLimit: 6, maxRotation: 0 },
           },
           y: {
-            beginAtZero: false
-          }
-        }
-      }
-    })
+            beginAtZero: false,
+          },
+        },
+      },
+    });
   }
 
   disconnect() {
-    this.chart?.destroy()
+    this.chart?.destroy();
   }
 }

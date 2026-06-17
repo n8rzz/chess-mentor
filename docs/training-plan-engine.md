@@ -94,5 +94,5 @@ Initial generation is a no-op if assignments already exist. Extension runs only 
 
 ## Seeds
 
-- [`db/seeds/02_puzzles.rb`](../db/seeds/02_puzzles.rb) — curated puzzles (all environments)
-- [`db/seeds/07_demo_training.rb`](../db/seeds/07_demo_training.rb) — demo active plan (development only)
+- [`db/seeds/production/01_puzzles.rb`](../db/seeds/production/01_puzzles.rb) — curated puzzles (all environments)
+- [`db/seeds/development/07_demo_training.rb`](../db/seeds/development/07_demo_training.rb) — demo active plan (development only)

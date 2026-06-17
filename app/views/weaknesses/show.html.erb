@@ -60,7 +60,11 @@
               <span class="text-gray-500">· <%= l(event.game.played_at.to_date) %></span>
             </td>
             <td class="px-4 py-3 font-mono text-gray-900">
-              <%= event.move.move_number %><%= event.move.white? ? "." : "..." %> <%= event.move.san %>
+              <%= link_to(
+                    "#{event.move.move_number}#{event.move.white? ? "." : "..."} #{event.move.san}",
+                    game_path(event.game, ply: event.move.ply),
+                    class: "underline text-gray-900"
+                  ) %>
             </td>
             <td class="px-4 py-3 capitalize text-gray-700"><%= event.phase %></td>
             <td class="px-4 py-3 text-gray-700"><%= number_with_precision(event.severity, precision: 2) %></td>

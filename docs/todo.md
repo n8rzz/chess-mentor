@@ -302,12 +302,12 @@ From [training-plan-generator.md](planning/training-plan-generator.md):
 
 Per PRD §14 — no React required:
 
-- [ ] Integrate `chess.js` + `cm-chessboard` via Stimulus
-- [ ] View position from FEN
-- [ ] Step through game moves
-- [ ] Compare played move vs engine best move (game review)
-- [ ] Mistake review mode (jump to classified moves)
-- [ ] Puzzle solve mode (input solution, basic validation)
+- [x] Integrate `chess.js` + `cm-chessboard` via Stimulus
+- [x] View position from FEN
+- [x] Step through game moves
+- [x] Compare played move vs engine best move (game review)
+- [x] Mistake review mode (jump to classified moves)
+- [x] Puzzle solve mode (input solution, basic validation)
 
 Used in: game detail, personal position review, puzzle assignments.
 
@@ -330,19 +330,26 @@ Import → Analyze → Classify → (user picks plan) → Generate plan → Prog
 - [ ] Rails: model/service/request specs for each workflow step
 - [ ] Python: unit + Stockfish integration + PGN→analysis→weakness→plan E2E
 - [ ] Capybara system spec: happy path (register → connect → import → wait → weaknesses → plan → complete assignment)
+- [ ] Create comprehensive test plan doc from milestone docs
+  - [ ] automate userflows as much as possible
 
 ### MVP success criteria (PRD §17)
 
-1. [ ] Connect a provider
-2. [ ] Import games
-3. [ ] Analyze games
+1. [x] Connect a provider
+2. [x] Import games
+3. [x] Analyze games
 4. [x] View recurring weaknesses
-5. [ ] Select a training plan
-6. [ ] Complete exercises
+5. [x] Select a training plan
+6. [x] Complete exercises
 7. [x] Track progress
 8. [ ] Demonstrate measurable reduction in targeted weakness frequency
 
 ---
+
+## Phase 1 Bugs and Polish
+
+- [ ] style action buttons with color in training plans
+- [ ] link to overdue tasks from dashboard
 
 ## Out of Phase 1 (PRD non-goals)
 

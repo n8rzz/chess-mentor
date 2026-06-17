@@ -131,6 +131,24 @@ RSpec.describe "Training plans", type: :request do
       expect(response.body).to include("Due today")
       expect(response.body).not_to include("Due tomorrow")
     end
+
+    it "links board assignments to their play pages" do
+      plan = create(:training_plan, :active, user: user)
+      puzzle_assignment = create(:training_assignment, training_plan: plan, due_on: Date.current)
+      review_assignment = create(
+        :training_assignment,
+        :personal_review,
+        training_plan: plan,
+        due_on: Date.current
+      )
+
+      sign_in user
+      get today_training_plan_path(plan)
+
+      expect(response.body).to include(training_plan_training_assignment_path(plan, puzzle_assignment))
+      expect(response.body).to include(training_plan_training_assignment_path(plan, review_assignment))
+      expect(response.body.scan(">Start<").size).to eq(2)
+    end
   end
 
   describe "plan lifecycle" do

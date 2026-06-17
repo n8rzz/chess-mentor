@@ -45,6 +45,7 @@ RSpec.describe "Weaknesses", type: :request do
       expect(response.body).to include("Missed tactics")
       expect(response.body).to include("rival_one")
       expect(response.body).to include("Qh5")
+      expect(response.body).to include(game_path(game, ply: move.ply))
     end
 
     it "does not allow access to another user's weakness cycle" do

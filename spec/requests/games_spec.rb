@@ -70,6 +70,24 @@ RSpec.describe "Games", type: :request do
       expect(response.body).to include("150")
     end
 
+    it "renders the interactive game review board" do
+      game = create(:game, user: user)
+      analysis_run = create(:analysis_run, :succeeded, game: game, user: user)
+      move = create(:move, game: game, san: "e4", played_by_user: true, ply: 1, move_number: 1, color: :white)
+      create(:move_evaluation, analysis_run: analysis_run, game: game, move: move, classification: :good)
+
+      sign_in user
+      get game_path(game, ply: move.ply)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('data-controller="game-review"')
+      expect(response.body).to include('data-controller="chess-board"')
+      expect(response.body).to include("data-game-review-review-value")
+      expect(response.body).to include('data-game-review-initial-ply-value="1"')
+      expect(response.body).to include('data-ply="1"')
+      expect(response.body).to include("Mistake review")
+    end
+
     it "does not allow access to another user's game" do
       game = create(:game, user: other_user)
 

@@ -1,0 +1,197 @@
+<% content_for :title, "#{@assignment.assignment_type.humanize} — Chess Mentor" %>
+
+<%= link_to "← Today's assignments", today_training_plan_path(@training_plan), class: "text-sm text-gray-600 underline" %>
+
+<h1 class="mt-4 text-3xl font-bold text-gray-900"><%= @assignment.assignment_type.humanize %></h1>
+<p class="mt-2 capitalize text-gray-600">Status: <%= @assignment.status %></p>
+
+<% if @assignment.prompt.present? %>
+  <p class="mt-4 text-gray-700"><%= @assignment.prompt %></p>
+<% end %>
+
+<% case @assignment.assignment_type %>
+<% when "theme_puzzle" %>
+  <% if @assignment.puzzle %>
+    <% puzzle_data = ChessBoardHelper.puzzle_data(@assignment.puzzle) %>
+    <section class="mt-8"
+             data-controller="puzzle-solve"
+             data-puzzle-solve-fen-value="<%= puzzle_data[:fen] %>"
+             data-puzzle-solve-solution-line-value="<%= @assignment.puzzle.solution %>"
+             data-puzzle-solve-hint-text-value="<%= puzzle_data[:hint][:text] %>"
+             data-puzzle-solve-hint-square-value="<%= puzzle_data[:hint][:square] %>"
+             <% if @assignment.pending? %>
+             data-puzzle-solve-skip-url-value="<%= skip_training_plan_training_assignment_path(@training_plan, @assignment) %>"
+             data-puzzle-solve-complete-url-value="<%= complete_training_plan_training_assignment_path(@training_plan, @assignment) %>"
+             <% end %>>
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,28rem)_1fr]">
+        <div data-puzzle-solve-target="board">
+          <%= render "shared/chess_board",
+                     fen: puzzle_data[:fen],
+                     orientation: ChessBoardHelper.side_to_move_from_fen(puzzle_data[:fen]),
+                     interactive: true %>
+        </div>
+
+        <div class="space-y-4">
+          <p class="text-sm text-gray-600">
+            Puzzle · <%= @assignment.puzzle.motif.humanize %> · <%= @assignment.puzzle.difficulty %> · rating <%= @assignment.puzzle.rating %>
+          </p>
+          <p class="text-sm font-medium text-gray-900" data-puzzle-solve-target="status">
+            Find the best move.
+          </p>
+
+          <p class="hidden rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900"
+             data-puzzle-solve-target="hintPanel">
+            <span data-puzzle-solve-target="hintText"></span>
+          </p>
+
+          <div class="flex flex-wrap gap-2">
+            <button type="button"
+                    class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 disabled:opacity-50"
+                    data-puzzle-solve-target="hintButton"
+                    data-action="puzzle-solve#showHint">
+              Hint
+            </button>
+
+            <button type="button"
+                    class="hidden rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900"
+                    data-puzzle-solve-target="tryAgainButton"
+                    data-action="puzzle-solve#tryAgain">
+              Try again
+            </button>
+
+          <% if @assignment.pending? %>
+            <%= button_to "Skip",
+                          skip_training_plan_training_assignment_path(@training_plan, @assignment),
+                          method: :patch,
+                          form: { data: { puzzle_solve_target: "finishForm" } },
+                          class: "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900",
+                          data: { puzzle_solve_target: "finishButton" } %>
+          <% end %>
+          </div>
+        </div>
+      </div>
+    </section>
+  <% else %>
+    <section class="mt-8 rounded-lg border border-gray-200 bg-white p-6">
+      <p class="text-sm text-gray-600">This puzzle is no longer available.</p>
+
+      <% if @assignment.pending? %>
+        <div class="mt-4 flex gap-2">
+          <%= button_to "Complete",
+                        complete_training_plan_training_assignment_path(@training_plan, @assignment),
+                        method: :patch,
+                        class: "rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
+          <%= button_to "Skip",
+                        skip_training_plan_training_assignment_path(@training_plan, @assignment),
+                        method: :patch,
+                        class: "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900" %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+<% when "personal_position_review" %>
+  <% if @assignment.source_move %>
+    <% challenge_data = ChessBoardHelper.personal_review_challenge_data(@assignment.source_move, @source_evaluation) %>
+    <section class="mt-8"
+             <% if challenge_data[:solution].any? %>
+             data-controller="puzzle-solve"
+             data-puzzle-solve-fen-value="<%= challenge_data[:fen] %>"
+             data-puzzle-solve-solution-line-value="<%= challenge_data[:solution].join(' ') %>"
+             data-puzzle-solve-hint-text-value="<%= challenge_data[:hint][:text] %>"
+             data-puzzle-solve-reveal-value="<%= challenge_data[:reveal].to_json %>"
+             <% if @assignment.pending? %>
+             data-puzzle-solve-skip-url-value="<%= skip_training_plan_training_assignment_path(@training_plan, @assignment) %>"
+             data-puzzle-solve-complete-url-value="<%= complete_training_plan_training_assignment_path(@training_plan, @assignment) %>"
+             <% end %>
+             <% end %>>
+      <div class="grid gap-6 lg:grid-cols-[minmax(0,28rem)_1fr]">
+        <div <% if challenge_data[:solution].any? %>data-puzzle-solve-target="board"<% end %>>
+          <%= render "shared/chess_board",
+                     fen: challenge_data[:fen],
+                     orientation: ChessBoardHelper.side_to_move_from_fen(challenge_data[:fen]),
+                     interactive: challenge_data[:solution].any? %>
+        </div>
+
+        <div class="space-y-4">
+          <% if @assignment.source_game %>
+            <p class="text-sm text-gray-600">
+              From your game vs <%= @assignment.source_game.opponent_username %>
+            </p>
+            <%= link_to "View full game at this move",
+                        game_path(@assignment.source_game, ply: @assignment.source_move.ply),
+                        class: "text-sm font-medium text-gray-900 underline" %>
+          <% end %>
+
+          <% if challenge_data[:solution].any? %>
+            <p class="text-sm font-medium text-gray-900" data-puzzle-solve-target="status">
+              Find the best move.
+            </p>
+
+            <p class="hidden rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-900"
+               data-puzzle-solve-target="hintPanel">
+              <span data-puzzle-solve-target="hintText"></span>
+            </p>
+
+            <div class="hidden rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-800"
+                 data-puzzle-solve-target="revealPanel"></div>
+
+            <div class="flex flex-wrap gap-2">
+              <button type="button"
+                      class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900 disabled:opacity-50"
+                      data-puzzle-solve-target="hintButton"
+                      data-action="puzzle-solve#showHint">
+                Hint
+              </button>
+
+              <button type="button"
+                      class="hidden rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900"
+                      data-puzzle-solve-target="tryAgainButton"
+                      data-action="puzzle-solve#tryAgain">
+                Try again
+              </button>
+
+              <% if @assignment.pending? %>
+                <%= button_to "Skip",
+                              skip_training_plan_training_assignment_path(@training_plan, @assignment),
+                              method: :patch,
+                              form: { data: { puzzle_solve_target: "finishForm" } },
+                              class: "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900",
+                              data: { puzzle_solve_target: "finishButton" } %>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-sm text-gray-600">Engine evaluation is not available for this position.</p>
+
+            <% if @assignment.pending? %>
+              <div class="flex gap-2">
+                <%= button_to "Complete",
+                              complete_training_plan_training_assignment_path(@training_plan, @assignment),
+                              method: :patch,
+                              class: "rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
+                <%= button_to "Skip",
+                              skip_training_plan_training_assignment_path(@training_plan, @assignment),
+                              method: :patch,
+                              class: "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900" %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </section>
+  <% end %>
+<% else %>
+  <section class="mt-8 rounded-lg border border-gray-200 bg-white p-6">
+    <% if @assignment.pending? %>
+      <div class="flex gap-2">
+        <%= button_to "Complete",
+                      complete_training_plan_training_assignment_path(@training_plan, @assignment),
+                      method: :patch,
+                      class: "rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white" %>
+        <%= button_to "Skip",
+                      skip_training_plan_training_assignment_path(@training_plan, @assignment),
+                      method: :patch,
+                      class: "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-900" %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

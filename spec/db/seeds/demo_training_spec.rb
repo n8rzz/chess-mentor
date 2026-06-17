@@ -4,7 +4,7 @@ require "rails_helper"
 
 RSpec.describe "Demo training seed" do
   before do
-    load Rails.root.join("db/seeds/02_puzzles.rb")
+    load Rails.root.join("db/seeds/production/01_puzzles.rb")
 
     @user = User.create!(
       email: "starship@example.com",
@@ -27,7 +27,7 @@ RSpec.describe "Demo training seed" do
     )
 
     allow(Rails.env).to receive(:development?).and_return(true)
-    load Rails.root.join("db/seeds/07_demo_training.rb")
+    load Rails.root.join("db/seeds/development/07_demo_training.rb")
   end
 
   it "creates a demo plan with 112 assignments for the demo user" do
@@ -41,11 +41,26 @@ RSpec.describe "Demo training seed" do
   end
 
   it "is idempotent when reloaded" do
-    load Rails.root.join("db/seeds/07_demo_training.rb")
+    load Rails.root.join("db/seeds/development/07_demo_training.rb")
 
     plan = TrainingPlan.find_by("metadata->>'seed_key' = ?", "demo_training_plan")
 
     expect(TrainingPlan.where(user: @user).count).to eq(1)
     expect(plan.training_assignments.count).to eq(112)
+  end
+
+  it "includes playable board assignments with linked puzzles" do
+    plan = TrainingPlan.find_by("metadata->>'seed_key' = ?", "demo_training_plan")
+    theme_puzzles = plan.training_assignments.theme_puzzle
+    personal_reviews = plan.training_assignments.personal_position_review
+
+    expect(theme_puzzles.count).to eq(70)
+    expect(personal_reviews.count).to eq(14)
+
+    theme_puzzles.find_each do |assignment|
+      expect(assignment.puzzle).to be_present
+      expect(assignment.puzzle.fen).to be_present
+      expect(assignment.puzzle.solution).to be_present
+    end
   end
 end

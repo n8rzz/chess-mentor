@@ -38,7 +38,7 @@ RSpec.describe "Demo progress seed" do
     )
 
     allow(Rails.env).to receive(:development?).and_return(true)
-    load Rails.root.join("db/seeds/08_demo_progress.rb")
+    load Rails.root.join("db/seeds/development/08_demo_progress.rb")
   end
 
   it "creates weekly demo progress snapshots for chart development" do
@@ -52,7 +52,7 @@ RSpec.describe "Demo progress seed" do
   end
 
   it "is idempotent when reloaded" do
-    load Rails.root.join("db/seeds/08_demo_progress.rb")
+    load Rails.root.join("db/seeds/development/08_demo_progress.rb")
 
     expect(ProgressSnapshot.where(user: @user).count).to eq(32)
   end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Curated puzzles for training plan generation (M6).
+# Production seed — curated puzzles required for training plan generation in all environments.
 # At least 5 puzzles per weakness theme; the generator assigns 5 theme puzzles per day
 # for 14 days (70 slots) and reuses puzzles deterministically when the pool is smaller.
 puzzles = [
@@ -26,10 +26,10 @@ puzzles = [
     key: "hanging_pieces_03",
     theme: :hanging_pieces,
     difficulty: :easy,
-    motif: :double_attack,
+    motif: :undefended_piece,
     rating: 950,
     fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 4",
-    solution: "f6g4"
+    solution: "f6e4"
   },
   {
     key: "hanging_pieces_04",
@@ -53,10 +53,10 @@ puzzles = [
     key: "missed_tactics_01",
     theme: :missed_tactics,
     difficulty: :easy,
-    motif: :pin,
+    motif: :undefended_piece,
     rating: 1000,
     fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 4",
-    solution: "f6g4"
+    solution: "f6e4"
   },
   {
     key: "missed_tactics_02",
@@ -182,7 +182,7 @@ puzzles = [
     motif: :center_control,
     rating: 1200,
     fen: "r2qkb1r/ppp2ppp/2n1n3/3p4/3P4/2NBPN2/PPP3PP/R1BQ1RK1 w - - 0 9",
-    solution: "e4d5 c6d5"
+    solution: "d4d5 c6d5"
   },
   {
     key: "king_safety_01",
@@ -251,10 +251,10 @@ puzzles = [
     key: "bad_trades_03",
     theme: :bad_trades,
     difficulty: :easy,
-    motif: :double_attack,
+    motif: :undefended_piece,
     rating: 950,
     fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 4",
-    solution: "f6g4"
+    solution: "f6e4"
   },
   {
     key: "bad_trades_04",
@@ -361,8 +361,8 @@ puzzles = [
     difficulty: :hard,
     motif: :king_and_pawn,
     rating: 1250,
-    fen: "8/8/8/4P3/8/8/8/4K3 w - - 0 1",
-    solution: "e5e6 e7e5 e6e7 e8q"
+    fen: "8/4k3/8/4P3/8/8/8/4K3 w - - 0 1",
+    solution: "e5e6"
   },
   {
     key: "time_pressure_01",
