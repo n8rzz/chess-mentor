@@ -40,6 +40,8 @@ gem "devise", "~> 5.0"
 gem "omniauth", "~> 2.1"
 gem "omniauth-rails_csrf_protection"
 gem "omniauth-oauth2", "~> 1.9"
+# Transitive via mail; pin for CVE-2026-47240/41/42 (bundler-audit)
+gem "net-imap", ">= 0.6.4.1"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
