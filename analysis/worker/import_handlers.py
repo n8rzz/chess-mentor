@@ -19,4 +19,10 @@ def import_games_handler(job: SystemJobRow) -> dict[str, Any]:
 
     config = load_config()
     with psycopg.connect(config.database_url) as conn:
-        return run_import(conn, import_batch_id)
+        try:
+            result = run_import(conn, import_batch_id)
+            conn.commit()
+            return result
+        except Exception:
+            conn.commit()
+            raise

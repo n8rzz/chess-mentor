@@ -45,6 +45,18 @@ RSpec.describe "Games", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include("queued for analysis")
     end
+
+    it "shows failed analysis status in the games list" do
+      game = create(:game, user: user, opponent_username: "rival_failed")
+      create(:analysis_run, :failed, game: game, user: user, error_message: "Engine timeout")
+
+      sign_in user
+      get games_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("rival_failed")
+      expect(response.body).to include("failed")
+    end
   end
 
   describe "GET /games/:id" do

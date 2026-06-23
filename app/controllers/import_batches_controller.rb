@@ -25,7 +25,9 @@ class ImportBatchesController < ApplicationController
     )
 
     redirect_to import_batch_path(batch), notice: "Import started."
-  rescue ImportBatches::Create::ImportInProgressError, ImportBatches::Create::InvalidFiltersError => e
+  rescue ImportBatches::Create::ImportInProgressError,
+         ImportBatches::Create::InvalidFiltersError,
+         ImportBatches::Create::MissingAccessTokenError => e
     redirect_to new_import_batch_path, alert: e.message
   end
 

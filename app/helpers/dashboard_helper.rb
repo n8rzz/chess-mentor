@@ -9,6 +9,8 @@ module DashboardHelper
   ].freeze
 
   def dashboard_chart_cards(progress)
+    return [] unless progress.chart_status == :ready
+
     [
       rating_history_card(progress),
       weakness_trend_card(progress),
@@ -24,7 +26,7 @@ module DashboardHelper
   private
 
   def rating_history_card(progress)
-    eligible = progress.ratings_by_time_class.select { |_, points| points.size >= 2 }
+    eligible = progress.ratings_by_time_class.select { |_, points| chartable_series?(points) }
     return if eligible.empty?
 
     reference_times = eligible.values.flat_map { |points| points.map(&:at) }.uniq.sort
@@ -45,6 +47,7 @@ module DashboardHelper
     {
       key: "rating_history",
       label: "Rating history",
+      integer_y_axis: true,
       series: {
         labels: labels,
         datasets: datasets
@@ -54,7 +57,7 @@ module DashboardHelper
 
   def weakness_trend_card(progress)
     points = progress.weakness_trend
-    return if points.size < 2
+    return unless chartable_series?(points)
 
     values = points.map { |point| point.occurrences || point.frequency }
     {
@@ -76,7 +79,7 @@ module DashboardHelper
   end
 
   def line_card(label, points, key:)
-    return if points.size < 2
+    return unless chartable_series?(points)
 
     {
       key: key,
@@ -94,6 +97,10 @@ module DashboardHelper
         ]
       }
     }
+  end
+
+  def chartable_series?(points)
+    points.size >= 2
   end
 
   def format_chart_label(timestamp)

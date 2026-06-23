@@ -7,7 +7,12 @@ from typing import Any
 
 import psycopg
 
-from worker.import_package.constants import IMPORT_BATCH_STATUS, IMPORT_RECORD_STATUS, PROVIDER
+from worker.import_package.constants import (
+    IMPORT_BATCH_STATUS,
+    IMPORT_BATCH_STATUS_BY_INTEGER,
+    IMPORT_RECORD_STATUS,
+    PROVIDER,
+)
 from worker.import_package.ids import new_ulid
 
 
@@ -69,6 +74,42 @@ class ImportRepository:
             max_games=row[6],
             time_controls=list(time_controls),
         )
+
+    def load_batch_status(self, import_batch_id: str) -> int:
+        row = self._conn.execute(
+            "SELECT status FROM import_batches WHERE id = %s",
+            (import_batch_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"import batch not found: {import_batch_id}")
+        return row[0]
+
+    def load_batch_summary(self, import_batch_id: str) -> dict[str, Any]:
+        row = self._conn.execute(
+            """
+            SELECT
+              status,
+              games_found_count,
+              games_imported_count,
+              games_skipped_count,
+              games_failed_count
+            FROM import_batches
+            WHERE id = %s
+            """,
+            (import_batch_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError(f"import batch not found: {import_batch_id}")
+
+        status_key = IMPORT_BATCH_STATUS_BY_INTEGER[row[0]]
+        return {
+            "import_batch_id": import_batch_id,
+            "status": status_key,
+            "games_found": row[1],
+            "games_imported": row[2],
+            "games_skipped": row[3],
+            "games_failed": row[4],
+        }
 
     def mark_batch_running(self, import_batch_id: str) -> None:
         now = _utcnow()

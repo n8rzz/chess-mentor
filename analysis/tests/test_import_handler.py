@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from worker.import_package.constants import PROVIDER
+from worker.import_package.constants import IMPORT_BATCH_STATUS, PROVIDER
 from worker.import_package.handler import run_import
 from worker.import_package.lichess_client import LichessGame
 from worker.import_package.repository import ImportContext, ImportRepository
@@ -45,10 +45,16 @@ def context() -> ImportContext:
     )
 
 
-def test_run_import_succeeds(context: ImportContext) -> None:
-    conn = MagicMock()
+def _repo_for_context(context: ImportContext) -> MagicMock:
     repo = MagicMock(spec=ImportRepository)
     repo.load_context.return_value = context
+    repo.load_batch_status.return_value = IMPORT_BATCH_STATUS["pending"]
+    return repo
+
+
+def test_run_import_succeeds(context: ImportContext) -> None:
+    conn = MagicMock()
+    repo = _repo_for_context(context)
     repo.import_record_exists.return_value = False
     repo.game_exists.return_value = False
 
@@ -90,8 +96,7 @@ def test_run_import_fails_for_unsupported_provider(context: ImportContext) -> No
 
 def test_run_import_skips_duplicate_games(context: ImportContext) -> None:
     conn = MagicMock()
-    repo = MagicMock(spec=ImportRepository)
-    repo.load_context.return_value = context
+    repo = _repo_for_context(context)
     repo.import_record_exists.return_value = True
 
     with patch("worker.import_package.handler.ImportRepository", return_value=repo):
@@ -108,8 +113,7 @@ def test_run_import_skips_duplicate_games(context: ImportContext) -> None:
 
 def test_run_import_partially_succeeded(context: ImportContext) -> None:
     conn = MagicMock()
-    repo = MagicMock(spec=ImportRepository)
-    repo.load_context.return_value = context
+    repo = _repo_for_context(context)
     repo.import_record_exists.return_value = False
     repo.game_exists.return_value = False
 
@@ -127,7 +131,7 @@ def test_run_import_partially_succeeded(context: ImportContext) -> None:
 
 def test_run_import_fails_without_access_token(context: ImportContext) -> None:
     conn = MagicMock()
-    repo = MagicMock(spec=ImportRepository)
+    repo = _repo_for_context(context)
     no_token_context = ImportContext(
         import_batch_id=context.import_batch_id,
         user_id=context.user_id,
@@ -141,9 +145,39 @@ def test_run_import_fails_without_access_token(context: ImportContext) -> None:
         time_controls=context.time_controls,
     )
     repo.load_context.return_value = no_token_context
+    repo.load_batch_summary.return_value = {
+        "import_batch_id": "batch1",
+        "status": "failed",
+        "games_found": 0,
+        "games_imported": 0,
+        "games_skipped": 0,
+        "games_failed": 0,
+        "error_message": "Missing Lichess access token",
+    }
 
     with patch("worker.import_package.handler.ImportRepository", return_value=repo):
-        with pytest.raises(Exception, match="Missing Lichess access token"):
-            run_import(conn, "batch1")
+        result = run_import(conn, "batch1")
 
+    assert result["status"] == "failed"
     assert repo.mark_batch_finished.call_args.kwargs["status"] == "failed"
+
+
+def test_run_import_returns_existing_summary_for_terminal_batch(context: ImportContext) -> None:
+    conn = MagicMock()
+    repo = _repo_for_context(context)
+    repo.load_batch_status.return_value = IMPORT_BATCH_STATUS["succeeded"]
+    repo.load_batch_summary.return_value = {
+        "import_batch_id": "batch1",
+        "status": "succeeded",
+        "games_found": 1,
+        "games_imported": 1,
+        "games_skipped": 0,
+        "games_failed": 0,
+    }
+
+    with patch("worker.import_package.handler.ImportRepository", return_value=repo):
+        result = run_import(conn, "batch1")
+
+    assert result["status"] == "succeeded"
+    repo.mark_batch_running.assert_not_called()
+    repo.load_batch_summary.assert_called_once_with("batch1")

@@ -154,4 +154,13 @@ RSpec.describe SystemJob, type: :model do
       expect(build(:system_job)).not_to be_retryable
     end
   end
+
+  describe "retry transition" do
+    it "allows failed jobs to return to pending" do
+      job = create(:system_job, :failed, attempts_count: 1, error_message: "boom")
+
+      expect(job.update(status: :pending, error_message: nil, finished_at: nil)).to be(true)
+      expect(job.reload).to be_pending
+    end
+  end
 end

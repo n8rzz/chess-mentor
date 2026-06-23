@@ -56,4 +56,15 @@ RSpec.describe "Demo progress seed" do
 
     expect(ProgressSnapshot.where(user: @user).count).to eq(32)
   end
+
+  it "models decreasing weakness frequency over time" do
+    weakness_snapshots = ProgressSnapshot
+      .where(user: @user)
+      .where("metadata->>'kind' = ?", "weakness")
+      .order(:snapshot_at)
+
+    frequencies = weakness_snapshots.map(&:weakness_frequency)
+    expect(frequencies).to eq(frequencies.sort.reverse)
+    expect(frequencies.first).to be > frequencies.last
+  end
 end

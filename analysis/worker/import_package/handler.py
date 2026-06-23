@@ -5,7 +5,7 @@ from typing import Any
 
 import psycopg
 
-from worker.import_package.constants import PROVIDER
+from worker.import_package.constants import IMPORT_BATCH_STATUS_BY_INTEGER, PROVIDER, TERMINAL_IMPORT_BATCH_STATUSES
 from worker.import_package.lichess_client import (
     LichessApiError,
     LichessAuthError,
@@ -33,21 +33,27 @@ def run_import(conn: psycopg.Connection, import_batch_id: str) -> dict[str, Any]
         )
         raise ValueError("unsupported provider")
 
+    status_key = IMPORT_BATCH_STATUS_BY_INTEGER[repo.load_batch_status(import_batch_id)]
+    if status_key in TERMINAL_IMPORT_BATCH_STATUSES:
+        logger.info("Import batch already terminal import_batch_id=%s status=%s", import_batch_id, status_key)
+        return repo.load_batch_summary(import_batch_id)
+
     repo.mark_batch_running(import_batch_id)
 
     try:
         summary = _import_lichess(conn, repo, context)
     except LichessAuthError as exc:
-        repo.mark_batch_finished(
-            import_batch_id,
-            status="failed",
-            games_found=0,
-            games_imported=0,
-            games_skipped=0,
-            games_failed=0,
-            error_message=str(exc),
-        )
-        raise
+        if IMPORT_BATCH_STATUS_BY_INTEGER[repo.load_batch_status(import_batch_id)] not in TERMINAL_IMPORT_BATCH_STATUSES:
+            repo.mark_batch_finished(
+                import_batch_id,
+                status="failed",
+                games_found=0,
+                games_imported=0,
+                games_skipped=0,
+                games_failed=0,
+                error_message=str(exc),
+            )
+        return repo.load_batch_summary(import_batch_id)
     except LichessApiError as exc:
         repo.mark_batch_finished(
             import_batch_id,

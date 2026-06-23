@@ -64,5 +64,18 @@ RSpec.describe ImportBatches::Create do
         )
       end.to raise_error(ImportBatches::Create::InvalidFiltersError)
     end
+
+    it "rejects when the Lichess account has no access token" do
+      account = create(:provider_account, user: user, access_token: nil)
+
+      expect do
+        described_class.call(
+          user: user,
+          provider_account: account,
+          days: 7,
+          time_controls: %w[blitz]
+        )
+      end.to raise_error(ImportBatches::Create::MissingAccessTokenError)
+    end
   end
 end

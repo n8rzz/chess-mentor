@@ -38,7 +38,14 @@ IMPORT_BATCH_STATUS = {
     "succeeded": 2,
     "partially_succeeded": 3,
     "failed": 4,
+    "cancelled": 5,
 }
+
+TERMINAL_IMPORT_BATCH_STATUSES = frozenset(
+    {"succeeded", "partially_succeeded", "failed", "cancelled"}
+)
+
+IMPORT_BATCH_STATUS_BY_INTEGER = {value: key for key, value in IMPORT_BATCH_STATUS.items()}
 
 PERF_TO_TIME_CLASS = {
     "bullet": TIME_CLASS["bullet"],

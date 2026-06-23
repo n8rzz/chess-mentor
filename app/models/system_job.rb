@@ -82,7 +82,12 @@ class SystemJob < ApplicationRecord
   def immutable_when_terminal
     return if new_record?
     return unless status_was.in?(%w[succeeded failed cancelled])
+    return if retrying_failed_job?
 
     errors.add(:base, "terminal jobs cannot be modified")
+  end
+
+  def retrying_failed_job?
+    status_was == "failed" && pending?
   end
 end

@@ -111,5 +111,41 @@ RSpec.describe "Import batches", type: :request do
 
       get import_batch_path(batch)
     end
+
+    it "shows per-game failures for a partially succeeded batch" do
+      account = create(:provider_account, user: user)
+      batch = create(
+        :import_batch,
+        status: :partially_succeeded,
+        user: user,
+        provider_account: account,
+        games_imported_count: 1,
+        games_failed_count: 1
+      )
+      create(
+        :import_record,
+        import_batch: batch,
+        provider: :lichess,
+        provider_game_id: "game-ok",
+        status: :imported
+      )
+      create(
+        :import_record,
+        import_batch: batch,
+        provider: :lichess,
+        provider_game_id: "game-bad",
+        status: :failed,
+        error_message: "PGN parse error"
+      )
+      sign_in user
+
+      get import_batch_path(batch)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("partially succeeded")
+      expect(response.body).to include("game-ok")
+      expect(response.body).to include("game-bad")
+      expect(response.body).to include("PGN parse error")
+    end
   end
 end

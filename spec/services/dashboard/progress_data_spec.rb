@@ -61,22 +61,61 @@ RSpec.describe Dashboard::ProgressData do
       expect(result.weakness_trend.first.occurrences).to eq(3)
       expect(result.blunders_per_game.map(&:value)).to eq([ 0.8, 0.6 ])
       expect(result.average_centipawn_loss.map(&:value)).to eq([ 42.5, 35.0 ])
-      expect(result.has_chart_data).to be(true)
+      expect(result.chart_status).to eq(:ready)
     end
 
-    it "reports no chart data when fewer than two points exist" do
+    it "dedupes multiple snapshots from the same day" do
       user = create(:user)
+      day = Time.zone.local(2026, 6, 22, 10, 0)
+
+      2.times do |index|
+        create(
+          :progress_snapshot,
+          user:,
+          blunders_per_game: 1.0 - (index * 0.1),
+          snapshot_at: day + index.hours,
+          metadata: { "kind" => "performance" }
+        )
+      end
       create(
         :progress_snapshot,
         user:,
-        time_class: :blitz,
-        rating: 1500,
-        metadata: { "kind" => "rating" }
+        blunders_per_game: 0.5,
+        snapshot_at: day - 1.day,
+        metadata: { "kind" => "performance" }
       )
 
       result = described_class.call(user:)
 
-      expect(result.has_chart_data).to be(false)
+      expect(result.blunders_per_game.map(&:value)).to eq([ 0.5, 0.9 ])
+    end
+
+    it "reports no snapshots when none exist" do
+      user = create(:user)
+
+      result = described_class.call(user:)
+
+      expect(result.chart_status).to eq(:none)
+    end
+
+    it "reports insufficient days when snapshots exist on only one day" do
+      user = create(:user)
+      now = Time.current
+
+      2.times do |index|
+        create(
+          :progress_snapshot,
+          user:,
+          time_class: :blitz,
+          rating: 1500 + index,
+          snapshot_at: now + index.minutes,
+          metadata: { "kind" => "rating" }
+        )
+      end
+
+      result = described_class.call(user:)
+
+      expect(result.chart_status).to eq(:insufficient_days)
     end
   end
 end

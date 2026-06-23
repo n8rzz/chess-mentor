@@ -7,13 +7,17 @@ RSpec.describe AnalysisRuns::ReconcileJob do
 
   describe "#perform" do
     it "runs reconciliation" do
+      expect(ImportBatches::ReconcileStuck).to receive(:call)
       expect(AnalysisRuns::ReconcileAll).to receive(:call)
+      expect(SystemJobs::ReconcileFailed).to receive(:call)
 
       described_class.new.perform(false)
     end
 
     it "reschedules itself when reschedule is true" do
+      allow(ImportBatches::ReconcileStuck).to receive(:call)
       allow(AnalysisRuns::ReconcileAll).to receive(:call)
+      allow(SystemJobs::ReconcileFailed).to receive(:call)
 
       described_class.new.perform(true)
 
@@ -21,7 +25,9 @@ RSpec.describe AnalysisRuns::ReconcileJob do
     end
 
     it "does not reschedule when reschedule is false" do
+      allow(ImportBatches::ReconcileStuck).to receive(:call)
       allow(AnalysisRuns::ReconcileAll).to receive(:call)
+      allow(SystemJobs::ReconcileFailed).to receive(:call)
 
       described_class.new.perform(false)
 
@@ -29,7 +35,9 @@ RSpec.describe AnalysisRuns::ReconcileJob do
     end
 
     it "reschedules by default when called without arguments" do
+      allow(ImportBatches::ReconcileStuck).to receive(:call)
       allow(AnalysisRuns::ReconcileAll).to receive(:call)
+      allow(SystemJobs::ReconcileFailed).to receive(:call)
 
       described_class.new.perform
 

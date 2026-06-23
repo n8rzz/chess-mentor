@@ -35,9 +35,24 @@ Rails and the Python analysis worker coordinate through the `system_jobs` table 
 pending → claimed → processing → succeeded
                               → failed
 pending → cancelled (Rails only)
+failed → pending (Rails retry via SystemJobs::Retry when retryable?)
 ```
 
-Terminal rows (`succeeded`, `failed`, `cancelled`) must not be updated by Rails validations; workers should not rewrite terminal jobs.
+Terminal rows (`succeeded`, `failed`, `cancelled`) must not be updated by Rails validations except `failed → pending` for retry (`SystemJobs::Retry` when `retryable?`). Workers should not rewrite terminal jobs.
+
+## Retry and reconciliation (M9)
+
+Rails reconcilers (invoked from `AnalysisRuns::ReconcileJob`):
+
+| Service | Purpose |
+| ------- | ------- |
+| `ImportBatches::ReconcileStuck` | Retry failed `import_games` jobs; enqueue imports for stuck `pending`/`running` batches without an active job |
+| `AnalysisRuns::ReconcileAll` | Enqueue analysis for terminal imports and stuck pending `AnalysisRun` rows |
+| `SystemJobs::ReconcileFailed` | Retry failed `classify_weaknesses` / `generate_training_plan` when parent entity still pending |
+
+`SystemJobs::Retry` resets a failed job to `pending`, clears errors, keeps `attempts_count`. Retry is allowed while `attempts_count < MAX_ATTEMPTS` (3).
+
+Import handler idempotency: re-running `import_games` on a terminal `ImportBatch` returns existing counts without side effects.
 
 ## Job type enum
 

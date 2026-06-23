@@ -1,10 +1,12 @@
 import { Controller } from "@hotwired/stimulus";
+import { integerYAxisScale } from "utils/chart_axis";
 
 export default class extends Controller {
   static values = {
     type: { type: String, default: "line" },
     series: Object,
     label: String,
+    integerYAxis: { type: Boolean, default: false },
   };
 
   async connect() {
@@ -26,6 +28,8 @@ export default class extends Controller {
       return;
     }
 
+    const integerYAxis = this.integerYAxisValue;
+
     this.chart = new Chart(canvas.getContext("2d"), {
       type: this.typeValue,
       data: this.seriesValue,
@@ -37,7 +41,21 @@ export default class extends Controller {
             display: this.seriesValue.datasets.length > 1,
             position: "bottom",
           },
-          tooltip: { mode: "index", intersect: false },
+          tooltip: {
+            mode: "index",
+            intersect: false,
+            callbacks: integerYAxis
+              ? {
+                  label: (context) => {
+                    const datasetLabel = context.dataset.label || "";
+                    const value = Math.round(context.parsed.y);
+                    return datasetLabel
+                      ? `${datasetLabel}: ${value}`
+                      : `${value}`;
+                  },
+                }
+              : undefined,
+          },
         },
         scales: {
           x: {
@@ -45,6 +63,7 @@ export default class extends Controller {
           },
           y: {
             beginAtZero: false,
+            ...(integerYAxis ? integerYAxisScale(this.seriesValue) : {}),
           },
         },
       },

@@ -154,5 +154,29 @@ RSpec.describe "Dashboard", type: :request do
       expect(response.body).to include("Rating history")
       expect(response.body).to include("Weakness trend")
     end
+
+    it "shows an intermediate message when snapshots exist on only one day" do
+      user = create(:user)
+      now = Time.current
+
+      2.times do |index|
+        create(
+          :progress_snapshot,
+          user:,
+          time_class: :blitz,
+          rating: 1500 + index,
+          snapshot_at: now + index.minutes,
+          metadata: { "kind" => "rating" }
+        )
+      end
+
+      sign_in user
+      get dashboard_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Progress charts")
+      expect(response.body).to include("Trend charts need at least two days of progress data")
+      expect(response.body).not_to include('data-controller="chart"')
+    end
   end
 end

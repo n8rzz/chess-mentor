@@ -17,7 +17,7 @@ module Dashboard
       :weakness_trend,
       :blunders_per_game,
       :average_centipawn_loss,
-      :has_chart_data
+      :chart_status
     )
 
     SeriesPoint = Data.define(:at, :value)
@@ -43,7 +43,7 @@ module Dashboard
         weakness_trend: weakness,
         blunders_per_game: performance[:blunders_per_game],
         average_centipawn_loss: performance[:average_centipawn_loss],
-        has_chart_data: chart_data?(ratings, weakness, performance)
+        chart_status: chart_status_for(snapshots, ratings, weakness, performance)
       )
     end
 
@@ -110,14 +110,38 @@ module Dashboard
     end
 
     def limit_series(points)
-      points.last(MAX_POINTS)
+      dedupe_by_day(points).last(MAX_POINTS)
+    end
+
+    def dedupe_by_day(points)
+      points
+        .group_by { |point| point.at.in_time_zone.to_date }
+        .values
+        .map { |day_points| day_points.max_by(&:at) }
+        .sort_by(&:at)
+    end
+
+    def chart_status_for(snapshots, ratings, weakness, performance)
+      return :none if snapshots.empty?
+      return :insufficient_days if distinct_snapshot_days(snapshots).size < 2
+      return :ready if chart_data?(ratings, weakness, performance)
+
+      :insufficient_days
+    end
+
+    def distinct_snapshot_days(snapshots)
+      snapshots.map { |snapshot| snapshot.snapshot_at.in_time_zone.to_date }.uniq
     end
 
     def chart_data?(ratings, weakness, performance)
-      ratings.values.any? { |series| series.size >= 2 } ||
-        weakness.size >= 2 ||
-        performance[:blunders_per_game].size >= 2 ||
-        performance[:average_centipawn_loss].size >= 2
+      ratings.values.any? { |series| chartable_series?(series) } ||
+        chartable_series?(weakness) ||
+        chartable_series?(performance[:blunders_per_game]) ||
+        chartable_series?(performance[:average_centipawn_loss])
+    end
+
+    def chartable_series?(points)
+      points.size >= 2
     end
   end
 end

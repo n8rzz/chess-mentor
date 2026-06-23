@@ -32,8 +32,13 @@ def seed_import_batch(
     *,
     access_token: str | None = "test-token",
     batch_status: int = 0,
+    started_at: datetime | None = None,
 ) -> dict[str, str]:
     now = datetime.now(timezone.utc)
+
+    if batch_status == 1 and started_at is None:
+        started_at = now
+
     user_id = new_id()
     provider_account_id = new_id()
     import_batch_id = new_id()
@@ -78,8 +83,8 @@ def seed_import_batch(
         INSERT INTO import_batches (
           id, user_id, provider_account_id, provider, status,
           requested_since, requested_until, max_games, time_controls,
-          metadata, created_at, updated_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::jsonb, %s, %s)
+          started_at, metadata, created_at, updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s::jsonb, %s, %s)
         """,
         (
             import_batch_id,
@@ -91,6 +96,7 @@ def seed_import_batch(
             now,
             30,
             json.dumps(["blitz", "rapid"]),
+            started_at,
             json.dumps({}),
             now,
             now,
@@ -195,9 +201,11 @@ def seed_partial_analysis_state(
 
     seed = seed_game_with_analysis_run(conn)
     repo = AnalysisRepository(conn)
-    positions = generate_positions(DEMO_BLITZ_PGN, user_color=USER_COLOR["white"])
+    positions = generate_positions(
+        DEMO_BLITZ_PGN, user_color=USER_COLOR["white"])
     repo.insert_moves(seed["game_id"], positions)
-    user_moves = [move for move in repo.load_moves(seed["game_id"]) if move.played_by_user]
+    user_moves = [move for move in repo.load_moves(
+        seed["game_id"]) if move.played_by_user]
     now = datetime.now(timezone.utc)
 
     for index, move in enumerate(user_moves[:evaluated_user_move_count]):

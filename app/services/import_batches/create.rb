@@ -6,6 +6,7 @@ module ImportBatches
     class ImportInProgressError < Error; end
     class InvalidProviderError < Error; end
     class InvalidFiltersError < Error; end
+    class MissingAccessTokenError < Error; end
 
     ALLOWED_DAYS = [ 7, 14, 30 ].freeze
     ALLOWED_TIME_CONTROLS = %w[bullet blitz rapid classical].freeze
@@ -54,6 +55,7 @@ module ImportBatches
     def validate!
       raise ActiveRecord::RecordNotFound unless @provider_account.user_id == @user.id
       raise InvalidProviderError, "Only Lichess imports are supported" unless @provider_account.lichess?
+      raise MissingAccessTokenError, "Reconnect your Lichess account before importing games" if @provider_account.access_token.blank?
 
       if @provider_account.import_batches.in_progress.exists?
         raise ImportInProgressError, "An import is already in progress for this account"

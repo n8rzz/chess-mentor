@@ -19,6 +19,10 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 os.environ.setdefault("STOCKFISH_PATH", "/opt/homebrew/bin/stockfish")
 
 
+def pytest_configure(config):
+    config.addinivalue_line("markers", "integration: cross-stack integration tests requiring Stockfish")
+
+
 def _database_url() -> str:
     return (
         f"postgresql://{os.environ['DATABASE_USERNAME']}:{os.environ['DATABASE_PASSWORD']}"

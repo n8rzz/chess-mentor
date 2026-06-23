@@ -5,50 +5,6 @@ require "rails_helper"
 RSpec.describe "Training plan pipeline", type: :request, skip_database_cleaner: true do
   include Devise::Test::IntegrationHelpers
 
-  def python_training_ready?
-    return false unless system("python3 --version", out: File::NULL, err: File::NULL)
-
-    script = "import psycopg; from worker.training_package.handler import run_plan_generation"
-    env = python_env
-    Dir.chdir(Rails.root.join("analysis")) do
-      system(env, "python3", "-c", script, out: File::NULL, err: File::NULL)
-    end
-  end
-
-  def python_env
-    db_config = ActiveRecord::Base.connection_db_config.configuration_hash
-    {
-      "DATABASE_HOST" => db_config[:host] || ENV.fetch("DATABASE_HOST", "localhost"),
-      "DATABASE_PORT" => (db_config[:port] || ENV.fetch("DATABASE_PORT", 5432)).to_s,
-      "DATABASE_USERNAME" => db_config[:username] || ENV.fetch("DATABASE_USERNAME", "chess_mentor"),
-      "DATABASE_PASSWORD" => db_config[:password] || ENV.fetch("DATABASE_PASSWORD", "chess_mentor"),
-      "DATABASE_NAME" => db_config[:database],
-      "REDIS_URL" => ENV.fetch("REDIS_URL", "redis://localhost:6379/0"),
-      "STOCKFISH_PATH" => ENV.fetch("STOCKFISH_PATH", "/opt/homebrew/bin/stockfish"),
-      "PYTHONPATH" => Rails.root.join("analysis/worker").to_s
-    }
-  end
-
-  def run_python_plan_generation(training_plan_id:)
-    script = <<~PY
-      import os
-      import psycopg
-      from worker.training_package.handler import run_plan_generation
-
-      db_url = (
-          f"postgresql://{os.environ['DATABASE_USERNAME']}:{os.environ['DATABASE_PASSWORD']}"
-          f"@{os.environ['DATABASE_HOST']}:{os.environ['DATABASE_PORT']}/{os.environ['DATABASE_NAME']}"
-      )
-      with psycopg.connect(db_url) as conn:
-          run_plan_generation(conn, "#{training_plan_id}")
-    PY
-
-    Dir.chdir(Rails.root.join("analysis")) do
-      success = system(python_env, "python3", "-c", script)
-      raise "Python training plan generation failed" unless success
-    end
-  end
-
   before do
     skip "Python training dependencies not available" unless python_training_ready?
   end

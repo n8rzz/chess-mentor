@@ -25,3 +25,4 @@ Shared setup: [make-commands.md](../development/make-commands.md).
 | M6 — Training plans | [m6-manual-testing.md](m6-manual-testing.md)                                       | Select plan; complete exercises   |
 | M7 — Dashboard      | [m7-manual-testing.md](m7-manual-testing.md)                                       | Track progress over time          |
 | M8 — Chess board UI | [m8-manual-testing.md](m8-manual-testing.md)                                       | Interactive board in review/training |
+| M9 — E2E validation | [m9-manual-testing.md](m9-manual-testing.md)                                       | Full MVP workflow + weakness reduction |
