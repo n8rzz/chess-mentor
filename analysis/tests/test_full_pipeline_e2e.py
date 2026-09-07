@@ -44,7 +44,7 @@ def test_full_pipeline_pgn_to_training_plan(db_conn) -> None:
     assert eval_count == 9
 
     classification_summary = run_classification(db_conn, user_id)
-    assert classification_summary["cycles_considered"] >= 0
+    assert classification_summary["pattern_cycles_created"] >= 0
 
     cycle_rows = db_conn.execute(
         "SELECT id, pattern FROM pattern_cycles WHERE user_id = %s",

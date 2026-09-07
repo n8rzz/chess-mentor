@@ -67,7 +67,10 @@ module PythonPipelineHelpers
       "DATABASE_NAME" => db_config[:database],
       "REDIS_URL" => ENV.fetch("REDIS_URL", "redis://localhost:6379/0"),
       "STOCKFISH_PATH" => ENV.fetch("STOCKFISH_PATH", "/opt/homebrew/bin/stockfish"),
-      "PYTHONPATH" => Rails.root.join("analysis/worker").to_s
+      "PYTHONPATH" => [
+        Rails.root.join("analysis/worker"),
+        Rails.root.join("analysis/tests")
+      ].join(File::PATH_SEPARATOR)
     }
   end
 
@@ -84,21 +87,24 @@ module PythonPipelineHelpers
   def run_python_import(import_batch_id:, use_fixture: true)
     batch = ImportBatch.includes(:provider_account).find(import_batch_id)
     access_token_literal = batch.provider_account.access_token.to_json
+    provider_username_literal = batch.provider_account.provider_username.to_json
 
     fixture_setup = if use_fixture
       <<~PY
-        from unittest.mock import patch
+        from unittest.mock import MagicMock, patch
         from worker.import_package.lichess_client import LichessGame
         from db_helpers import DEMO_BLITZ_PGN, sample_lichess_game_raw
+        import time
 
         raw = sample_lichess_game_raw()
         raw["id"] = "mvp-e2e-game-1"
         raw["pgn"] = DEMO_BLITZ_PGN
-        raw["players"]["white"]["user"]["name"] = "testuser"
+        raw["createdAt"] = int(time.time() * 1000)
+        raw["players"]["white"]["user"]["name"] = #{provider_username_literal}
         games = [LichessGame(raw=raw)]
-        patch_target = patch("worker.import_package.handler.LichessClient")
-        patch_target.return_value.fetch_games.return_value = games
-        patch_ctx = patch_target
+        client = MagicMock()
+        client.fetch_games.return_value = games
+        patch_ctx = patch("worker.import_package.handler.LichessClient", return_value=client)
       PY
     else
       <<~PY
