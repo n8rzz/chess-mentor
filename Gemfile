@@ -34,7 +34,7 @@ gem "kamal", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.0"
 gem "ulid", "~> 1.4"
-gem "redis", "~> 5.4"
+gem "redis", "~> 6.0"
 gem "sidekiq", "~> 8.1"
 gem "devise", "~> 5.0"
 gem "omniauth", "~> 2.1"
