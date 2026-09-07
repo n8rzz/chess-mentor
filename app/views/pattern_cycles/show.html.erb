@@ -1,14 +1,14 @@
-<% content_for :title, "#{@weakness_cycle.theme_label} — Chess Mentor" %>
+<% content_for :title, "#{@pattern_cycle.pattern_label} — Chess Mentor" %>
 
 <p class="text-sm text-gray-500">
-  <%= link_to "Weaknesses", weaknesses_path, class: "underline" %>
+  <%= link_to "Patterns", pattern_cycles_path, class: "underline" %>
 </p>
 
-<h1 class="mt-2 text-3xl font-bold text-gray-900"><%= @weakness_cycle.theme_label %></h1>
+<h1 class="mt-2 text-3xl font-bold text-gray-900"><%= @pattern_cycle.pattern_label %></h1>
 <p class="mt-2 capitalize text-gray-600">
-  Status: <%= @weakness_cycle.status %>
-  <% if @weakness_cycle.cycle_number > 1 %>
-    · Cycle <%= @weakness_cycle.cycle_number %>
+  Status: <%= @pattern_cycle.status %>
+  <% if @pattern_cycle.cycle_number > 1 %>
+    · Cycle <%= @pattern_cycle.cycle_number %>
   <% end %>
 </p>
 
@@ -16,28 +16,28 @@
   <div class="rounded-lg border border-gray-200 bg-white p-4">
     <p class="text-sm text-gray-500">Games affected</p>
     <p class="mt-1 text-lg font-semibold text-gray-900">
-      <%= @weakness_cycle.games_affected %> / <%= @weakness_cycle.detection_window_games %>
+      <%= @pattern_cycle.games_affected %> / <%= @pattern_cycle.detection_window_games %>
     </p>
   </div>
   <div class="rounded-lg border border-gray-200 bg-white p-4">
     <p class="text-sm text-gray-500">Frequency</p>
-    <p class="mt-1 text-lg font-semibold text-gray-900"><%= number_to_percentage(@weakness_cycle.frequency * 100, precision: 0) %></p>
+    <p class="mt-1 text-lg font-semibold text-gray-900"><%= number_to_percentage(@pattern_cycle.frequency * 100, precision: 0) %></p>
   </div>
   <div class="rounded-lg border border-gray-200 bg-white p-4">
     <p class="text-sm text-gray-500">Severity</p>
-    <p class="mt-1 text-lg font-semibold text-gray-900"><%= number_with_precision(@weakness_cycle.current_severity, precision: 2) %></p>
+    <p class="mt-1 text-lg font-semibold text-gray-900"><%= number_with_precision(@pattern_cycle.current_severity, precision: 2) %></p>
   </div>
   <div class="rounded-lg border border-gray-200 bg-white p-4">
     <p class="text-sm text-gray-500">Detection window</p>
     <p class="mt-1 text-lg font-semibold text-gray-900">
-      <%= @weakness_cycle.detection_window_games %> games / <%= @weakness_cycle.detection_window_days %> days
+      <%= @pattern_cycle.detection_window_games %> games / <%= @pattern_cycle.detection_window_days %> days
     </p>
   </div>
 </section>
 
 <section class="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white">
   <h2 class="border-b border-gray-200 px-4 py-3 text-lg font-semibold text-gray-900">Linked games and moves</h2>
-  <% if @weakness_events.any? %>
+  <% if @pattern_occurrences.any? %>
     <table class="min-w-full divide-y divide-gray-200 text-sm">
       <thead class="bg-gray-50">
         <tr>
@@ -49,7 +49,7 @@
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-200">
-        <% @weakness_events.each do |event| %>
+        <% @pattern_occurrences.each do |event| %>
           <tr>
             <td class="px-4 py-3">
               <%= link_to(
@@ -74,6 +74,6 @@
       </tbody>
     </table>
   <% else %>
-    <p class="px-4 py-6 text-gray-600">No weakness events recorded for this cycle.</p>
+    <p class="px-4 py-6 text-gray-600">No pattern occurrences recorded for this cycle.</p>
   <% end %>
 </section>

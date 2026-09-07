@@ -12,16 +12,16 @@ from worker.training_package.constants import (
     PLAN_DURATION_DAYS,
 )
 from worker.training_package.generator import generate_assignments
-from worker.training_package.types import PlanRow, PuzzleRow, WeaknessEventRow
-from worker.weakness_package.constants import WEAKNESS_THEME
+from worker.training_package.types import PlanRow, PuzzleRow, PatternOccurrenceRow
+from worker.weakness_package.constants import PATTERN
 
 
 def _plan(theme: str = "missed_tactics") -> PlanRow:
     return PlanRow(
         id="plan-1",
         user_id="user-1",
-        weakness_cycle_id="cycle-1",
-        theme=WEAKNESS_THEME[theme],
+        pattern_cycle_id="cycle-1",
+        pattern=PATTERN[theme],
         status=1,
         starts_at=datetime(2026, 6, 1, tzinfo=timezone.utc),
         ends_at=None,
@@ -33,9 +33,9 @@ def _plan(theme: str = "missed_tactics") -> PlanRow:
     )
 
 
-def _events(count: int = 3) -> list[WeaknessEventRow]:
+def _events(count: int = 3) -> list[PatternOccurrenceRow]:
     return [
-        WeaknessEventRow(
+        PatternOccurrenceRow(
             id=f"event-{index}",
             game_id=f"game-{index}",
             move_id=f"move-{index}",
@@ -47,7 +47,7 @@ def _events(count: int = 3) -> list[WeaknessEventRow]:
 
 def _puzzles(count: int = 5) -> list[PuzzleRow]:
     return [
-        PuzzleRow(id=f"puzzle-{index}", theme=WEAKNESS_THEME["missed_tactics"], rating=1000 + index * 50)
+        PuzzleRow(id=f"puzzle-{index}", pattern=PATTERN["missed_tactics"], rating=1000 + index * 50)
         for index in range(count)
     ]
 
@@ -126,7 +126,7 @@ def test_generate_assignments_cycles_puzzles_and_events():
     assert day_one_review.source_move_id == "move-0"
 
 
-def test_generate_assignments_play_game_prompt_includes_theme_label():
+def test_generate_assignments_play_game_prompt_includes_pattern_label():
     drafts = generate_assignments(
         _plan("king_safety"),
         _events(),

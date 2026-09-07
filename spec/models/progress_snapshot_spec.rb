@@ -9,29 +9,29 @@
 #  blunders_per_game      :decimal(5, 2)
 #  games_analyzed_count   :integer          default(0), not null
 #  metadata               :jsonb            not null
+#  pattern_frequency      :decimal(5, 2)
+#  pattern_severity       :decimal(5, 2)
 #  rating                 :integer
 #  snapshot_at            :datetime         not null
 #  time_class             :integer          default("unknown"), not null
-#  weakness_frequency     :decimal(5, 2)
-#  weakness_severity      :decimal(5, 2)
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
+#  pattern_cycle_id       :string
 #  training_plan_id       :string
 #  user_id                :string           not null
-#  weakness_cycle_id      :string
 #
 # Indexes
 #
+#  index_progress_snapshots_on_pattern_cycle_id         (pattern_cycle_id)
 #  index_progress_snapshots_on_training_plan_id         (training_plan_id)
 #  index_progress_snapshots_on_user_id                  (user_id)
 #  index_progress_snapshots_on_user_id_and_snapshot_at  (user_id,snapshot_at)
-#  index_progress_snapshots_on_weakness_cycle_id        (weakness_cycle_id)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (pattern_cycle_id => pattern_cycles.id) ON DELETE => nullify
 #  fk_rails_...  (training_plan_id => training_plans.id) ON DELETE => nullify
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
-#  fk_rails_...  (weakness_cycle_id => weakness_cycles.id) ON DELETE => nullify
 #
 require "rails_helper"
 
@@ -41,7 +41,7 @@ RSpec.describe ProgressSnapshot, type: :model do
   describe "associations" do
     it { is_expected.to belong_to(:user) }
     it { is_expected.to belong_to(:training_plan).optional }
-    it { is_expected.to belong_to(:weakness_cycle).optional }
+    it { is_expected.to belong_to(:pattern_cycle).optional }
   end
 
   describe "enums" do

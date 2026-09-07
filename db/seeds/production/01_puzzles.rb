@@ -6,7 +6,7 @@
 puzzles = [
   {
     key: "hanging_pieces_01",
-    theme: :hanging_pieces,
+    pattern: :hanging_pieces,
     difficulty: :easy,
     motif: :undefended_piece,
     rating: 900,
@@ -15,7 +15,7 @@ puzzles = [
   },
   {
     key: "hanging_pieces_02",
-    theme: :hanging_pieces,
+    pattern: :hanging_pieces,
     difficulty: :medium,
     motif: :fork,
     rating: 1100,
@@ -24,7 +24,7 @@ puzzles = [
   },
   {
     key: "hanging_pieces_03",
-    theme: :hanging_pieces,
+    pattern: :hanging_pieces,
     difficulty: :easy,
     motif: :undefended_piece,
     rating: 950,
@@ -33,7 +33,7 @@ puzzles = [
   },
   {
     key: "hanging_pieces_04",
-    theme: :hanging_pieces,
+    pattern: :hanging_pieces,
     difficulty: :medium,
     motif: :skewer,
     rating: 1150,
@@ -42,7 +42,7 @@ puzzles = [
   },
   {
     key: "hanging_pieces_05",
-    theme: :hanging_pieces,
+    pattern: :hanging_pieces,
     difficulty: :hard,
     motif: :removal_of_defender,
     rating: 1300,
@@ -51,7 +51,7 @@ puzzles = [
   },
   {
     key: "missed_tactics_01",
-    theme: :missed_tactics,
+    pattern: :missed_tactics,
     difficulty: :easy,
     motif: :undefended_piece,
     rating: 1000,
@@ -60,7 +60,7 @@ puzzles = [
   },
   {
     key: "missed_tactics_02",
-    theme: :missed_tactics,
+    pattern: :missed_tactics,
     difficulty: :medium,
     motif: :discovered_attack,
     rating: 1200,
@@ -69,7 +69,7 @@ puzzles = [
   },
   {
     key: "missed_tactics_03",
-    theme: :missed_tactics,
+    pattern: :missed_tactics,
     difficulty: :hard,
     motif: :sacrifice,
     rating: 1500,
@@ -78,7 +78,7 @@ puzzles = [
   },
   {
     key: "missed_tactics_04",
-    theme: :missed_tactics,
+    pattern: :missed_tactics,
     difficulty: :easy,
     motif: :fork,
     rating: 900,
@@ -87,7 +87,7 @@ puzzles = [
   },
   {
     key: "missed_tactics_05",
-    theme: :missed_tactics,
+    pattern: :missed_tactics,
     difficulty: :medium,
     motif: :discovered_check,
     rating: 1250,
@@ -96,7 +96,7 @@ puzzles = [
   },
   {
     key: "ignored_threats_01",
-    theme: :ignored_threats,
+    pattern: :ignored_threats,
     difficulty: :easy,
     motif: :back_rank_mate,
     rating: 950,
@@ -105,7 +105,7 @@ puzzles = [
   },
   {
     key: "ignored_threats_02",
-    theme: :ignored_threats,
+    pattern: :ignored_threats,
     difficulty: :medium,
     motif: :mate_threat,
     rating: 1150,
@@ -114,7 +114,7 @@ puzzles = [
   },
   {
     key: "ignored_threats_03",
-    theme: :ignored_threats,
+    pattern: :ignored_threats,
     difficulty: :easy,
     motif: :deflection,
     rating: 900,
@@ -123,7 +123,7 @@ puzzles = [
   },
   {
     key: "ignored_threats_04",
-    theme: :ignored_threats,
+    pattern: :ignored_threats,
     difficulty: :medium,
     motif: :decoy,
     rating: 1100,
@@ -132,7 +132,7 @@ puzzles = [
   },
   {
     key: "ignored_threats_05",
-    theme: :ignored_threats,
+    pattern: :ignored_threats,
     difficulty: :hard,
     motif: :overloaded_piece,
     rating: 1300,
@@ -141,7 +141,7 @@ puzzles = [
   },
   {
     key: "opening_development_01",
-    theme: :opening_development,
+    pattern: :opening_development,
     difficulty: :easy,
     motif: :piece_activity,
     rating: 800,
@@ -150,7 +150,7 @@ puzzles = [
   },
   {
     key: "opening_development_02",
-    theme: :opening_development,
+    pattern: :opening_development,
     difficulty: :medium,
     motif: :center_control,
     rating: 1050,
@@ -159,7 +159,7 @@ puzzles = [
   },
   {
     key: "opening_development_03",
-    theme: :opening_development,
+    pattern: :opening_development,
     difficulty: :easy,
     motif: :center_control,
     rating: 850,
@@ -168,7 +168,7 @@ puzzles = [
   },
   {
     key: "opening_development_04",
-    theme: :opening_development,
+    pattern: :opening_development,
     difficulty: :medium,
     motif: :piece_activity,
     rating: 1000,
@@ -177,7 +177,7 @@ puzzles = [
   },
   {
     key: "opening_development_05",
-    theme: :opening_development,
+    pattern: :opening_development,
     difficulty: :hard,
     motif: :center_control,
     rating: 1200,
@@ -186,7 +186,7 @@ puzzles = [
   },
   {
     key: "king_safety_01",
-    theme: :king_safety,
+    pattern: :king_safety,
     difficulty: :medium,
     motif: :exposed_king,
     rating: 1100,
@@ -195,7 +195,7 @@ puzzles = [
   },
   {
     key: "king_safety_02",
-    theme: :king_safety,
+    pattern: :king_safety,
     difficulty: :hard,
     motif: :castling_break,
     rating: 1400,
@@ -204,7 +204,7 @@ puzzles = [
   },
   {
     key: "king_safety_03",
-    theme: :king_safety,
+    pattern: :king_safety,
     difficulty: :easy,
     motif: :exposed_king,
     rating: 950,
@@ -213,7 +213,7 @@ puzzles = [
   },
   {
     key: "king_safety_04",
-    theme: :king_safety,
+    pattern: :king_safety,
     difficulty: :medium,
     motif: :mate_threat,
     rating: 1150,
@@ -222,7 +222,7 @@ puzzles = [
   },
   {
     key: "king_safety_05",
-    theme: :king_safety,
+    pattern: :king_safety,
     difficulty: :hard,
     motif: :castling_break,
     rating: 1350,
@@ -231,7 +231,7 @@ puzzles = [
   },
   {
     key: "bad_trades_01",
-    theme: :bad_trades,
+    pattern: :bad_trades,
     difficulty: :easy,
     motif: :material_loss,
     rating: 900,
@@ -240,7 +240,7 @@ puzzles = [
   },
   {
     key: "bad_trades_02",
-    theme: :bad_trades,
+    pattern: :bad_trades,
     difficulty: :medium,
     motif: :material_loss,
     rating: 1100,
@@ -249,7 +249,7 @@ puzzles = [
   },
   {
     key: "bad_trades_03",
-    theme: :bad_trades,
+    pattern: :bad_trades,
     difficulty: :easy,
     motif: :undefended_piece,
     rating: 950,
@@ -258,7 +258,7 @@ puzzles = [
   },
   {
     key: "bad_trades_04",
-    theme: :bad_trades,
+    pattern: :bad_trades,
     difficulty: :medium,
     motif: :skewer,
     rating: 1150,
@@ -267,7 +267,7 @@ puzzles = [
   },
   {
     key: "bad_trades_05",
-    theme: :bad_trades,
+    pattern: :bad_trades,
     difficulty: :hard,
     motif: :sacrifice,
     rating: 1400,
@@ -276,7 +276,7 @@ puzzles = [
   },
   {
     key: "pawn_structure_01",
-    theme: :pawn_structure,
+    pattern: :pawn_structure,
     difficulty: :medium,
     motif: :isolated_pawn,
     rating: 1200,
@@ -285,7 +285,7 @@ puzzles = [
   },
   {
     key: "pawn_structure_02",
-    theme: :pawn_structure,
+    pattern: :pawn_structure,
     difficulty: :hard,
     motif: :passed_pawn,
     rating: 1450,
@@ -294,7 +294,7 @@ puzzles = [
   },
   {
     key: "pawn_structure_03",
-    theme: :pawn_structure,
+    pattern: :pawn_structure,
     difficulty: :easy,
     motif: :isolated_pawn,
     rating: 900,
@@ -303,7 +303,7 @@ puzzles = [
   },
   {
     key: "pawn_structure_04",
-    theme: :pawn_structure,
+    pattern: :pawn_structure,
     difficulty: :medium,
     motif: :passed_pawn,
     rating: 1100,
@@ -312,7 +312,7 @@ puzzles = [
   },
   {
     key: "pawn_structure_05",
-    theme: :pawn_structure,
+    pattern: :pawn_structure,
     difficulty: :hard,
     motif: :isolated_pawn,
     rating: 1350,
@@ -321,7 +321,7 @@ puzzles = [
   },
   {
     key: "endgame_technique_01",
-    theme: :endgame_technique,
+    pattern: :endgame_technique,
     difficulty: :easy,
     motif: :king_and_pawn,
     rating: 850,
@@ -330,7 +330,7 @@ puzzles = [
   },
   {
     key: "endgame_technique_02",
-    theme: :endgame_technique,
+    pattern: :endgame_technique,
     difficulty: :medium,
     motif: :opposition,
     rating: 1100,
@@ -339,7 +339,7 @@ puzzles = [
   },
   {
     key: "endgame_technique_03",
-    theme: :endgame_technique,
+    pattern: :endgame_technique,
     difficulty: :easy,
     motif: :king_and_pawn,
     rating: 800,
@@ -348,7 +348,7 @@ puzzles = [
   },
   {
     key: "endgame_technique_04",
-    theme: :endgame_technique,
+    pattern: :endgame_technique,
     difficulty: :medium,
     motif: :opposition,
     rating: 1050,
@@ -357,7 +357,7 @@ puzzles = [
   },
   {
     key: "endgame_technique_05",
-    theme: :endgame_technique,
+    pattern: :endgame_technique,
     difficulty: :hard,
     motif: :king_and_pawn,
     rating: 1250,
@@ -366,7 +366,7 @@ puzzles = [
   },
   {
     key: "time_pressure_01",
-    theme: :time_pressure,
+    pattern: :time_pressure,
     difficulty: :medium,
     motif: :one_move_win,
     rating: 1000,
@@ -375,7 +375,7 @@ puzzles = [
   },
   {
     key: "time_pressure_02",
-    theme: :time_pressure,
+    pattern: :time_pressure,
     difficulty: :hard,
     motif: :forcing_line,
     rating: 1350,
@@ -384,7 +384,7 @@ puzzles = [
   },
   {
     key: "time_pressure_03",
-    theme: :time_pressure,
+    pattern: :time_pressure,
     difficulty: :easy,
     motif: :one_move_win,
     rating: 850,
@@ -393,7 +393,7 @@ puzzles = [
   },
   {
     key: "time_pressure_04",
-    theme: :time_pressure,
+    pattern: :time_pressure,
     difficulty: :medium,
     motif: :forcing_line,
     rating: 1050,
@@ -402,7 +402,7 @@ puzzles = [
   },
   {
     key: "time_pressure_05",
-    theme: :time_pressure,
+    pattern: :time_pressure,
     difficulty: :hard,
     motif: :zwischenzug,
     rating: 1300,

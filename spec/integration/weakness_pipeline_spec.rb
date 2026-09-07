@@ -27,12 +27,12 @@ RSpec.describe "Weakness pipeline", type: :integration do
 
     expect do
       run_python_classification(user_id: user.id)
-    end.to change(WeaknessCycle, :count).by(at_least: 0)
-      .and change(WeaknessEvent, :count).by(at_least: 0)
+    end.to change(PatternCycle, :count).by(at_least: 0)
+      .and change(PatternOccurrence, :count).by(at_least: 0)
 
     sign_in user
-    get weaknesses_path
+    get pattern_cycles_path
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Recurring weaknesses")
+    expect(response.body).to include("Recurring patterns")
   end
 end

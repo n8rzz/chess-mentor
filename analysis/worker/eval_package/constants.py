@@ -1,13 +1,13 @@
 """Integer enums and tunable thresholds for the evaluation engine.
 
 All integer values mirror the Rails contract (`Game`, `Move`, `AnalysisRun`,
-`MoveEvaluation`, `CandidateEvent`) so Python writers and the UI read the same semantics.
+`MoveEvaluation`, `AnalysisEvent`) so Python writers and the UI read the same semantics.
 
 Usage:
     from worker.eval_package.constants import CLASSIFICATION, CPL_THRESHOLDS, EVENT_TYPE
 
     label = classify_move(cpl)  # returns CLASSIFICATION["mistake"] when cpl >= 100
-    repo.insert_candidate_event(..., event_type=EVENT_TYPE["tactical"])
+    repo.insert_analysis_event(..., event_type=EVENT_TYPE["tactical"])
 """
 
 # Which side the user played in a game (`games.user_color`).
@@ -76,9 +76,9 @@ CPL_THRESHOLDS = {
     "blunder": 300,
 }
 
-# Candidate-event category persisted on `candidate_events.event_type`.
+# Candidate-event category persisted on `analysis_events.event_type`.
 # Produced by detectors in `eval_package/detectors/`; consumed later by the
-# weakness classifier (Milestone 5). Not the same as `WEAKNESS_THEME`.
+# weakness classifier (Milestone 5). Not the same as `PATTERN`.
 EVENT_TYPE = {
     "material": 0,
     "tactical": 1,

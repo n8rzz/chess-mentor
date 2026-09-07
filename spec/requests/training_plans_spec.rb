@@ -10,7 +10,7 @@ RSpec.describe "Training plans", type: :request do
 
   describe "GET /training_plans" do
     it "lists recommendations when no active plan exists" do
-      create(:weakness_cycle, :active, user: user, theme: :king_safety, current_severity: 0.9)
+      create(:pattern_cycle, :active, user: user, pattern: :king_safety, current_severity: 0.9)
 
       sign_in user
       get training_plans_path
@@ -21,7 +21,7 @@ RSpec.describe "Training plans", type: :request do
     end
 
     it "shows the current plan when one is active" do
-      plan = create(:training_plan, :active, user: user, theme: :missed_tactics)
+      plan = create(:training_plan, :active, user: user, pattern: :missed_tactics)
 
       sign_in user
       get training_plans_path
@@ -37,10 +37,10 @@ RSpec.describe "Training plans", type: :request do
     before { sign_in user }
 
     it "creates a plan from a recommended weakness cycle" do
-      cycle = create(:weakness_cycle, :active, user: user, theme: :hanging_pieces)
+      cycle = create(:pattern_cycle, :active, user: user, pattern: :hanging_pieces)
 
       expect {
-        post training_plans_path, params: { weakness_cycle_id: cycle.id }
+        post training_plans_path, params: { pattern_cycle_id: cycle.id }
       }.to change(TrainingPlan, :count).by(1)
         .and change(SystemJob, :count).by(1)
 
@@ -50,10 +50,10 @@ RSpec.describe "Training plans", type: :request do
     end
 
     it "redirects with an alert when the cycle is ineligible" do
-      cycle = create(:weakness_cycle, :archived, user: user)
+      cycle = create(:pattern_cycle, :archived, user: user)
 
       expect {
-        post training_plans_path, params: { weakness_cycle_id: cycle.id }
+        post training_plans_path, params: { pattern_cycle_id: cycle.id }
       }.not_to change(TrainingPlan, :count)
 
       expect(response).to redirect_to(training_plans_path)
@@ -62,10 +62,10 @@ RSpec.describe "Training plans", type: :request do
 
     it "redirects with an alert when the user already has an active plan" do
       create(:training_plan, :active, user: user)
-      cycle = create(:weakness_cycle, :active, user: user, theme: :king_safety)
+      cycle = create(:pattern_cycle, :active, user: user, pattern: :king_safety)
 
       expect {
-        post training_plans_path, params: { weakness_cycle_id: cycle.id }
+        post training_plans_path, params: { pattern_cycle_id: cycle.id }
       }.not_to change(TrainingPlan, :count)
 
       expect(response).to redirect_to(training_plans_path)
@@ -75,7 +75,7 @@ RSpec.describe "Training plans", type: :request do
 
   describe "GET /training_plans/:id" do
     it "shows plan details and assignments" do
-      plan = create(:training_plan, :active, user: user, theme: :missed_tactics)
+      plan = create(:training_plan, :active, user: user, pattern: :missed_tactics)
       create(:training_assignment, training_plan: plan, due_on: Date.current, assignment_type: :theme_puzzle)
 
       sign_in user

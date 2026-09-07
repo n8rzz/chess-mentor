@@ -58,7 +58,9 @@ class Game < ApplicationRecord
 
   has_many :moves, dependent: :destroy
   has_many :analysis_runs, dependent: :destroy
-  has_many :weakness_events, dependent: :destroy
+  has_many :pattern_occurrences, dependent: :destroy
+  has_many :review_period_games, dependent: :destroy
+  has_many :review_periods, through: :review_period_games
 
   validates :provider_game_id, :pgn, :played_at, presence: true
   validates :provider_game_id, uniqueness: { scope: %i[user_id provider] }

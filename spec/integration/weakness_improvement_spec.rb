@@ -4,9 +4,9 @@ require "rails_helper"
 
 RSpec.describe "Weakness improvement", type: :integration do
   let(:user) { create(:user) }
-  let(:weakness_cycle) do
+  let(:pattern_cycle) do
     create(
-      :weakness_cycle,
+      :pattern_cycle,
       :active,
       user: user,
       baseline_occurrences: 8,
@@ -19,7 +19,7 @@ RSpec.describe "Weakness improvement", type: :integration do
       :training_plan,
       :active,
       user: user,
-      weakness_cycle: weakness_cycle,
+      pattern_cycle: pattern_cycle,
       baseline_occurrences: 8,
       current_occurrences: 8,
       progress_percentage: 0.0,
@@ -29,13 +29,13 @@ RSpec.describe "Weakness improvement", type: :integration do
   end
 
   it "demonstrates measurable weakness reduction through plan progress" do
-    weakness_cycle.update!(current_occurrences: 5)
+    pattern_cycle.update!(current_occurrences: 5)
     TrainingPlans::SyncProgress.call(plan: plan)
 
     expect(plan.reload).to be_improving
     expect(plan.progress_percentage).to eq(37.5)
 
-    weakness_cycle.update!(current_occurrences: 1)
+    pattern_cycle.update!(current_occurrences: 1)
     TrainingPlans::SyncProgress.call(plan: plan)
 
     expect(plan.reload).to be_managed
@@ -46,18 +46,18 @@ RSpec.describe "Weakness improvement", type: :integration do
     older = create(
       :progress_snapshot,
       user: user,
-      weakness_cycle: weakness_cycle,
+      pattern_cycle: pattern_cycle,
       training_plan: plan,
-      weakness_frequency: 0.8,
+      pattern_frequency: 0.8,
       snapshot_at: 2.weeks.ago,
       metadata: { "kind" => "weakness" }
     )
     newer = create(
       :progress_snapshot,
       user: user,
-      weakness_cycle: weakness_cycle,
+      pattern_cycle: pattern_cycle,
       training_plan: plan,
-      weakness_frequency: 0.3,
+      pattern_frequency: 0.3,
       snapshot_at: 1.week.ago,
       metadata: { "kind" => "weakness" }
     )
@@ -65,6 +65,6 @@ RSpec.describe "Weakness improvement", type: :integration do
     snapshots = user.progress_snapshots.order(:snapshot_at)
 
     expect(snapshots).to eq([ older, newer ])
-    expect(snapshots.last.weakness_frequency).to be < snapshots.first.weakness_frequency
+    expect(snapshots.last.pattern_frequency).to be < snapshots.first.pattern_frequency
   end
 end

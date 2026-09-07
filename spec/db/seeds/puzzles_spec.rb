@@ -8,8 +8,8 @@ RSpec.describe "Puzzle seeds" do
   end
 
   it "seeds at least five curated puzzles per weakness theme" do
-    WeaknessThemeable::THEMES.each_key do |theme|
-      count = Puzzle.curated.where(theme: theme).count
+    Patternable::PATTERNS.each_key do |theme|
+      count = Puzzle.curated.where(pattern: theme).count
       expect(count).to be >= 5, "expected at least 5 puzzles for #{theme}, got #{count}"
     end
   end

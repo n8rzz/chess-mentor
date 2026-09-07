@@ -192,7 +192,7 @@ def seed_partial_analysis_state(
     conn: psycopg.Connection,
     *,
     evaluated_user_move_count: int = 2,
-    with_candidate_events: bool = True,
+    with_analysis_events: bool = True,
 ) -> dict[str, str | int]:
     """Game with moves and a subset of evaluations — simulates a crashed/retrying worker."""
     from worker.eval_package.constants import USER_COLOR
@@ -225,10 +225,10 @@ def seed_partial_analysis_state(
             mate_after=None,
             metadata={"seed": "partial"},
         )
-        if with_candidate_events:
+        if with_analysis_events:
             conn.execute(
                 """
-                INSERT INTO candidate_events (
+                INSERT INTO analysis_events (
                   id, analysis_run_id, game_id, move_id,
                   event_type, severity, confidence, metadata,
                   created_at, updated_at

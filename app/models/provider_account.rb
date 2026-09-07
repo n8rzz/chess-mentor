@@ -33,6 +33,8 @@ class ProviderAccount < ApplicationRecord
   has_many :import_batches, dependent: :destroy
   has_many :games, dependent: :destroy
 
+  encrypts :access_token, :refresh_token
+
   validates :provider_username, presence: true
   validates :provider_user_id, presence: true
   validates :provider_user_id, uniqueness: { scope: :provider }

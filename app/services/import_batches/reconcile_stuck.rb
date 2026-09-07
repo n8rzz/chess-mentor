@@ -20,9 +20,12 @@ module ImportBatches
     def retry_failed_import_jobs
       SystemJob.import_games.failed.find_each do |job|
         next unless job.retryable?
-        next unless import_batch_recoverable?(job)
 
-        SystemJobs::Retry.call(job: job)
+        batch = recoverable_batch_for(job)
+        next unless batch
+
+        # Refresh decrypted token — older jobs may lack it or hold a stale copy.
+        SystemJobs::Retry.call(job: job, payload: JobPayload.for(batch: batch))
       end
     end
 
@@ -35,17 +38,18 @@ module ImportBatches
         SystemJobs::Create.call(
           user: batch.user,
           job_type: :import_games,
-          payload: { "import_batch_id" => batch.id }
+          payload: JobPayload.for(batch: batch)
         )
       end
     end
 
-    def import_batch_recoverable?(job)
+    def recoverable_batch_for(job)
       batch = ImportBatch.includes(:provider_account).find_by(id: job.payload["import_batch_id"])
-      return false unless batch
-      return false unless importable?(batch)
+      return unless batch
+      return unless importable?(batch)
+      return unless batch.pending? || batch.running?
 
-      batch.pending? || batch.running?
+      batch
     end
 
     def importable?(batch)

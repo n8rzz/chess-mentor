@@ -15,11 +15,11 @@ RSpec.describe "Training plan pipeline", type: :request, skip_database_cleaner: 
     import_batch = create(:import_batch, :succeeded, user: user, provider_account: provider_account)
     game = create(:game, user: user, provider_account: provider_account, import_batch: import_batch)
     move = create(:move, game: game, played_by_user: true)
-    cycle = create(:weakness_cycle, :active, user: user, theme: :missed_tactics, baseline_occurrences: 4, current_occurrences: 4)
-    create(:weakness_event, user: user, game: game, move: move, weakness_cycle: cycle, primary_theme: :missed_tactics)
-    create_list(:puzzle, 5, theme: :missed_tactics)
+    cycle = create(:pattern_cycle, :active, user: user, pattern: :missed_tactics, baseline_occurrences: 4, current_occurrences: 4)
+    create(:pattern_occurrence, user: user, game: game, move: move, pattern_cycle: cycle, primary_pattern: :missed_tactics)
+    create_list(:puzzle, 5, pattern: :missed_tactics)
 
-    plan = TrainingPlans::Activate.call(user: user, weakness_cycle: cycle)
+    plan = TrainingPlans::Activate.call(user: user, pattern_cycle: cycle)
 
     expect {
       run_python_plan_generation(training_plan_id: plan.id)

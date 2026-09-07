@@ -1,1 +1,1 @@
-"""Weakness classification: CandidateEvent artifacts → WeaknessEvent / WeaknessCycle."""
+"""Weakness classification: AnalysisEvent artifacts → PatternOccurrence / PatternCycle."""

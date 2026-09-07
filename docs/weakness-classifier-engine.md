@@ -10,7 +10,7 @@ tags:
 
 # Weakness classifier engine
 
-The weakness classifier turns evaluation artifacts (`candidate_events`, `move_evaluations`) into player-facing weakness patterns: `weakness_events` and `weakness_cycles`. It runs inside the Python worker when a `classify_weaknesses` system job is claimed.
+The weakness classifier turns evaluation artifacts (`analysis_events`, `move_evaluations`) into player-facing weakness patterns: `pattern_occurrences` and `pattern_cycles`. It runs inside the Python worker when a `classify_patterns` system job is claimed.
 
 Design spec (requirements and non-goals): [planning/weakness-classifier.md](planning/weakness-classifier.md).
 
@@ -18,19 +18,19 @@ Design spec (requirements and non-goals): [planning/weakness-classifier.md](plan
 
 ```mermaid
 flowchart TD
-    Analyze[analyze_game succeeds] --> Enqueue[enqueue classify_weaknesses deduped]
-    Job[classify_weaknesses system job] --> Handler[classify_handlers.py]
+    Analyze[analyze_game succeeds] --> Enqueue[enqueue classify_patterns deduped]
+    Job[classify_patterns system job] --> Handler[classify_handlers.py]
     Handler --> Run[weakness_package.handler.run_classification]
     Run --> Load[repository.load_window_artifacts]
     Load --> Rules[theme_rules.classify_move]
     Rules --> Agg[aggregator.classify_artifacts]
     Agg --> Cycles[cycles.build_cycle]
-    Cycles --> WE[(weakness_events)]
-    Cycles --> WC[(weakness_cycles)]
-    WC --> UI[WeaknessesController]
+    Cycles --> WE[(pattern_occurrences)]
+    Cycles --> WC[(pattern_cycles)]
+    WC --> UI[PatternCyclesController]
 ```
 
-1. After each successful game analysis, the evaluation handler enqueues a deduped `classify_weaknesses` job for the user.
+1. After each successful game analysis, the evaluation handler enqueues a deduped `classify_patterns` job for the user.
 2. The classifier loads the last 30 analyzed games within 30 days.
 3. Per-move theme rules map candidate events + evaluations → classified weaknesses.
 4. Events aggregate by theme; cycles receive frequency, severity, and lifecycle status.
@@ -56,7 +56,7 @@ Job entry point: [`analysis/worker/classify_handlers.py`](../analysis/worker/cla
 
 ## Theme classification
 
-Nine MVP themes (integers in `WEAKNESS_THEME`, matching `WeaknessThemeable` in Rails):
+Nine MVP themes (integers in `PATTERN`, matching `Patternable` in Rails):
 
 | Theme                 | Primary signals from evaluation engine                          |
 | --------------------- | --------------------------------------------------------------- |
@@ -84,7 +84,7 @@ Opening family performance is **not** tracked (reporting-only in the planning do
 ## Rails consumption
 
 - **Enqueue:** automatically after each `analyze_game` success (deduped per user).
-- **UI:** [`WeaknessesController`](../app/controllers/weaknesses_controller.rb) index (top weaknesses) and show (linked games/moves).
+- **UI:** [`PatternCyclesController`](../app/controllers/weaknesses_controller.rb) index (top weaknesses) and show (linked games/moves).
 
 ## Configuration
 
@@ -103,7 +103,7 @@ Thresholds live in [`analysis/worker/weakness_package/constants.py`](../analysis
 
 | Layer                 | Location                                                                                      |
 | --------------------- | --------------------------------------------------------------------------------------------- |
-| Unit                  | `analysis/tests/test_weakness_theme_rules.py`, `test_weakness_aggregator.py`, `test_weakness_cycles.py` |
+| Unit                  | `analysis/tests/test_weakness_theme_rules.py`, `test_weakness_aggregator.py`, `test_pattern_cycles.py` |
 | Determinism           | `analysis/tests/test_weakness_determinism.py`                                                 |
 | Python integration    | `analysis/tests/test_classify_handler_integration.py`                                         |
 | Rails request specs   | `spec/requests/weaknesses_spec.rb`                                                            |

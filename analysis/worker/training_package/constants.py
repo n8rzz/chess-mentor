@@ -1,6 +1,6 @@
 """Integer enums and tunable thresholds for training plan generation."""
 
-from worker.weakness_package.constants import IMPROVING_THRESHOLD, MANAGED_THRESHOLD, WEAKNESS_THEME
+from worker.weakness_package.constants import IMPROVING_THRESHOLD, MANAGED_THRESHOLD, PATTERN
 
 PLAN_DURATION_DAYS = 14
 
@@ -36,12 +36,12 @@ PUZZLE_SOURCE = {
     "curated": 0,
 }
 
-THEME_LABELS = {
+PATTERN_LABELS = {
     theme: key.replace("_", " ").title()
-    for key, theme in WEAKNESS_THEME.items()
+    for key, theme in PATTERN.items()
 }
 
-THEME_BY_INTEGER = {value: key for key, value in WEAKNESS_THEME.items()}
+PATTERN_BY_INTEGER = {value: key for key, value in PATTERN.items()}
 
 HABIT_PROMPTS = {
     "hanging_pieces": "Before every move ask: What is attacked?",
@@ -57,6 +57,6 @@ HABIT_PROMPTS = {
 
 DEFAULT_HABIT_PROMPT = "Before every move ask: What is the best candidate move?"
 
-PLAY_GAME_PROMPT = "Play 1 rapid game focusing on {theme_label}."
+PLAY_GAME_PROMPT = "Play 1 rapid game focusing on {pattern_label}."
 
 PERSONAL_REVIEW_PROMPT = "Review your mistake from this game position and find the best move."

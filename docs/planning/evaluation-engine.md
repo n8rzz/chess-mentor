@@ -287,7 +287,7 @@ Time Pressure
 Output:
 
 ```text
-CandidateEvent
+AnalysisEvent
 ```
 
 ---

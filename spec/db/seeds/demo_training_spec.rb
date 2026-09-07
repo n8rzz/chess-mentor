@@ -11,9 +11,9 @@ RSpec.describe "Demo training seed" do
       password: "password123",
       username: "starship123"
     )
-    @cycle = WeaknessCycle.create!(
+    @cycle = PatternCycle.create!(
       user: @user,
-      theme: :missed_tactics,
+      pattern: :missed_tactics,
       status: :active,
       cycle_number: 1,
       baseline_occurrences: 4,
@@ -35,8 +35,8 @@ RSpec.describe "Demo training seed" do
 
     expect(plan).to be_present
     expect(plan.user).to eq(@user)
-    expect(plan.weakness_cycle).to eq(@cycle)
-    expect(plan.theme).to eq("missed_tactics")
+    expect(plan.pattern_cycle).to eq(@cycle)
+    expect(plan.pattern).to eq("missed_tactics")
     expect(plan.training_assignments.count).to eq(112)
   end
 

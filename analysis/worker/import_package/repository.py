@@ -16,6 +16,14 @@ from worker.import_package.constants import (
 from worker.import_package.ids import new_ulid
 
 
+def _looks_like_active_record_ciphertext(value: str | None) -> bool:
+    """Detect Rails Active Record Encryption payloads stored in the DB column."""
+    if not value:
+        return False
+    text = value.strip()
+    return text.startswith("{") and '"p"' in text and '"h"' in text
+
+
 @dataclass(frozen=True)
 class ImportContext:
     import_batch_id: str
@@ -34,7 +42,12 @@ class ImportRepository:
     def __init__(self, conn: psycopg.Connection) -> None:
         self._conn = conn
 
-    def load_context(self, import_batch_id: str) -> ImportContext:
+    def load_context(
+        self,
+        import_batch_id: str,
+        *,
+        access_token_override: str | None = None,
+    ) -> ImportContext:
         row = self._conn.execute(
             """
             SELECT
@@ -62,13 +75,22 @@ class ImportRepository:
         if isinstance(time_controls, str):
             time_controls = json.loads(time_controls)
 
+        stored_token = row[9]
+        if access_token_override:
+            access_token = access_token_override
+        elif _looks_like_active_record_ciphertext(stored_token):
+            # Ciphertext from Rails encrypts — unusable as a Bearer token.
+            access_token = None
+        else:
+            access_token = stored_token
+
         return ImportContext(
             import_batch_id=row[0],
             user_id=row[1],
             provider_account_id=row[2],
             provider=row[3],
             provider_username=row[8],
-            access_token=row[9],
+            access_token=access_token,
             requested_since=row[4],
             requested_until=row[5],
             max_games=row[6],

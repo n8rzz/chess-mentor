@@ -152,13 +152,16 @@ def test_run_import_fails_without_access_token(context: ImportContext) -> None:
         "games_imported": 0,
         "games_skipped": 0,
         "games_failed": 0,
-        "error_message": "Missing Lichess access token",
+        "error_message": (
+            "Missing Lichess access token. Reconnect Lichess in Settings and start a new import."
+        ),
     }
 
     with patch("worker.import_package.handler.ImportRepository", return_value=repo):
         result = run_import(conn, "batch1")
 
     assert result["status"] == "failed"
+    assert "Reconnect Lichess" in repo.mark_batch_finished.call_args.kwargs["error_message"]
     assert repo.mark_batch_finished.call_args.kwargs["status"] == "failed"
 
 

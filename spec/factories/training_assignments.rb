@@ -40,7 +40,7 @@ FactoryBot.define do
     assignment_type { :theme_puzzle }
     status { :pending }
     due_on { Date.current }
-    puzzle { association :puzzle, theme: training_plan.theme }
+    puzzle { association :puzzle, pattern: training_plan.pattern }
     prompt { "Solve this tactics puzzle." }
     metadata { {} }
 

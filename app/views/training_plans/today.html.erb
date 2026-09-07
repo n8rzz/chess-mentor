@@ -3,7 +3,7 @@
 <%= link_to "← Plan overview", training_plan_path(@training_plan), class: "text-sm text-gray-600 underline" %>
 
 <h1 class="mt-4 text-3xl font-bold text-gray-900">Today's assignments</h1>
-<p class="mt-2 text-gray-600"><%= @training_plan.theme_label %> · <%= Date.current.strftime("%B %-d, %Y") %></p>
+<p class="mt-2 text-gray-600"><%= @training_plan.pattern_label %> · <%= Date.current.strftime("%B %-d, %Y") %></p>
 
 <% if @assignments.any? %>
   <ul class="mt-8 space-y-4">

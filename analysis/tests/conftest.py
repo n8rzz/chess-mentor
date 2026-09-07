@@ -46,9 +46,9 @@ def db_conn():
                   training_assignments,
                   training_plans,
                   puzzles,
-                  weakness_events,
-                  weakness_cycles,
-                  candidate_events,
+                  pattern_occurrences,
+                  pattern_cycles,
+                  analysis_events,
                   move_evaluations,
                   moves,
                   import_records,
@@ -68,7 +68,7 @@ def db_conn():
                 conn.execute(
                     """
                     TRUNCATE TABLE
-                      candidate_events,
+                      analysis_events,
                       move_evaluations,
                       moves,
                       import_records,

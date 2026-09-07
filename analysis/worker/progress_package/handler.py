@@ -52,15 +52,15 @@ def run_snapshot_update(conn: psycopg.Connection, user_id: str) -> dict[str, Any
             )
             kinds.append(SNAPSHOT_KIND_PERFORMANCE)
 
-        for cycle in repo.load_tracked_weakness_cycles(user_id):
+        for cycle in repo.load_tracked_pattern_cycles(user_id):
             snapshot_ids.append(
                 repo.insert_snapshot(
                     user_id=user_id,
                     snapshot_at=snapshot_at,
                     kind=SNAPSHOT_KIND_WEAKNESS,
-                    weakness_cycle_id=cycle["id"],
-                    weakness_frequency=cycle["weakness_frequency"],
-                    weakness_severity=float(cycle["current_severity"])
+                    pattern_cycle_id=cycle["id"],
+                    pattern_frequency=cycle["pattern_frequency"],
+                    pattern_severity=float(cycle["current_severity"])
                     if cycle["current_severity"] is not None
                     else None,
                     metadata={"current_occurrences": cycle["current_occurrences"]},
@@ -81,7 +81,7 @@ def run_snapshot_update(conn: psycopg.Connection, user_id: str) -> dict[str, Any
                     snapshot_at=snapshot_at,
                     kind=SNAPSHOT_KIND_TRAINING,
                     training_plan_id=plan["id"],
-                    weakness_cycle_id=plan["weakness_cycle_id"],
+                    pattern_cycle_id=plan["pattern_cycle_id"],
                     metadata=metadata,
                 )
             )

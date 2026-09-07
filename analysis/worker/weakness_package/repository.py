@@ -14,18 +14,21 @@ from worker.weakness_package.constants import (
     JOB_STATUS_CLAIMED,
     JOB_STATUS_PENDING,
     JOB_STATUS_PROCESSING,
-    JOB_TYPE_CLASSIFY_WEAKNESSES,
+    JOB_TYPE_CLASSIFY_PATTERNS,
+    PATTERN_CLASSIFIER_NAME,
+    PATTERN_CLASSIFIER_VERSION,
+    PATTERN_TAXONOMY_VERSION,
 )
 from worker.weakness_package.types import (
-    CandidateEventRow,
-    ClassifiedWeakness,
+    AnalysisEventRow,
+    ClassifiedPattern,
     CycleBuildResult,
     MoveArtifact,
     MoveEvaluationRow,
 )
 
 
-class WeaknessRepository:
+class PatternRepository:
     def __init__(self, conn: psycopg.Connection) -> None:
         self._conn = conn
 
@@ -43,10 +46,10 @@ class WeaknessRepository:
     def load_archived_cycle_numbers(self, user_id: str) -> dict[int, int]:
         rows = self._conn.execute(
             """
-            SELECT theme, MAX(cycle_number) AS max_cycle
-            FROM weakness_cycles
+            SELECT pattern, MAX(cycle_number) AS max_cycle
+            FROM pattern_cycles
             WHERE user_id = %s AND status = %s
-            GROUP BY theme
+            GROUP BY pattern
             """,
             (user_id, CYCLE_STATUS["archived"]),
         ).fetchall()
@@ -55,10 +58,10 @@ class WeaknessRepository:
     def clear_rebuildable_cycles(self, user_id: str) -> None:
         self._conn.execute(
             """
-            DELETE FROM weakness_events
+            DELETE FROM pattern_occurrences
             WHERE user_id = %s
-              AND weakness_cycle_id IN (
-                SELECT id FROM weakness_cycles
+              AND pattern_cycle_id IN (
+                SELECT id FROM pattern_cycles
                 WHERE user_id = %s AND status != %s
               )
             """,
@@ -66,7 +69,7 @@ class WeaknessRepository:
         )
         self._conn.execute(
             """
-            DELETE FROM weakness_cycles
+            DELETE FROM pattern_cycles
             WHERE user_id = %s AND status != %s
             """,
             (user_id, CYCLE_STATUS["archived"]),
@@ -76,14 +79,14 @@ class WeaknessRepository:
         self,
         user_id: str,
         cycle: CycleBuildResult,
-        events: list[ClassifiedWeakness],
+        events: list[ClassifiedPattern],
     ) -> str:
         now = _utcnow()
         cycle_id = new_ulid()
         self._conn.execute(
             """
-            INSERT INTO weakness_cycles (
-              id, user_id, theme, status, cycle_number,
+            INSERT INTO pattern_cycles (
+              id, user_id, pattern, status, cycle_number,
               baseline_occurrences, current_occurrences,
               baseline_severity, current_severity,
               improvement_percentage,
@@ -103,7 +106,7 @@ class WeaknessRepository:
             (
                 cycle_id,
                 user_id,
-                cycle.theme,
+                cycle.pattern,
                 cycle.status,
                 cycle.cycle_number,
                 cycle.baseline_occurrences,
@@ -122,7 +125,7 @@ class WeaknessRepository:
         )
 
         for event in events:
-            self._insert_weakness_event(user_id=user_id, cycle_id=cycle_id, event=event)
+            self._insert_pattern_occurrence(user_id=user_id, cycle_id=cycle_id, event=event)
 
         return cycle_id
 
@@ -138,7 +141,7 @@ class WeaknessRepository:
             """,
             (
                 user_id,
-                JOB_TYPE_CLASSIFY_WEAKNESSES,
+                JOB_TYPE_CLASSIFY_PATTERNS,
                 JOB_STATUS_PENDING,
                 JOB_STATUS_CLAIMED,
                 JOB_STATUS_PROCESSING,
@@ -158,7 +161,7 @@ class WeaknessRepository:
             (
                 new_ulid(),
                 user_id,
-                JOB_TYPE_CLASSIFY_WEAKNESSES,
+                JOB_TYPE_CLASSIFY_PATTERNS,
                 JOB_STATUS_PENDING,
                 json.dumps({}),
                 0,
@@ -168,19 +171,21 @@ class WeaknessRepository:
         )
         return True
 
-    def _insert_weakness_event(self, *, user_id: str, cycle_id: str, event: ClassifiedWeakness) -> None:
+    def _insert_pattern_occurrence(self, *, user_id: str, cycle_id: str, event: ClassifiedPattern) -> None:
         now = _utcnow()
         self._conn.execute(
             """
-            INSERT INTO weakness_events (
-              id, user_id, game_id, move_id, weakness_cycle_id,
-              primary_theme, secondary_theme, severity, phase,
+            INSERT INTO pattern_occurrences (
+              id, user_id, game_id, move_id, pattern_cycle_id,
+              primary_pattern, secondary_pattern, severity, phase,
               occurred_under_time_pressure, explanation_key, metadata,
+              classifier, classifier_version, pattern_taxonomy_version,
               created_at, updated_at
             ) VALUES (
               %s, %s, %s, %s, %s,
               %s, %s, %s, %s,
               %s, %s, %s::jsonb,
+              %s, %s, %s,
               %s, %s
             )
             """,
@@ -190,13 +195,16 @@ class WeaknessRepository:
                 event.game_id,
                 event.move_id,
                 cycle_id,
-                event.primary_theme,
-                event.secondary_theme,
+                event.primary_pattern,
+                event.secondary_pattern,
                 event.severity,
                 event.phase,
                 event.occurred_under_time_pressure,
                 event.explanation_key,
                 json.dumps(event.metadata),
+                PATTERN_CLASSIFIER_NAME,
+                PATTERN_CLASSIFIER_VERSION,
+                PATTERN_TAXONOMY_VERSION,
                 now,
                 now,
             ),
@@ -247,7 +255,7 @@ class WeaknessRepository:
 
         artifacts: list[MoveArtifact] = []
         for move_id, move_number, san in move_rows:
-            events = self._load_candidate_events(game["analysis_run_id"], move_id)
+            events = self._load_analysis_events(game["analysis_run_id"], move_id)
             evaluation = self._load_move_evaluation(game["analysis_run_id"], move_id)
             artifacts.append(
                 MoveArtifact(
@@ -258,23 +266,23 @@ class WeaknessRepository:
                     san=san,
                     played_at=game["played_at"],
                     time_class=game["time_class"],
-                    candidate_events=tuple(events),
+                    analysis_events=tuple(events),
                     evaluation=evaluation,
                 )
             )
         return artifacts
 
-    def _load_candidate_events(self, analysis_run_id: str, move_id: str) -> list[CandidateEventRow]:
+    def _load_analysis_events(self, analysis_run_id: str, move_id: str) -> list[AnalysisEventRow]:
         rows = self._conn.execute(
             """
             SELECT id, event_type, severity, confidence, metadata
-            FROM candidate_events
+            FROM analysis_events
             WHERE analysis_run_id = %s AND move_id = %s
             """,
             (analysis_run_id, move_id),
         ).fetchall()
 
-        return [_row_to_candidate_event(row) for row in rows]
+        return [_row_to_analysis_event(row) for row in rows]
 
     def _load_move_evaluation(self, analysis_run_id: str, move_id: str) -> MoveEvaluationRow | None:
         row = self._conn.execute(
@@ -299,11 +307,11 @@ class WeaknessRepository:
         )
 
 
-def _row_to_candidate_event(row: tuple[Any, ...]) -> CandidateEventRow:
+def _row_to_analysis_event(row: tuple[Any, ...]) -> AnalysisEventRow:
     metadata = row[4]
     if isinstance(metadata, str):
         metadata = json.loads(metadata)
-    return CandidateEventRow(
+    return AnalysisEventRow(
         id=row[0],
         event_type=int(row[1]),
         severity=float(row[2]),

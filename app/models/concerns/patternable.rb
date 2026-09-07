@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-module WeaknessThemeable
+module Patternable
   extend ActiveSupport::Concern
 
-  THEMES = {
+  PATTERNS = {
     hanging_pieces: 0,
     missed_tactics: 1,
     ignored_threats: 2,
@@ -15,13 +15,13 @@ module WeaknessThemeable
     time_pressure: 8
   }.freeze
 
-  THEME_LABELS = THEMES.keys.index_with { |key| key.to_s.humanize }.freeze
+  PATTERN_LABELS = PATTERNS.keys.index_with { |key| key.to_s.humanize }.freeze
 
   included do
-    enum :theme, THEMES, validate: true
+    enum :pattern, PATTERNS, validate: true
   end
 
-  def theme_label
-    THEME_LABELS.fetch(theme.to_sym)
+  def pattern_label
+    PATTERN_LABELS.fetch(pattern.to_sym)
   end
 end

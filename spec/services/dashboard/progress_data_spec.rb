@@ -7,7 +7,7 @@ RSpec.describe Dashboard::ProgressData do
     it "groups snapshot series by kind and time class" do
       user = create(:user)
       plan = create(:training_plan, :active, user:)
-      cycle = plan.weakness_cycle
+      cycle = plan.pattern_cycle
       now = Time.current
 
       create(
@@ -29,9 +29,9 @@ RSpec.describe Dashboard::ProgressData do
       create(
         :progress_snapshot,
         user:,
-        weakness_cycle: cycle,
-        weakness_frequency: 0.5,
-        weakness_severity: 0.6,
+        pattern_cycle: cycle,
+        pattern_frequency: 0.5,
+        pattern_severity: 0.6,
         snapshot_at: 1.day.ago,
         metadata: { "kind" => "weakness", "current_occurrences" => 3 }
       )

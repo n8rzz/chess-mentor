@@ -1,0 +1,35 @@
+<% content_for :title, "Patterns — Chess Mentor" %>
+
+<h1 class="text-3xl font-bold text-gray-900">Recurring patterns</h1>
+<p class="mt-2 text-gray-600">Patterns detected across your recent analyzed games. Strengths and weaknesses are polarities over these labels.</p>
+
+<% if @pattern_cycles.any? %>
+  <div class="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white">
+    <table class="min-w-full divide-y divide-gray-200 text-sm">
+      <thead class="bg-gray-50 text-left text-gray-600">
+        <tr>
+          <th class="px-4 py-3 font-medium">Pattern</th>
+          <th class="px-4 py-3 font-medium">Status</th>
+          <th class="px-4 py-3 font-medium">Occurrences</th>
+          <th class="px-4 py-3 font-medium">Severity</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <% @pattern_cycles.each do |cycle| %>
+          <tr>
+            <td class="px-4 py-3">
+              <%= link_to cycle.pattern_label, pattern_cycle_path(cycle), class: "font-medium text-gray-900 underline" %>
+            </td>
+            <td class="px-4 py-3 text-gray-700"><%= cycle.status %></td>
+            <td class="px-4 py-3 text-gray-700"><%= cycle.current_occurrences %></td>
+            <td class="px-4 py-3 text-gray-700"><%= number_with_precision(cycle.current_severity, precision: 2) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% else %>
+  <div class="mt-6 rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center">
+    <p class="text-gray-600">No recurring patterns detected yet. Import and analyze games to get started.</p>
+  </div>
+<% end %>

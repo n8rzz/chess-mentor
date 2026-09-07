@@ -24,10 +24,10 @@ RSpec.describe "Dashboard", type: :request do
     it "summarizes top weakness cycles when present" do
       user = create(:user)
       cycle = create(
-        :weakness_cycle,
+        :pattern_cycle,
         :active,
         user: user,
-        theme: :missed_tactics,
+        pattern: :missed_tactics,
         current_occurrences: 2,
         detection_window_games: 3,
         metadata: { "frequency" => 0.667 }
@@ -37,10 +37,10 @@ RSpec.describe "Dashboard", type: :request do
       get dashboard_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Recurring weaknesses")
+      expect(response.body).to include("Recurring patterns")
       expect(response.body).to include("Missed tactics")
-      expect(response.body).to include(weakness_path(cycle))
-      expect(response.body).to include("View all weaknesses")
+      expect(response.body).to include(pattern_cycle_path(cycle))
+      expect(response.body).to include("View all patterns")
     end
 
     it "shows an empty weaknesses state when none exist" do
@@ -55,10 +55,10 @@ RSpec.describe "Dashboard", type: :request do
     it "shows the active training plan when one exists" do
       user = create(:user)
       cycle = create(
-        :weakness_cycle,
+        :pattern_cycle,
         :active,
         user: user,
-        theme: :king_safety,
+        pattern: :king_safety,
         baseline_occurrences: 4,
         current_occurrences: 3
       )
@@ -66,8 +66,8 @@ RSpec.describe "Dashboard", type: :request do
         :training_plan,
         :active,
         user: user,
-        weakness_cycle: cycle,
-        theme: :king_safety,
+        pattern_cycle: cycle,
+        pattern: :king_safety,
         baseline_occurrences: 4,
         current_occurrences: 3,
         improvement_threshold: 0.30,
@@ -115,7 +115,7 @@ RSpec.describe "Dashboard", type: :request do
     it "renders progress charts when snapshot history exists" do
       user = create(:user)
       plan = create(:training_plan, :active, user: user)
-      cycle = plan.weakness_cycle
+      cycle = plan.pattern_cycle
       2.times do |index|
         snapshot_at = (index + 1).days.ago
         create(
@@ -129,8 +129,8 @@ RSpec.describe "Dashboard", type: :request do
         create(
           :progress_snapshot,
           user:,
-          weakness_cycle: cycle,
-          weakness_frequency: 0.5,
+          pattern_cycle: cycle,
+          pattern_frequency: 0.5,
           snapshot_at:,
           metadata: { "kind" => "weakness", "current_occurrences" => 4 - index }
         )

@@ -25,7 +25,10 @@ RSpec.describe ImportBatches::Create do
       expect(batch.provider).to eq("lichess")
       expect(batch.time_controls).to eq(%w[blitz rapid])
       expect(job.job_type).to eq("import_games")
-      expect(job.payload).to eq("import_batch_id" => batch.id)
+      expect(job.payload).to eq(
+        "import_batch_id" => batch.id,
+        "access_token" => provider_account.access_token
+      )
     end
 
     it "rejects a non-Lichess provider account" do
@@ -76,6 +79,39 @@ RSpec.describe ImportBatches::Create do
           time_controls: %w[blitz]
         )
       end.to raise_error(ImportBatches::Create::MissingAccessTokenError)
+    end
+
+    it "uses the sync watermark when prior games exist" do
+      import_batch = create(:import_batch, :succeeded, user: user, provider_account: provider_account)
+      create(
+        :game,
+        user: user,
+        provider_account: provider_account,
+        import_batch: import_batch,
+        played_at: 3.days.ago
+      )
+      provider_account.update!(last_imported_at: 2.days.ago)
+
+      batch = described_class.call(
+        user: user,
+        provider_account: provider_account,
+        days: 30,
+        time_controls: %w[blitz]
+      )
+
+      expect(batch.requested_since).to be_within(2.seconds).of(provider_account.last_imported_at - 1.minute)
+    end
+
+    it "falls back to the lookback window for the first import" do
+      before = Time.current
+      batch = described_class.call(
+        user: user,
+        provider_account: provider_account,
+        days: 7,
+        time_controls: %w[blitz]
+      )
+
+      expect(batch.requested_since).to be_within(2.seconds).of(before - 7.days)
     end
   end
 end

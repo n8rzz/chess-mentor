@@ -2,7 +2,7 @@ import json
 from datetime import datetime, timezone
 
 from worker.weakness_package.handler import run_classification
-from worker.weakness_package.repository import WeaknessRepository
+from worker.weakness_package.repository import PatternRepository
 from db_helpers import new_id, seed_import_batch
 from worker.eval_package.constants import CLASSIFICATION, EVENT_TYPE
 
@@ -125,7 +125,7 @@ def _seed_three_game_pattern(conn, seed: dict[str, str]) -> None:
         )
         conn.execute(
             """
-            INSERT INTO candidate_events (
+            INSERT INTO analysis_events (
               id, analysis_run_id, game_id, move_id,
               event_type, severity, confidence, metadata,
               created_at, updated_at
@@ -153,18 +153,18 @@ def test_run_classification_persists_cycles_and_events(db_conn):
     summary = run_classification(db_conn, seed["user_id"])
 
     assert summary["games_analyzed"] == 3
-    assert summary["weakness_events_created"] == 3
-    assert summary["weakness_cycles_created"] == 1
+    assert summary["pattern_occurrences_created"] == 3
+    assert summary["pattern_cycles_created"] == 1
 
     cycle = db_conn.execute(
-        "SELECT status, current_occurrences FROM weakness_cycles WHERE user_id = %s",
+        "SELECT status, current_occurrences FROM pattern_cycles WHERE user_id = %s",
         (seed["user_id"],),
     ).fetchone()
     assert cycle[0] == 1  # active — 3 occurrences across 3 games
     assert cycle[1] == 3
 
     event_count = db_conn.execute(
-        "SELECT COUNT(*) FROM weakness_events WHERE user_id = %s",
+        "SELECT COUNT(*) FROM pattern_occurrences WHERE user_id = %s",
         (seed["user_id"],),
     ).fetchone()[0]
     assert event_count == 3
@@ -172,7 +172,7 @@ def test_run_classification_persists_cycles_and_events(db_conn):
 
 def test_enqueue_classification_if_needed_dedupes(db_conn):
     seed = seed_import_batch(db_conn, batch_status=2)
-    repo = WeaknessRepository(db_conn)
+    repo = PatternRepository(db_conn)
 
     assert repo.enqueue_classification_if_needed(seed["user_id"]) is True
     assert repo.enqueue_classification_if_needed(seed["user_id"]) is False

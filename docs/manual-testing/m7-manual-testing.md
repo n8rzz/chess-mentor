@@ -140,12 +140,12 @@ Confirms `update_progress_snapshots` runs after classification and writes rows t
 | ---- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
 | 6.1  | Ensure worker is running (`docker compose ps`)                                             | Worker container healthy                                                                              |
 | 6.2  | Use a user with analyzed games but few/no snapshots (or archive demo plan and re-import)   | Classification pipeline can run                                                                       |
-| 6.3  | Trigger `classify_weaknesses` (happens automatically after each successful `analyze_game`) | `system_jobs` row with `job_type` **classify_weaknesses** succeeds                                    |
+| 6.3  | Trigger `classify_patterns` (happens automatically after each successful `analyze_game`) | `system_jobs` row with `job_type` **classify_patterns** succeeds                                    |
 | 6.4  | Check `system_jobs` after classification                                                   | Pending or succeeded **`update_progress_snapshots`** job for the user (deduped — at most one pending) |
 | 6.5  | Wait for worker; confirm `progress_snapshots` rows                                         | Rows with `metadata->>'kind'` of `rating`, `performance`, `weakness`, and/or `training`               |
 | 6.6  | Run classification + snapshot **twice** (e.g. two import/analyze cycles)                   | Dashboard charts appear once a series has ≥2 points                                                   |
 
-**If snapshots never appear:** check worker logs (`docker compose logs worker`), Redis, and that `classify_weaknesses` completed successfully.
+**If snapshots never appear:** check worker logs (`docker compose logs worker`), Redis, and that `classify_patterns` completed successfully.
 
 ---
 
@@ -195,7 +195,7 @@ If time is tight, these six checks are enough:
 3. Demo user: **Training plan** panel with progress bar and today's tasks
 4. Demo user: **Progress charts** render (four canvases, no console errors)
 5. Empty user: correct placeholders (no plan, no charts)
-6. Worker path: `classify_weaknesses` → `update_progress_snapshots` → `progress_snapshots` rows created
+6. Worker path: `classify_patterns` → `update_progress_snapshots` → `progress_snapshots` rows created
 
 ---
 

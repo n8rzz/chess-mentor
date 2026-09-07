@@ -15,7 +15,9 @@ Rails.application.routes.draw do
 
   resources :import_batches, only: %i[index show new create]
   resources :games, only: %i[index show]
-  resources :weaknesses, only: %i[index show]
+  resources :pattern_cycles, only: %i[index show]
+  get "weaknesses", to: redirect("/pattern_cycles")
+  get "weaknesses/:id", to: redirect { |path_params, _req| "/pattern_cycles/#{path_params[:id]}" }
   resources :training_plans, only: %i[index show create] do
     member do
       get :today

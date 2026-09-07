@@ -35,13 +35,13 @@ RSpec.describe "MVP workflow", type: :system do
     visit import_batch_path(batch)
     expect(page).to have_text("succeeded")
 
-    visit weaknesses_path
-    expect(page).to have_text("Recurring weaknesses")
+    visit pattern_cycles_path
+    expect(page).to have_text("Recurring patterns")
 
     user = User.find_by!(email: "mvpplayer@example.com")
-    cycle = user.weakness_cycles.first
+    cycle = user.pattern_cycles.first
     expect(cycle).to be_present
-    create_list(:puzzle, 5, theme: cycle.theme) if Puzzle.where(theme: cycle.theme).count < 5
+    create_list(:puzzle, 5, pattern: cycle.pattern) if Puzzle.where(pattern: cycle.pattern).count < 5
 
     visit training_plans_path
     click_button "Start plan"

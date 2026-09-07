@@ -123,7 +123,7 @@ def _seed_analyzed_game(conn, user_id: str, provider_account_id: str, import_bat
     )
     conn.execute(
         """
-        INSERT INTO candidate_events (
+        INSERT INTO analysis_events (
           id, analysis_run_id, game_id, move_id,
           event_type, severity, confidence, metadata,
           created_at, updated_at
@@ -149,13 +149,13 @@ def _seed_analyzed_game(conn, user_id: str, provider_account_id: str, import_bat
 def _snapshot(conn, user_id: str) -> list[tuple]:
     return conn.execute(
         """
-        SELECT wc.theme, wc.status, wc.current_occurrences,
+        SELECT wc.pattern, wc.status, wc.current_occurrences,
                ROUND(wc.current_severity::numeric, 2),
-               we.primary_theme, ROUND(we.severity::numeric, 2)
-        FROM weakness_cycles wc
-        LEFT JOIN weakness_events we ON we.weakness_cycle_id = wc.id
+               we.primary_pattern, ROUND(we.severity::numeric, 2)
+        FROM pattern_cycles wc
+        LEFT JOIN pattern_occurrences we ON we.pattern_cycle_id = wc.id
         WHERE wc.user_id = %s
-        ORDER BY wc.theme, we.move_id
+        ORDER BY wc.pattern, we.move_id
         """,
         (user_id,),
     ).fetchall()

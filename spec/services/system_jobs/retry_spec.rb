@@ -17,6 +17,26 @@ RSpec.describe SystemJobs::Retry do
     expect(job.attempts_count).to eq(1)
   end
 
+  it "can refresh the payload while retrying" do
+    job = create(
+      :system_job,
+      :failed,
+      user: user,
+      attempts_count: 1,
+      payload: { "import_batch_id" => "01OLD" }
+    )
+
+    described_class.call(
+      job: job,
+      payload: { "import_batch_id" => "01OLD", "access_token" => "fresh-token" }
+    )
+
+    expect(job.reload.payload).to eq(
+      "import_batch_id" => "01OLD",
+      "access_token" => "fresh-token"
+    )
+  end
+
   it "raises when the job is not retryable" do
     job = create(:system_job, :failed, user: user, attempts_count: SystemJob::MAX_ATTEMPTS)
 

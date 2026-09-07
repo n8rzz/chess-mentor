@@ -33,21 +33,21 @@ RSpec.describe "Full workflow pipeline", type: :integration do
     expect(game.moves.count).to eq(17)
 
     sign_in user
-    get weaknesses_path
+    get pattern_cycles_path
     expect(response).to have_http_status(:ok)
-    expect(response.body).to include("Recurring weaknesses")
+    expect(response.body).to include("Recurring patterns")
 
-    cycle = user.weakness_cycles.first
+    cycle = user.pattern_cycles.first
     expect(cycle).to be_present
-    create_list(:puzzle, 5, theme: cycle.theme) if Puzzle.where(theme: cycle.theme).count < 5
+    create_list(:puzzle, 5, pattern: cycle.pattern) if Puzzle.where(pattern: cycle.pattern).count < 5
 
-    plan = TrainingPlans::Activate.call(user: user, weakness_cycle: cycle)
+    plan = TrainingPlans::Activate.call(user: user, pattern_cycle: cycle)
     workflow_driver.drain_pending_jobs!
 
     expect(plan.training_assignments.count).to eq(112)
 
     get training_plans_path
-    expect(response.body).to include(plan.theme_label)
+    expect(response.body).to include(plan.pattern_label)
 
     get today_training_plan_path(plan)
     expect(response).to have_http_status(:ok)

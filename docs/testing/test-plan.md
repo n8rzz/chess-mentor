@@ -30,7 +30,7 @@ This document maps MVP success criteria and workflow steps to automated and manu
 | ---- | ------------ | ------- | ----------- | ------ | ------ |
 | Import | `import_batch`, `import_record` models | `import_batches_spec` | `full_workflow_pipeline_spec` | `mvp_workflow_spec` | `test_import_handler_integration` |
 | Analyze | `analysis_run` model | `games_spec` | `analysis_pipeline_spec`, `analysis_reconciliation_spec` | `mvp_workflow_spec` | `test_analyze_idempotency`, `test_engine_integration` |
-| Classify | `weakness_cycle` model | `weaknesses_spec` | `weakness_pipeline_spec`, `full_workflow_pipeline_spec` | `mvp_workflow_spec` | `test_classify_handler_integration` |
+| Classify | `pattern_cycle` model | `weaknesses_spec` | `weakness_pipeline_spec`, `full_workflow_pipeline_spec` | `mvp_workflow_spec` | `test_classify_handler_integration` |
 | Training plan | `training_plan` services | `training_plans_spec` | `training_plan_pipeline_spec`, `full_workflow_pipeline_spec` | `mvp_workflow_spec` | `test_training_handler_integration` |
 | Progress | `progress_snapshot` model | `dashboard_spec` | `domain_model_checkpoint_spec`, `weakness_improvement_spec` | `dashboard_spec` (charts) | `test_progress_handler_integration` |
 | Job transport | `system_job` model | — | `system_job_worker_contract_spec` | — | worker `jobs.py` contract |

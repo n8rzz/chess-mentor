@@ -11,7 +11,7 @@ module TrainingPlans
     end
 
     def call
-      cycle = @plan.weakness_cycle
+      cycle = @plan.pattern_cycle
       baseline = @plan.baseline_occurrences
       current = cycle.current_occurrences
       progress = compute_progress_percentage(baseline, current)

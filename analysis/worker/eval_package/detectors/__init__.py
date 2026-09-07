@@ -7,7 +7,7 @@ from worker.eval_package.detectors.pawn_structure import detect_pawn_structure
 from worker.eval_package.detectors.tactical import detect_tactical
 from worker.eval_package.detectors.threat import detect_threat
 from worker.eval_package.detectors.time_pressure import detect_time_pressure
-from worker.eval_package.detectors.types import CandidateEventData
+from worker.eval_package.detectors.types import AnalysisEventData
 from worker.eval_package.engine import EngineEvaluation
 from worker.eval_package.positions import MovePosition
 from worker.eval_package.repository import AnalysisContext, StoredMove
@@ -20,8 +20,8 @@ def run_detectors(
     position: MovePosition,
     evaluation: EngineEvaluation | None,
     cpl: int | None,
-) -> list[CandidateEventData]:
-    events: list[CandidateEventData] = []
+) -> list[AnalysisEventData]:
+    events: list[AnalysisEventData] = []
     events.extend(detect_material(position=position))
     events.extend(detect_time_pressure(context=context, position=position))
     if evaluation is not None and cpl is not None:

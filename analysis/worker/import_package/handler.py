@@ -17,9 +17,14 @@ from worker.import_package.repository import ImportRepository
 logger = logging.getLogger(__name__)
 
 
-def run_import(conn: psycopg.Connection, import_batch_id: str) -> dict[str, Any]:
+def run_import(
+    conn: psycopg.Connection,
+    import_batch_id: str,
+    *,
+    access_token: str | None = None,
+) -> dict[str, Any]:
     repo = ImportRepository(conn)
-    context = repo.load_context(import_batch_id)
+    context = repo.load_context(import_batch_id, access_token_override=access_token)
 
     if context.provider != PROVIDER["lichess"]:
         repo.mark_batch_finished(
@@ -83,9 +88,13 @@ def _import_lichess(
             games_imported=0,
             games_skipped=0,
             games_failed=0,
-            error_message="Missing Lichess access token",
+            error_message=(
+                "Missing Lichess access token. Reconnect Lichess in Settings and start a new import."
+            ),
         )
-        raise LichessAuthError("Missing Lichess access token")
+        raise LichessAuthError(
+            "Missing Lichess access token. Reconnect Lichess in Settings and start a new import."
+        )
 
     client = LichessClient(context.access_token)
     since_ms = int(context.requested_since.timestamp() * 1000)

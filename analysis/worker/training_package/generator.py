@@ -13,25 +13,25 @@ from worker.training_package.constants import (
     PERSONAL_REVIEW_PROMPT,
     PLAN_DURATION_DAYS,
     PLAY_GAME_PROMPT,
-    THEME_BY_INTEGER,
-    THEME_LABELS,
+    PATTERN_BY_INTEGER,
+    PATTERN_LABELS,
 )
-from worker.training_package.types import AssignmentDraft, PlanRow, PuzzleRow, WeaknessEventRow
+from worker.training_package.types import AssignmentDraft, PlanRow, PuzzleRow, PatternOccurrenceRow
 
 
 def generate_assignments(
     plan: PlanRow,
-    events: list[WeaknessEventRow],
+    events: list[PatternOccurrenceRow],
     puzzles: list[PuzzleRow],
     *,
     start_day_offset: int = 0,
     day_count: int = PLAN_DURATION_DAYS,
     start_date: date,
 ) -> list[AssignmentDraft]:
-    theme_key = THEME_BY_INTEGER[plan.theme]
-    theme_label = THEME_LABELS[plan.theme]
-    habit_prompt = HABIT_PROMPTS.get(theme_key, DEFAULT_HABIT_PROMPT)
-    play_prompt = PLAY_GAME_PROMPT.format(theme_label=theme_label)
+    pattern_key = PATTERN_BY_INTEGER[plan.pattern]
+    pattern_label = PATTERN_LABELS[plan.pattern]
+    habit_prompt = HABIT_PROMPTS.get(pattern_key, DEFAULT_HABIT_PROMPT)
+    play_prompt = PLAY_GAME_PROMPT.format(pattern_label=pattern_label)
 
     sorted_events = sorted(events, key=lambda event: (event.created_at, event.id), reverse=True)
     sorted_puzzles = sorted(puzzles, key=lambda puzzle: (puzzle.rating or 0, puzzle.id))
@@ -81,7 +81,7 @@ def generate_assignments(
                     assignment_type=ASSIGNMENT_TYPE["habit_exercise"],
                     due_on=due_on,
                     prompt=habit_prompt,
-                    metadata={"day_index": start_day_offset + day_index, "theme": theme_key},
+                    metadata={"day_index": start_day_offset + day_index, "pattern": pattern_key},
                 )
             )
 

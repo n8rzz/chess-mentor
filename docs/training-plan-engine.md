@@ -27,7 +27,7 @@ flowchart TD
     Gen --> TA[(training_assignments)]
     TP --> Today[Today's assignments UI]
     TA --> Today
-    WC[(weakness_cycles)] --> Sync[TrainingPlans::SyncProgress]
+    WC[(pattern_cycles)] --> Sync[TrainingPlans::SyncProgress]
     Sync --> TP
 ```
 
@@ -56,7 +56,7 @@ Each plan day includes **8 assignments**:
 
 | Type                       | Count | Source                          |
 | -------------------------- | ----- | ------------------------------- |
-| `personal_position_review` | 1     | User's `WeaknessEvent`s         |
+| `personal_position_review` | 1     | User's `PatternOccurrence`s         |
 | `theme_puzzle`             | 5     | Curated `Puzzle`s matching theme |
 | `play_game`                | 1     | Prompt only (manual completion) |
 | `habit_exercise`           | 1     | Theme-specific thinking prompt  |
@@ -74,7 +74,7 @@ Aligned with the weakness classifier ([`weakness_package/constants.py`](../analy
 | Improving  | 30%               | `improving` |
 | Managed    | 75%               | `managed`   |
 
-`TrainingPlans::SyncProgress` copies `weakness_cycle.current_occurrences` into the plan and updates `progress_percentage` on plan show/today views.
+`TrainingPlans::SyncProgress` copies `pattern_cycle.current_occurrences` into the plan and updates `progress_percentage` on plan show/today views.
 
 ## Plan extension
 

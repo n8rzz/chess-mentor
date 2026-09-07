@@ -3,7 +3,7 @@ from __future__ import annotations
 import chess
 
 from worker.eval_package.constants import CPL_THRESHOLDS, EVENT_TYPE
-from worker.eval_package.detectors.types import CandidateEventData
+from worker.eval_package.detectors.types import AnalysisEventData
 from worker.eval_package.engine import EngineEvaluation
 from worker.eval_package.positions import MovePosition
 
@@ -13,7 +13,7 @@ def detect_threat(
     position: MovePosition,
     evaluation: EngineEvaluation,
     cpl: int,
-) -> list[CandidateEventData]:
+) -> list[AnalysisEventData]:
     if not position.parsed.played_by_user:
         return []
 
@@ -26,7 +26,7 @@ def detect_threat(
         return []
 
     return [
-        CandidateEventData(
+        AnalysisEventData(
             event_type=EVENT_TYPE["threat"],
             severity=round(min(1.0, cpl / 400.0), 2),
             confidence=0.7,

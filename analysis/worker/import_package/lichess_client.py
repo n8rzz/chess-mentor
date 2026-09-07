@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable
 
 import httpx
 
@@ -24,11 +26,21 @@ class LichessGame:
 
 class LichessClient:
     BASE_URL = "https://lichess.org"
+    MAX_RETRIES = 4
+    BASE_BACKOFF_SECONDS = 1.0
 
-    def __init__(self, access_token: str, *, timeout: float = 30.0, client: httpx.Client | None = None) -> None:
+    def __init__(
+        self,
+        access_token: str,
+        *,
+        timeout: float = 30.0,
+        client: httpx.Client | None = None,
+        sleep: Callable[[float], None] = time.sleep,
+    ) -> None:
         self._access_token = access_token
         self._timeout = timeout
         self._client = client
+        self._sleep = sleep
 
     def fetch_games(
         self,
@@ -54,11 +66,7 @@ class LichessClient:
             "Accept": "application/x-ndjson",
         }
 
-        if self._client is not None:
-            response = self._client.get(url, params=params, headers=headers)
-        else:
-            with httpx.Client(timeout=self._timeout) as client:
-                response = client.get(url, params=params, headers=headers)
+        response = self._request_with_retries(url, params=params, headers=headers)
 
         if response.status_code == 401:
             raise LichessAuthError("Lichess access token is invalid or expired")
@@ -70,10 +78,46 @@ class LichessClient:
             line = line.strip()
             if not line:
                 continue
-            import json
-
             games.append(LichessGame(raw=json.loads(line)))
         return games
+
+    def _request_with_retries(
+        self,
+        url: str,
+        *,
+        params: dict[str, Any],
+        headers: dict[str, str],
+    ) -> httpx.Response:
+        last_response: httpx.Response | None = None
+
+        for attempt in range(self.MAX_RETRIES + 1):
+            if self._client is not None:
+                response = self._client.get(url, params=params, headers=headers)
+            else:
+                with httpx.Client(timeout=self._timeout) as client:
+                    response = client.get(url, params=params, headers=headers)
+
+            last_response = response
+            if response.status_code == 401:
+                return response
+            if response.status_code == 429 or response.status_code >= 500:
+                if attempt >= self.MAX_RETRIES:
+                    break
+                self._sleep(self._retry_delay_seconds(response, attempt))
+                continue
+            return response
+
+        assert last_response is not None
+        return last_response
+
+    def _retry_delay_seconds(self, response: httpx.Response, attempt: int) -> float:
+        retry_after = response.headers.get("Retry-After")
+        if retry_after:
+            try:
+                return max(float(retry_after), 0.0)
+            except ValueError:
+                pass
+        return self.BASE_BACKOFF_SECONDS * (2**attempt)
 
 
 def normalize_lichess_game(game: LichessGame, *, account_username: str) -> dict[str, Any]:

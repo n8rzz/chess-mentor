@@ -19,8 +19,8 @@ class TrainingPlansController < ApplicationController
   end
 
   def create
-    weakness_cycle = current_user.weakness_cycles.find(params[:weakness_cycle_id])
-    plan = TrainingPlans::Activate.call(user: current_user, weakness_cycle: weakness_cycle)
+    pattern_cycle = current_user.pattern_cycles.find(params[:pattern_cycle_id])
+    plan = TrainingPlans::Activate.call(user: current_user, pattern_cycle: pattern_cycle)
 
     redirect_to training_plan_path(plan), notice: "Training plan started. Assignments will appear shortly."
   rescue TrainingPlans::Activate::Error => error

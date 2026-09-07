@@ -1,16 +1,16 @@
 from datetime import datetime, timezone
 
 from worker.eval_package.constants import CLASSIFICATION, EVENT_TYPE
-from worker.weakness_package.constants import WEAKNESS_THEME
+from worker.weakness_package.constants import PATTERN
 from worker.weakness_package.theme_rules import classify_move
-from worker.weakness_package.types import CandidateEventRow, MoveArtifact, MoveEvaluationRow
+from worker.weakness_package.types import AnalysisEventRow, MoveArtifact, MoveEvaluationRow
 
 
 def _artifact(
     *,
     san: str = "Qh5",
     move_number: int = 10,
-    events: list[CandidateEventRow] | None = None,
+    events: list[AnalysisEventRow] | None = None,
     cpl: int = 120,
     classification: int = CLASSIFICATION["mistake"],
 ) -> MoveArtifact:
@@ -22,7 +22,7 @@ def _artifact(
         san=san,
         played_at=datetime.now(timezone.utc),
         time_class=1,
-        candidate_events=tuple(events or []),
+        analysis_events=tuple(events or []),
         evaluation=MoveEvaluationRow(
             centipawn_loss=cpl,
             classification=classification,
@@ -33,7 +33,7 @@ def _artifact(
 
 def test_hanging_pieces_from_material_loss():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["material"],
             severity=0.6,
@@ -43,12 +43,12 @@ def test_hanging_pieces_from_material_loss():
     ]
     result = classify_move(_artifact(events=events, san="Qh5"))
     assert result is not None
-    assert result.primary_theme == WEAKNESS_THEME["hanging_pieces"]
+    assert result.primary_pattern == PATTERN["hanging_pieces"]
 
 
 def test_bad_trades_requires_capture_and_material_loss():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["material"],
             severity=0.7,
@@ -58,12 +58,12 @@ def test_bad_trades_requires_capture_and_material_loss():
     ]
     result = classify_move(_artifact(events=events, san="Bxf6"))
     assert result is not None
-    assert result.primary_theme == WEAKNESS_THEME["bad_trades"]
+    assert result.primary_pattern == PATTERN["bad_trades"]
 
 
 def test_missed_tactics_requires_tactical_event_and_cpl():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["tactical"],
             severity=0.8,
@@ -73,12 +73,12 @@ def test_missed_tactics_requires_tactical_event_and_cpl():
     ]
     result = classify_move(_artifact(events=events, cpl=150))
     assert result is not None
-    assert result.primary_theme == WEAKNESS_THEME["missed_tactics"]
+    assert result.primary_pattern == PATTERN["missed_tactics"]
 
 
 def test_ignored_threats_from_threat_event():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["threat"],
             severity=0.6,
@@ -88,15 +88,15 @@ def test_ignored_threats_from_threat_event():
     ]
     result = classify_move(_artifact(events=events, san="h3", cpl=80))
     assert result is not None
-    assert result.primary_theme in {
-        WEAKNESS_THEME["hanging_pieces"],
-        WEAKNESS_THEME["ignored_threats"],
+    assert result.primary_pattern in {
+        PATTERN["hanging_pieces"],
+        PATTERN["ignored_threats"],
     }
 
 
 def test_opening_development_from_delayed_castling():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["king_safety"],
             severity=0.6,
@@ -106,12 +106,12 @@ def test_opening_development_from_delayed_castling():
     ]
     result = classify_move(_artifact(events=events, move_number=8, san="a4"))
     assert result is not None
-    assert result.primary_theme == WEAKNESS_THEME["opening_development"]
+    assert result.primary_pattern == PATTERN["opening_development"]
 
 
 def test_king_safety_outside_opening():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["king_safety"],
             severity=0.6,
@@ -121,12 +121,12 @@ def test_king_safety_outside_opening():
     ]
     result = classify_move(_artifact(events=events, move_number=20, san="h3"))
     assert result is not None
-    assert result.primary_theme == WEAKNESS_THEME["king_safety"]
+    assert result.primary_pattern == PATTERN["king_safety"]
 
 
 def test_pawn_structure_requires_eval_worsening():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["pawn_structure"],
             severity=0.5,
@@ -136,12 +136,12 @@ def test_pawn_structure_requires_eval_worsening():
     ]
     result = classify_move(_artifact(events=events, cpl=60))
     assert result is not None
-    assert result.primary_theme == WEAKNESS_THEME["pawn_structure"]
+    assert result.primary_pattern == PATTERN["pawn_structure"]
 
 
 def test_endgame_technique_from_endgame_phase_event():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["endgame_phase"],
             severity=0.5,
@@ -151,19 +151,19 @@ def test_endgame_technique_from_endgame_phase_event():
     ]
     result = classify_move(_artifact(events=events, move_number=40))
     assert result is not None
-    assert result.primary_theme == WEAKNESS_THEME["endgame_technique"]
+    assert result.primary_pattern == PATTERN["endgame_technique"]
 
 
-def test_time_pressure_secondary_theme():
+def test_time_pressure_secondary_pattern():
     events = [
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e1",
             event_type=EVENT_TYPE["material"],
             severity=0.6,
             confidence=0.9,
             metadata={"material_lost": 3},
         ),
-        CandidateEventRow(
+        AnalysisEventRow(
             id="e2",
             event_type=EVENT_TYPE["time_pressure"],
             severity=0.7,
@@ -173,5 +173,5 @@ def test_time_pressure_secondary_theme():
     ]
     result = classify_move(_artifact(events=events))
     assert result is not None
-    assert result.secondary_theme == WEAKNESS_THEME["time_pressure"]
+    assert result.secondary_pattern == PATTERN["time_pressure"]
     assert result.occurred_under_time_pressure is True

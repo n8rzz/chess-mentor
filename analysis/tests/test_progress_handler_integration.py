@@ -12,7 +12,7 @@ from worker.progress_package.constants import (
 )
 from worker.progress_package.handler import run_snapshot_update
 from worker.progress_package.repository import ProgressRepository
-from worker.weakness_package.constants import WEAKNESS_THEME
+from worker.weakness_package.constants import PATTERN
 from db_helpers import new_id, seed_import_batch
 from worker.eval_package.constants import ANALYSIS_RUN_STATUS, CLASSIFICATION
 
@@ -149,7 +149,7 @@ def _seed_training_plan(conn, seed: dict[str, str], cycle_id: str) -> str:
     conn.execute(
         """
         INSERT INTO training_plans (
-          id, user_id, weakness_cycle_id, theme, status,
+          id, user_id, pattern_cycle_id, pattern, status,
           starts_at, ends_at, baseline_occurrences, current_occurrences,
           progress_percentage, improvement_threshold, managed_threshold,
           metadata, created_at, updated_at
@@ -164,7 +164,7 @@ def _seed_training_plan(conn, seed: dict[str, str], cycle_id: str) -> str:
             plan_id,
             seed["user_id"],
             cycle_id,
-            WEAKNESS_THEME["missed_tactics"],
+            PATTERN["missed_tactics"],
             1,
             now,
             now,
@@ -226,8 +226,8 @@ def test_run_snapshot_update_writes_expected_rows(db_conn):
     cycle_id = new_id()
     db_conn.execute(
         """
-        INSERT INTO weakness_cycles (
-          id, user_id, theme, status, cycle_number,
+        INSERT INTO pattern_cycles (
+          id, user_id, pattern, status, cycle_number,
           baseline_occurrences, current_occurrences,
           baseline_severity, current_severity,
           detection_window_games, detection_window_days,
@@ -243,7 +243,7 @@ def test_run_snapshot_update_writes_expected_rows(db_conn):
         (
             cycle_id,
             seed["user_id"],
-            WEAKNESS_THEME["missed_tactics"],
+            PATTERN["missed_tactics"],
             1,
             1,
             10,

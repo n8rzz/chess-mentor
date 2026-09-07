@@ -17,7 +17,7 @@ RSpec.describe DashboardHelper, type: :helper do
     it "returns no cards when progress spans only one day" do
       user = create(:user)
       plan = create(:training_plan, :active, user: user)
-      cycle = plan.weakness_cycle
+      cycle = plan.pattern_cycle
       base = Time.zone.local(2026, 6, 22, 10, 0)
 
       3.times do |index|
@@ -25,8 +25,8 @@ RSpec.describe DashboardHelper, type: :helper do
         create(
           :progress_snapshot,
           user:,
-          weakness_cycle: cycle,
-          weakness_frequency: 0.5 - (index * 0.05),
+          pattern_cycle: cycle,
+          pattern_frequency: 0.5 - (index * 0.05),
           snapshot_at:,
           metadata: { "kind" => "weakness", "current_occurrences" => 4 - index }
         )
@@ -58,15 +58,15 @@ RSpec.describe DashboardHelper, type: :helper do
     it "returns cards when progress spans multiple days" do
       user = create(:user)
       plan = create(:training_plan, :active, user: user)
-      cycle = plan.weakness_cycle
+      cycle = plan.pattern_cycle
 
       2.times do |index|
         snapshot_at = (index + 1).days.ago
         create(
           :progress_snapshot,
           user:,
-          weakness_cycle: cycle,
-          weakness_frequency: 0.5,
+          pattern_cycle: cycle,
+          pattern_frequency: 0.5,
           snapshot_at:,
           metadata: { "kind" => "weakness", "current_occurrences" => 4 - index }
         )

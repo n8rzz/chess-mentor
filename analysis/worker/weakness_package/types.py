@@ -6,7 +6,7 @@ from typing import Any
 
 
 @dataclass(frozen=True)
-class CandidateEventRow:
+class AnalysisEventRow:
     id: str
     event_type: int
     severity: float
@@ -30,17 +30,17 @@ class MoveArtifact:
     san: str
     played_at: datetime
     time_class: int
-    candidate_events: tuple[CandidateEventRow, ...] = ()
+    analysis_events: tuple[AnalysisEventRow, ...] = ()
     evaluation: MoveEvaluationRow | None = None
 
 
 @dataclass(frozen=True)
-class ClassifiedWeakness:
+class ClassifiedPattern:
     user_id: str
     game_id: str
     move_id: str
-    primary_theme: int
-    secondary_theme: int | None
+    primary_pattern: int
+    secondary_pattern: int | None
     severity: float
     phase: int
     occurred_under_time_pressure: bool
@@ -50,9 +50,9 @@ class ClassifiedWeakness:
 
 
 @dataclass
-class ThemeAggregation:
-    theme: int
-    events: list[ClassifiedWeakness] = field(default_factory=list)
+class PatternAggregation:
+    pattern: int
+    events: list[ClassifiedPattern] = field(default_factory=list)
 
     @property
     def occurrences(self) -> int:
@@ -65,7 +65,7 @@ class ThemeAggregation:
 
 @dataclass(frozen=True)
 class CycleBuildResult:
-    theme: int
+    pattern: int
     cycle_number: int
     status: int
     baseline_occurrences: int

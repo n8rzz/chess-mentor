@@ -20,7 +20,7 @@ RSpec.describe "SystemJob worker contract", type: :integration do
     expect(SystemJob.job_types).to eq(
       "import_games" => 0,
       "analyze_game" => 1,
-      "classify_weaknesses" => 2,
+      "classify_patterns" => 2,
       "generate_training_plan" => 3,
       "update_progress_snapshots" => 4
     )
@@ -65,7 +65,7 @@ RSpec.describe "SystemJob worker contract", type: :integration do
   end
 
   it "records failures on the failed path" do
-    job = SystemJobs::Create.call(user: user, job_type: :classify_weaknesses)
+    job = SystemJobs::Create.call(user: user, job_type: :classify_patterns)
     claimed = claim_next_job(worker_id: worker_id)
 
     mark_failed(claimed, "handler error", details: { "code" => "handler_error" })

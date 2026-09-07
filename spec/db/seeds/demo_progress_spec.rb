@@ -9,9 +9,9 @@ RSpec.describe "Demo progress seed" do
       password: "password123",
       username: "starship123"
     )
-    @cycle = WeaknessCycle.create!(
+    @cycle = PatternCycle.create!(
       user: @user,
-      theme: :missed_tactics,
+      pattern: :missed_tactics,
       status: :active,
       cycle_number: 1,
       baseline_occurrences: 8,
@@ -25,8 +25,8 @@ RSpec.describe "Demo progress seed" do
     )
     @plan = TrainingPlan.create!(
       user: @user,
-      weakness_cycle: @cycle,
-      theme: :missed_tactics,
+      pattern_cycle: @cycle,
+      pattern: :missed_tactics,
       status: :active,
       starts_at: 2.weeks.ago,
       ends_at: 2.weeks.from_now,
@@ -63,7 +63,7 @@ RSpec.describe "Demo progress seed" do
       .where("metadata->>'kind' = ?", "weakness")
       .order(:snapshot_at)
 
-    frequencies = weakness_snapshots.map(&:weakness_frequency)
+    frequencies = weakness_snapshots.map(&:pattern_frequency)
     expect(frequencies).to eq(frequencies.sort.reverse)
     expect(frequencies.first).to be > frequencies.last
   end

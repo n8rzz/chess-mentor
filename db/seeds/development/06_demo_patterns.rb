@@ -10,8 +10,8 @@ def find_demo_game(user:, provider_game_id:)
   Game.find_by!(user: user, provider: :lichess, provider_game_id: provider_game_id)
 end
 
-def upsert_weakness_cycle(user:, seed_key:, theme:, status:, games_affected:, window_games: 3, **attrs)
-  cycle = WeaknessCycle.find_or_initialize_by(user: user, theme: theme)
+def upsert_pattern_cycle(user:, seed_key:, pattern:, status:, games_affected:, window_games: 3, **attrs)
+  cycle = PatternCycle.find_or_initialize_by(user: user, pattern: pattern)
   return cycle if cycle.persisted? && cycle.metadata["seed_key"] == seed_key
 
   frequency = games_affected.to_f / window_games
@@ -31,21 +31,21 @@ def upsert_weakness_cycle(user:, seed_key:, theme:, status:, games_affected:, wi
   cycle
 end
 
-def upsert_weakness_event(cycle:, game:, move:, primary_theme:, **attrs)
-  event = WeaknessEvent.find_or_initialize_by(
-    weakness_cycle: cycle,
+def upsert_pattern_occurrence(cycle:, game:, move:, primary_pattern:, **attrs)
+  event = PatternOccurrence.find_or_initialize_by(
+    pattern_cycle: cycle,
     game: game,
     move: move,
-    primary_theme: primary_theme
+    primary_pattern: primary_pattern
   )
   event.assign_attributes(
     user: cycle.user,
-    secondary_theme: attrs[:secondary_theme],
+    secondary_pattern: attrs[:secondary_pattern],
     severity: attrs.fetch(:severity, 0.7),
     phase: attrs.fetch(:phase, :middlegame),
     occurred_under_time_pressure: attrs.fetch(:occurred_under_time_pressure, false),
-    explanation_key: attrs.fetch(:explanation_key, "#{primary_theme}.v1"),
-    metadata: attrs.fetch(:metadata, { "seed_key" => "demo_weakness_event" })
+    explanation_key: attrs.fetch(:explanation_key, "#{primary_pattern}.v1"),
+    metadata: attrs.fetch(:metadata, { "seed_key" => "demo_pattern_occurrence" })
   )
   event.save!
   event
@@ -77,61 +77,61 @@ blitz_blunder = Move.find_by(game: blitz_game, san: "Bg5") ||
 rapid_mistake = ensure_user_move(game: rapid_game, ply: 15, move_number: 8, san: "Bxc5", uci: "e3c5")
 classical_inaccuracy = ensure_user_move(game: classical_game, ply: 7, move_number: 4, san: "Bh4", uci: "g5h4")
 
-missed_tactics_cycle = upsert_weakness_cycle(
+missed_tactics_cycle = upsert_pattern_cycle(
   user: user,
   seed_key: "demo_missed_tactics_cycle",
-  theme: :missed_tactics,
+  pattern: :missed_tactics,
   status: :active,
   games_affected: 2,
   severity: 0.73
 )
-upsert_weakness_event(
+upsert_pattern_occurrence(
   cycle: missed_tactics_cycle,
   game: blitz_game,
   move: blitz_blunder,
-  primary_theme: :missed_tactics,
+  primary_pattern: :missed_tactics,
   severity: 0.78,
   phase: :middlegame
 )
-upsert_weakness_event(
+upsert_pattern_occurrence(
   cycle: missed_tactics_cycle,
   game: rapid_game,
   move: rapid_mistake,
-  primary_theme: :missed_tactics,
+  primary_pattern: :missed_tactics,
   severity: 0.68,
   phase: :middlegame
 )
 
-king_safety_cycle = upsert_weakness_cycle(
+king_safety_cycle = upsert_pattern_cycle(
   user: user,
   seed_key: "demo_king_safety_cycle",
-  theme: :king_safety,
+  pattern: :king_safety,
   status: :active,
   games_affected: 1,
   severity: 0.65
 )
-upsert_weakness_event(
+upsert_pattern_occurrence(
   cycle: king_safety_cycle,
   game: blitz_game,
   move: blitz_mistake,
-  primary_theme: :king_safety,
+  primary_pattern: :king_safety,
   severity: 0.65,
   phase: :opening
 )
 
-opening_cycle = upsert_weakness_cycle(
+opening_cycle = upsert_pattern_cycle(
   user: user,
   seed_key: "demo_opening_development_cycle",
-  theme: :opening_development,
+  pattern: :opening_development,
   status: :detected,
   games_affected: 1,
   severity: 0.42
 )
-upsert_weakness_event(
+upsert_pattern_occurrence(
   cycle: opening_cycle,
   game: classical_game,
   move: classical_inaccuracy,
-  primary_theme: :opening_development,
+  primary_pattern: :opening_development,
   severity: 0.42,
   phase: :opening
 )

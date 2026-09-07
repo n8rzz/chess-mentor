@@ -5,8 +5,8 @@ require "rails_helper"
 RSpec.describe SystemJobs::ReconcileFailed do
   let(:user) { create(:user) }
 
-  it "retries a failed classify_weaknesses job when no active job exists" do
-    job = create(:system_job, :classify_weaknesses, :failed, user: user, attempts_count: 1)
+  it "retries a failed classify_patterns job when no active job exists" do
+    job = create(:system_job, :classify_patterns, :failed, user: user, attempts_count: 1)
 
     described_class.call
 

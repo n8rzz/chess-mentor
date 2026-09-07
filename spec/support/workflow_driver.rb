@@ -87,7 +87,7 @@ class WorkflowDriver
         analysis_run_id: job.payload.fetch("analysis_run_id"),
         game_id: job.payload.fetch("game_id")
       )
-    when "classify_weaknesses"
+    when "classify_patterns"
       user_id = job.payload["user_id"] || job.user_id
       run_python_classification(user_id: user_id)
     when "generate_training_plan"

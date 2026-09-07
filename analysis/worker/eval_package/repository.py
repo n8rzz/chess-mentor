@@ -228,10 +228,10 @@ class AnalysisRepository:
         )
         return evaluation, int(row[2])
 
-    def move_has_candidate_events(self, analysis_run_id: str, move_id: str) -> bool:
+    def move_has_analysis_events(self, analysis_run_id: str, move_id: str) -> bool:
         row = self._conn.execute(
             """
-            SELECT 1 FROM candidate_events
+            SELECT 1 FROM analysis_events
             WHERE analysis_run_id = %s AND move_id = %s
             LIMIT 1
             """,
@@ -239,9 +239,9 @@ class AnalysisRepository:
         ).fetchone()
         return row is not None
 
-    def count_candidate_events(self, analysis_run_id: str) -> int:
+    def count_analysis_events(self, analysis_run_id: str) -> int:
         row = self._conn.execute(
-            "SELECT COUNT(*) FROM candidate_events WHERE analysis_run_id = %s",
+            "SELECT COUNT(*) FROM analysis_events WHERE analysis_run_id = %s",
             (analysis_run_id,),
         ).fetchone()
         return int(row[0]) if row else 0
@@ -372,7 +372,7 @@ class AnalysisRepository:
             ),
         )
 
-    def insert_candidate_event(
+    def insert_analysis_event(
         self,
         *,
         analysis_run_id: str,
@@ -386,7 +386,7 @@ class AnalysisRepository:
         now = _utcnow()
         self._conn.execute(
             """
-            INSERT INTO candidate_events (
+            INSERT INTO analysis_events (
               id, analysis_run_id, game_id, move_id,
               event_type, severity, confidence, metadata,
               created_at, updated_at

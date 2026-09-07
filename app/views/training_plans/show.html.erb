@@ -1,8 +1,8 @@
-<% content_for :title, "#{@training_plan.theme_label} plan — Chess Mentor" %>
+<% content_for :title, "#{@training_plan.pattern_label} plan — Chess Mentor" %>
 
 <%= link_to "← Training plans", training_plans_path, class: "text-sm text-gray-600 underline" %>
 
-<h1 class="mt-4 text-3xl font-bold text-gray-900"><%= @training_plan.theme_label %> training plan</h1>
+<h1 class="mt-4 text-3xl font-bold text-gray-900"><%= @training_plan.pattern_label %> training plan</h1>
 <p class="mt-2 capitalize text-gray-600">Status: <%= @training_plan.status %></p>
 
 <section class="mt-6 grid gap-4 md:grid-cols-3">

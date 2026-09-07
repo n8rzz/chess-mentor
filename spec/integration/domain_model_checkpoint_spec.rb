@@ -10,12 +10,12 @@ RSpec.describe "Domain model checkpoint", type: :integration do
   let(:move) { create(:move, game: game, played_by_user: true) }
   let(:analysis_run) { create(:analysis_run, :succeeded, game: game, user: user) }
   let!(:move_evaluation) { create(:move_evaluation, analysis_run: analysis_run, game: game, move: move) }
-  let!(:candidate_event) { create(:candidate_event, analysis_run: analysis_run, game: game, move: move) }
-  let(:weakness_cycle) { create(:weakness_cycle, :active, user: user) }
-  let!(:weakness_event) do
-    create(:weakness_event, user: user, game: game, move: move, weakness_cycle: weakness_cycle)
+  let!(:analysis_event) { create(:analysis_event, analysis_run: analysis_run, game: game, move: move) }
+  let(:pattern_cycle) { create(:pattern_cycle, :active, user: user) }
+  let!(:pattern_occurrence) do
+    create(:pattern_occurrence, user: user, game: game, move: move, pattern_cycle: pattern_cycle)
   end
-  let(:training_plan) { create(:training_plan, :active, user: user, weakness_cycle: weakness_cycle) }
+  let(:training_plan) { create(:training_plan, :active, user: user, pattern_cycle: pattern_cycle) }
   let!(:due_assignment) do
     create(:training_assignment, training_plan: training_plan, due_on: Date.current, status: :pending)
   end
@@ -24,9 +24,9 @@ RSpec.describe "Domain model checkpoint", type: :integration do
       :progress_snapshot,
       user: user,
       training_plan: training_plan,
-      weakness_cycle: weakness_cycle,
+      pattern_cycle: pattern_cycle,
       snapshot_at: 2.days.ago,
-      weakness_frequency: 0.6
+      pattern_frequency: 0.6
     )
   end
   let!(:newer_snapshot) do
@@ -34,9 +34,9 @@ RSpec.describe "Domain model checkpoint", type: :integration do
       :progress_snapshot,
       user: user,
       training_plan: training_plan,
-      weakness_cycle: weakness_cycle,
+      pattern_cycle: pattern_cycle,
       snapshot_at: 1.day.ago,
-      weakness_frequency: 0.4
+      pattern_frequency: 0.4
     )
   end
 
@@ -84,12 +84,12 @@ RSpec.describe "Domain model checkpoint", type: :integration do
 
   it "answers what Stockfish found" do
     expect(analysis_run.move_evaluations).to contain_exactly(move_evaluation)
-    expect(analysis_run.candidate_events).to contain_exactly(candidate_event)
+    expect(analysis_run.analysis_events).to contain_exactly(analysis_event)
   end
 
   it "answers what weaknesses were detected" do
-    expect(user.weakness_cycles).to include(weakness_cycle)
-    expect(weakness_cycle.weakness_events).to contain_exactly(weakness_event)
+    expect(user.pattern_cycles).to include(pattern_cycle)
+    expect(pattern_cycle.pattern_occurrences).to contain_exactly(pattern_occurrence)
   end
 
   it "answers which weakness is being trained" do
@@ -106,6 +106,6 @@ RSpec.describe "Domain model checkpoint", type: :integration do
     snapshots = user.progress_snapshots.order(:snapshot_at)
 
     expect(snapshots).to eq([ older_snapshot, newer_snapshot ])
-    expect(snapshots.last.weakness_frequency).to be < snapshots.first.weakness_frequency
+    expect(snapshots.last.pattern_frequency).to be < snapshots.first.pattern_frequency
   end
 end

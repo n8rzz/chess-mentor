@@ -86,7 +86,7 @@ Use a freshly imported game or trigger reconciliation.
 | 4.1 | Import games (M3) with worker running | `analyze_game` jobs enqueued after import succeeds |
 | 4.2 | Wait for worker (~30s–2min per game) | `AnalysisRun` status **succeeded** |
 | 4.3 | Refresh game detail | Move evaluations and classifications appear |
-| 4.4 | Check DB | `moves`, `move_evaluations`, `candidate_events` rows for the game |
+| 4.4 | Check DB | `moves`, `move_evaluations`, `analysis_events` rows for the game |
 
 **If analysis stalls:** worker logs, Stockfish path, corrupt PGN errors in `analysis_runs.error_message`.
 

@@ -1,14 +1,14 @@
 from datetime import datetime, timedelta, timezone
 
 from worker.weakness_package.aggregator import (
-    aggregate_by_theme,
+    aggregate_by_pattern,
     build_cycles,
     classify_artifacts,
     compute_cycle_severity,
     dedupe_by_game_and_theme,
 )
-from worker.weakness_package.constants import CYCLE_STATUS, WEAKNESS_THEME
-from worker.weakness_package.types import ClassifiedWeakness, MoveArtifact, ThemeAggregation
+from worker.weakness_package.constants import CYCLE_STATUS, PATTERN
+from worker.weakness_package.types import ClassifiedPattern, MoveArtifact, PatternAggregation
 
 
 def _classified(
@@ -18,13 +18,13 @@ def _classified(
     move_id: str,
     played_at: datetime,
     severity: float = 0.7,
-) -> ClassifiedWeakness:
-    return ClassifiedWeakness(
+) -> ClassifiedPattern:
+    return ClassifiedPattern(
         user_id="user-1",
         game_id=game_id,
         move_id=move_id,
-        primary_theme=theme,
-        secondary_theme=None,
+        primary_pattern=theme,
+        secondary_pattern=None,
         severity=severity,
         phase=1,
         occurred_under_time_pressure=False,
@@ -34,27 +34,27 @@ def _classified(
     )
 
 
-def test_aggregate_by_theme_groups_events():
+def test_aggregate_by_pattern_groups_events():
     now = datetime.now(timezone.utc)
     events = [
-        _classified(theme=WEAKNESS_THEME["missed_tactics"], game_id="g1", move_id="m1", played_at=now),
-        _classified(theme=WEAKNESS_THEME["missed_tactics"], game_id="g2", move_id="m2", played_at=now),
-        _classified(theme=WEAKNESS_THEME["hanging_pieces"], game_id="g1", move_id="m3", played_at=now),
+        _classified(theme=PATTERN["missed_tactics"], game_id="g1", move_id="m1", played_at=now),
+        _classified(theme=PATTERN["missed_tactics"], game_id="g2", move_id="m2", played_at=now),
+        _classified(theme=PATTERN["hanging_pieces"], game_id="g1", move_id="m3", played_at=now),
     ]
-    aggregations = aggregate_by_theme(events, games_analyzed=3)
-    by_theme = {item.theme: item for item in aggregations}
-    assert by_theme[WEAKNESS_THEME["missed_tactics"]].occurrences == 2
-    assert by_theme[WEAKNESS_THEME["hanging_pieces"]].occurrences == 1
+    aggregations = aggregate_by_pattern(events, games_analyzed=3)
+    by_pattern = {item.pattern: item for item in aggregations}
+    assert by_pattern[PATTERN["missed_tactics"]].occurrences == 2
+    assert by_pattern[PATTERN["hanging_pieces"]].occurrences == 1
 
 
 def test_build_cycles_promotes_active_when_recurring():
     now = datetime.now(timezone.utc)
     events = [
-        _classified(theme=WEAKNESS_THEME["missed_tactics"], game_id="g1", move_id="m1", played_at=now),
-        _classified(theme=WEAKNESS_THEME["missed_tactics"], game_id="g2", move_id="m2", played_at=now - timedelta(days=1)),
-        _classified(theme=WEAKNESS_THEME["missed_tactics"], game_id="g3", move_id="m3", played_at=now - timedelta(days=2)),
+        _classified(theme=PATTERN["missed_tactics"], game_id="g1", move_id="m1", played_at=now),
+        _classified(theme=PATTERN["missed_tactics"], game_id="g2", move_id="m2", played_at=now - timedelta(days=1)),
+        _classified(theme=PATTERN["missed_tactics"], game_id="g3", move_id="m3", played_at=now - timedelta(days=2)),
     ]
-    aggregations = aggregate_by_theme(events, games_analyzed=5)
+    aggregations = aggregate_by_pattern(events, games_analyzed=5)
     cycles = build_cycles(aggregations, games_analyzed=5, archived_cycle_numbers={})
     assert len(cycles) == 1
     assert cycles[0].status == CYCLE_STATUS["active"]
@@ -64,19 +64,19 @@ def test_build_cycles_promotes_active_when_recurring():
 def test_build_cycles_stays_detected_below_threshold():
     now = datetime.now(timezone.utc)
     events = [
-        _classified(theme=WEAKNESS_THEME["missed_tactics"], game_id="g1", move_id="m1", played_at=now),
+        _classified(theme=PATTERN["missed_tactics"], game_id="g1", move_id="m1", played_at=now),
     ]
-    aggregations = aggregate_by_theme(events, games_analyzed=5)
+    aggregations = aggregate_by_pattern(events, games_analyzed=5)
     cycles = build_cycles(aggregations, games_analyzed=5, archived_cycle_numbers={})
     assert cycles[0].status == CYCLE_STATUS["detected"]
 
 
 def test_compute_cycle_severity_is_bounded():
     now = datetime.now(timezone.utc)
-    aggregation = ThemeAggregation(
-        theme=WEAKNESS_THEME["missed_tactics"],
+    aggregation = PatternAggregation(
+        pattern=PATTERN["missed_tactics"],
         events=[
-            _classified(theme=WEAKNESS_THEME["missed_tactics"], game_id="g1", move_id="m1", played_at=now),
+            _classified(theme=PATTERN["missed_tactics"], game_id="g1", move_id="m1", played_at=now),
         ],
     )
     severity = compute_cycle_severity(aggregation, games_analyzed=5, reference_time=now)
@@ -89,7 +89,7 @@ def test_classify_artifacts_returns_empty_for_no_signals():
 
 def test_dedupe_by_game_and_theme_keeps_highest_severity_per_game():
     now = datetime.now(timezone.utc)
-    theme = WEAKNESS_THEME["opening_development"]
+    theme = PATTERN["opening_development"]
     events = [
         _classified(theme=theme, game_id="g1", move_id="m1", played_at=now, severity=0.4),
         _classified(theme=theme, game_id="g1", move_id="m2", played_at=now, severity=0.8),
@@ -107,10 +107,10 @@ def test_dedupe_by_game_and_theme_keeps_highest_severity_per_game():
 def test_build_cycles_frequency_is_capped_by_games_analyzed():
     now = datetime.now(timezone.utc)
     events = [
-        _classified(theme=WEAKNESS_THEME["king_safety"], game_id=f"g{i}", move_id=f"m{i}", played_at=now)
+        _classified(theme=PATTERN["king_safety"], game_id=f"g{i}", move_id=f"m{i}", played_at=now)
         for i in range(5)
     ]
-    aggregations = aggregate_by_theme(events, games_analyzed=12)
+    aggregations = aggregate_by_pattern(events, games_analyzed=12)
     cycles = build_cycles(aggregations, games_analyzed=12, archived_cycle_numbers={})
 
     assert cycles[0].frequency == round(5 / 12, 4)

@@ -74,6 +74,9 @@ module PythonPipelineHelpers
   end
 
   def run_python_import(import_batch_id:, use_fixture: true)
+    batch = ImportBatch.includes(:provider_account).find(import_batch_id)
+    access_token_literal = batch.provider_account.access_token.to_json
+
     fixture_setup = if use_fixture
       <<~PY
         from unittest.mock import patch
@@ -106,7 +109,7 @@ module PythonPipelineHelpers
       config = load_config()
       with patch_ctx:
           with psycopg.connect(config.database_url) as conn:
-              run_import(conn, "#{import_batch_id}")
+              run_import(conn, "#{import_batch_id}", access_token=#{access_token_literal})
     PY
 
     run_python_script(script)

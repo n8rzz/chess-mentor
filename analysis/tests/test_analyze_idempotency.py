@@ -53,8 +53,8 @@ def test_repository_load_and_query_helpers(db_conn):
     assert loaded is not None
     assert loaded[1] == 20
 
-    assert repo.move_has_candidate_events(partial["analysis_run_id"], user_move.id)
-    assert repo.count_candidate_events(partial["analysis_run_id"]) == 2
+    assert repo.move_has_analysis_events(partial["analysis_run_id"], user_move.id)
+    assert repo.count_analysis_events(partial["analysis_run_id"]) == 2
 
 
 @pytest.mark.skipif(not stockfish_available, reason="Stockfish binary not available")

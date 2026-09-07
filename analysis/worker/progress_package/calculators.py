@@ -19,7 +19,7 @@ def compute_training_completion_percentage(completed_count: int, due_through_tod
     return round((completed_count / due_through_today) * 100.0, 2)
 
 
-def compute_weakness_frequency(current_occurrences: int, detection_window_games: int | None, metadata: dict[str, Any]) -> float:
+def compute_pattern_frequency(current_occurrences: int, detection_window_games: int | None, metadata: dict[str, Any]) -> float:
     stored = metadata.get("frequency")
     if stored is not None:
         return round(float(stored), 4)

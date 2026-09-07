@@ -12,36 +12,36 @@
 #  improvement_threshold :decimal(5, 2)
 #  managed_threshold     :decimal(5, 2)
 #  metadata              :jsonb            not null
+#  pattern               :integer          not null
 #  progress_percentage   :decimal(5, 2)
 #  starts_at             :datetime
 #  status                :integer          default("recommended"), not null
-#  theme                 :integer          not null
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
+#  pattern_cycle_id      :string           not null
 #  user_id               :string           not null
-#  weakness_cycle_id     :string           not null
 #
 # Indexes
 #
+#  index_training_plans_on_pattern_cycle_id    (pattern_cycle_id)
 #  index_training_plans_on_user_id             (user_id)
 #  index_training_plans_on_user_id_and_status  (user_id,status)
-#  index_training_plans_on_weakness_cycle_id   (weakness_cycle_id)
 #  index_training_plans_one_active_per_user    (user_id) UNIQUE WHERE (status = 1)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (pattern_cycle_id => pattern_cycles.id) ON DELETE => cascade
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
-#  fk_rails_...  (weakness_cycle_id => weakness_cycles.id) ON DELETE => cascade
 #
 class TrainingPlan < ApplicationRecord
-  include WeaknessThemeable
+  include Patternable
 
   DEFAULT_IMPROVEMENT_THRESHOLD = 0.30
   DEFAULT_MANAGED_THRESHOLD = 0.75
   PLAN_DURATION_DAYS = 14
 
   belongs_to :user
-  belongs_to :weakness_cycle
+  belongs_to :pattern_cycle
   has_many :training_assignments, dependent: :destroy
   has_many :progress_snapshots, dependent: :nullify
 

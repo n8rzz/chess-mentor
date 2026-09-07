@@ -8,13 +8,13 @@ module TrainingPlans
 
     ELIGIBLE_CYCLE_STATUSES = Recommend::ELIGIBLE_CYCLE_STATUSES
 
-    def self.call(user:, weakness_cycle:)
-      new(user:, weakness_cycle:).call
+    def self.call(user:, pattern_cycle:)
+      new(user:, pattern_cycle:).call
     end
 
-    def initialize(user:, weakness_cycle:)
+    def initialize(user:, pattern_cycle:)
       @user = user
-      @weakness_cycle = weakness_cycle
+      @pattern_cycle = pattern_cycle
     end
 
     def call
@@ -33,13 +33,13 @@ module TrainingPlans
     private
 
     def validate!
-      raise ActiveRecord::RecordNotFound unless @weakness_cycle.user_id == @user.id
+      raise ActiveRecord::RecordNotFound unless @pattern_cycle.user_id == @user.id
       raise IneligibleCycleError, "Weakness cycle is not eligible for a training plan" unless eligible_cycle?
       raise ActivePlanExistsError, "User already has an active or paused training plan" if blocking_plan?
     end
 
     def eligible_cycle?
-      ELIGIBLE_CYCLE_STATUSES.include?(@weakness_cycle.status.to_sym)
+      ELIGIBLE_CYCLE_STATUSES.include?(@pattern_cycle.status.to_sym)
     end
 
     def blocking_plan?
@@ -55,12 +55,12 @@ module TrainingPlans
     def create_plan!
       TrainingPlan.create!(
         user: @user,
-        weakness_cycle: @weakness_cycle,
-        theme: @weakness_cycle.theme,
+        pattern_cycle: @pattern_cycle,
+        pattern: @pattern_cycle.pattern,
         status: :active,
         starts_at: Time.current,
-        baseline_occurrences: @weakness_cycle.baseline_occurrences,
-        current_occurrences: @weakness_cycle.current_occurrences,
+        baseline_occurrences: @pattern_cycle.baseline_occurrences,
+        current_occurrences: @pattern_cycle.current_occurrences,
         improvement_threshold: TrainingPlan::DEFAULT_IMPROVEMENT_THRESHOLD,
         managed_threshold: TrainingPlan::DEFAULT_MANAGED_THRESHOLD,
         progress_percentage: 0.0,

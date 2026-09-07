@@ -10,36 +10,36 @@ from worker.weakness_package.constants import (
     MISTAKE_CPL,
     OPENING_MOVE_LIMIT,
     TACTICAL_VALUE_MIN_CPL,
-    WEAKNESS_THEME,
+    PATTERN,
 )
-from worker.weakness_package.types import CandidateEventRow, ClassifiedWeakness, MoveArtifact
+from worker.weakness_package.types import AnalysisEventRow, ClassifiedPattern, MoveArtifact
 
 
-def classify_move(artifact: MoveArtifact) -> ClassifiedWeakness | None:
-    events_by_type = _group_events_by_type(artifact.candidate_events)
+def classify_move(artifact: MoveArtifact) -> ClassifiedPattern | None:
+    events_by_type = _group_events_by_type(artifact.analysis_events)
     evaluation = artifact.evaluation
     cpl = evaluation.centipawn_loss if evaluation else 0
     under_pressure = EVENT_TYPE["time_pressure"] in events_by_type
 
-    primary = _resolve_primary_theme(artifact, events_by_type, cpl)
+    primary = _resolve_primary_pattern(artifact, events_by_type, cpl)
     if primary is None:
         return None
 
-    secondary = WEAKNESS_THEME["time_pressure"] if under_pressure and primary != WEAKNESS_THEME["time_pressure"] else None
+    secondary = PATTERN["time_pressure"] if under_pressure and primary != PATTERN["time_pressure"] else None
     phase = _derive_phase(artifact.move_number, events_by_type)
     severity = _event_severity(primary, events_by_type, cpl)
-    theme_key = _theme_key(primary)
+    pattern_key = _theme_key(primary)
 
-    return ClassifiedWeakness(
+    return ClassifiedPattern(
         user_id=artifact.user_id,
         game_id=artifact.game_id,
         move_id=artifact.move_id,
-        primary_theme=primary,
-        secondary_theme=secondary,
+        primary_pattern=primary,
+        secondary_pattern=secondary,
         severity=round(min(1.0, max(0.0, severity)), 2),
         phase=phase,
         occurred_under_time_pressure=under_pressure,
-        explanation_key=f"{theme_key}.v1",
+            explanation_key=f"{pattern_key}.v1",
         metadata=_build_metadata(events_by_type, evaluation),
         played_at=artifact.played_at,
     )
@@ -50,11 +50,11 @@ def classify_time_pressure_standalone(
     *,
     baseline_mistake_rate: float,
     pressure_mistake_rate: float,
-) -> ClassifiedWeakness | None:
+) -> ClassifiedPattern | None:
     if pressure_mistake_rate <= baseline_mistake_rate:
         return None
 
-    events_by_type = _group_events_by_type(artifact.candidate_events)
+    events_by_type = _group_events_by_type(artifact.analysis_events)
     if EVENT_TYPE["time_pressure"] not in events_by_type:
         return None
 
@@ -68,12 +68,12 @@ def classify_time_pressure_standalone(
     cpl = evaluation.centipawn_loss
     severity = min(1.0, 0.5 + (cpl / 600.0))
 
-    return ClassifiedWeakness(
+    return ClassifiedPattern(
         user_id=artifact.user_id,
         game_id=artifact.game_id,
         move_id=artifact.move_id,
-        primary_theme=WEAKNESS_THEME["time_pressure"],
-        secondary_theme=None,
+        primary_pattern=PATTERN["time_pressure"],
+        secondary_pattern=None,
         severity=round(severity, 2),
         phase=_derive_phase(artifact.move_number, events_by_type),
         occurred_under_time_pressure=True,
@@ -88,33 +88,33 @@ def classify_time_pressure_standalone(
     )
 
 
-def _resolve_primary_theme(
+def _resolve_primary_pattern(
     artifact: MoveArtifact,
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
     cpl: int,
 ) -> int | None:
     if _matches_bad_trades(artifact, events_by_type, cpl):
-        return WEAKNESS_THEME["bad_trades"]
+        return PATTERN["bad_trades"]
     if _matches_hanging_pieces(events_by_type, cpl):
-        return WEAKNESS_THEME["hanging_pieces"]
+        return PATTERN["hanging_pieces"]
     if _matches_missed_tactics(events_by_type, cpl):
-        return WEAKNESS_THEME["missed_tactics"]
+        return PATTERN["missed_tactics"]
     if _matches_ignored_threats(events_by_type, cpl):
-        return WEAKNESS_THEME["ignored_threats"]
+        return PATTERN["ignored_threats"]
     if _matches_pawn_structure(events_by_type, cpl):
-        return WEAKNESS_THEME["pawn_structure"]
+        return PATTERN["pawn_structure"]
     if EVENT_TYPE["endgame_phase"] in events_by_type:
-        return WEAKNESS_THEME["endgame_technique"]
+        return PATTERN["endgame_technique"]
     if _matches_opening_development(artifact, events_by_type):
-        return WEAKNESS_THEME["opening_development"]
+        return PATTERN["opening_development"]
     if _matches_king_safety(artifact, events_by_type):
-        return WEAKNESS_THEME["king_safety"]
+        return PATTERN["king_safety"]
     return None
 
 
 def _matches_bad_trades(
     artifact: MoveArtifact,
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
     cpl: int,
 ) -> bool:
     material_events = events_by_type.get(EVENT_TYPE["material"], [])
@@ -133,7 +133,7 @@ def _matches_bad_trades(
 
 
 def _matches_hanging_pieces(
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
     cpl: int,
 ) -> bool:
     material_events = events_by_type.get(EVENT_TYPE["material"], [])
@@ -148,7 +148,7 @@ def _matches_hanging_pieces(
 
 
 def _matches_missed_tactics(
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
     cpl: int,
 ) -> bool:
     tactical_events = events_by_type.get(EVENT_TYPE["tactical"], [])
@@ -160,7 +160,7 @@ def _matches_missed_tactics(
 
 
 def _matches_ignored_threats(
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
     cpl: int,
 ) -> bool:
     threat_events = events_by_type.get(EVENT_TYPE["threat"], [])
@@ -168,7 +168,7 @@ def _matches_ignored_threats(
 
 
 def _matches_pawn_structure(
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
     cpl: int,
 ) -> bool:
     pawn_events = events_by_type.get(EVENT_TYPE["pawn_structure"], [])
@@ -179,7 +179,7 @@ def _matches_pawn_structure(
 
 def _matches_opening_development(
     artifact: MoveArtifact,
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
 ) -> bool:
     if artifact.move_number > OPENING_MOVE_LIMIT:
         return False
@@ -194,7 +194,7 @@ def _matches_opening_development(
 
 def _matches_king_safety(
     artifact: MoveArtifact,
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
 ) -> bool:
     if _matches_opening_development(artifact, events_by_type):
         return False
@@ -203,7 +203,7 @@ def _matches_king_safety(
     return bool(king_events)
 
 
-def _derive_phase(move_number: int, events_by_type: dict[int, list[CandidateEventRow]]) -> int:
+def _derive_phase(move_number: int, events_by_type: dict[int, list[AnalysisEventRow]]) -> int:
     if EVENT_TYPE["endgame_phase"] in events_by_type:
         return GAME_PHASE["endgame"]
     if move_number <= OPENING_MOVE_LIMIT:
@@ -215,7 +215,7 @@ def _derive_phase(move_number: int, events_by_type: dict[int, list[CandidateEven
 
 def _event_severity(
     primary: int,
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
     cpl: int,
 ) -> float:
     event_type = _primary_to_event_type(primary)
@@ -229,35 +229,35 @@ def _event_severity(
 
 def _primary_to_event_type(primary: int) -> int | None:
     mapping = {
-        WEAKNESS_THEME["hanging_pieces"]: EVENT_TYPE["material"],
-        WEAKNESS_THEME["missed_tactics"]: EVENT_TYPE["tactical"],
-        WEAKNESS_THEME["ignored_threats"]: EVENT_TYPE["threat"],
-        WEAKNESS_THEME["opening_development"]: EVENT_TYPE["king_safety"],
-        WEAKNESS_THEME["king_safety"]: EVENT_TYPE["king_safety"],
-        WEAKNESS_THEME["bad_trades"]: EVENT_TYPE["material"],
-        WEAKNESS_THEME["pawn_structure"]: EVENT_TYPE["pawn_structure"],
-        WEAKNESS_THEME["endgame_technique"]: EVENT_TYPE["endgame_phase"],
-        WEAKNESS_THEME["time_pressure"]: EVENT_TYPE["time_pressure"],
+        PATTERN["hanging_pieces"]: EVENT_TYPE["material"],
+        PATTERN["missed_tactics"]: EVENT_TYPE["tactical"],
+        PATTERN["ignored_threats"]: EVENT_TYPE["threat"],
+        PATTERN["opening_development"]: EVENT_TYPE["king_safety"],
+        PATTERN["king_safety"]: EVENT_TYPE["king_safety"],
+        PATTERN["bad_trades"]: EVENT_TYPE["material"],
+        PATTERN["pawn_structure"]: EVENT_TYPE["pawn_structure"],
+        PATTERN["endgame_technique"]: EVENT_TYPE["endgame_phase"],
+        PATTERN["time_pressure"]: EVENT_TYPE["time_pressure"],
     }
     return mapping.get(primary)
 
 
 def _theme_key(theme: int) -> str:
-    for key, value in WEAKNESS_THEME.items():
+    for key, value in PATTERN.items():
         if value == theme:
             return key
     return "unknown"
 
 
-def _group_events_by_type(events: tuple[CandidateEventRow, ...]) -> dict[int, list[CandidateEventRow]]:
-    grouped: dict[int, list[CandidateEventRow]] = {}
+def _group_events_by_type(events: tuple[AnalysisEventRow, ...]) -> dict[int, list[AnalysisEventRow]]:
+    grouped: dict[int, list[AnalysisEventRow]] = {}
     for event in events:
         grouped.setdefault(event.event_type, []).append(event)
     return grouped
 
 
 def _build_metadata(
-    events_by_type: dict[int, list[CandidateEventRow]],
+    events_by_type: dict[int, list[AnalysisEventRow]],
     evaluation: Any,
 ) -> dict[str, Any]:
     metadata: dict[str, Any] = {}

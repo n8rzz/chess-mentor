@@ -20,7 +20,7 @@ STATUS_FAILED = 4
 JOB_TYPE_KEYS = {
     0: "import_games",
     1: "analyze_game",
-    2: "classify_weaknesses",
+    2: "classify_patterns",
     3: "generate_training_plan",
     4: "update_progress_snapshots",
 }
@@ -108,6 +108,7 @@ def mark_succeeded(
         UPDATE system_jobs
         SET status = %s,
             result = %s::jsonb,
+            payload = payload - 'access_token',
             finished_at = %s,
             updated_at = %s
         WHERE id = %s
@@ -129,6 +130,7 @@ def mark_failed(
         SET status = %s,
             error_message = %s,
             error_details = %s::jsonb,
+            payload = payload - 'access_token',
             finished_at = %s,
             updated_at = %s
         WHERE id = %s

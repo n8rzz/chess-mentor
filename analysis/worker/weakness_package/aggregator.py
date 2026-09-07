@@ -12,11 +12,11 @@ from worker.weakness_package.constants import (
 )
 from worker.weakness_package.cycles import build_cycle
 from worker.weakness_package.theme_rules import classify_move, classify_time_pressure_standalone
-from worker.weakness_package.types import ClassifiedWeakness, CycleBuildResult, MoveArtifact, ThemeAggregation
+from worker.weakness_package.types import ClassifiedPattern, CycleBuildResult, MoveArtifact, PatternAggregation
 
 
-def classify_artifacts(artifacts: list[MoveArtifact]) -> list[ClassifiedWeakness]:
-    classified: list[ClassifiedWeakness] = []
+def classify_artifacts(artifacts: list[MoveArtifact]) -> list[ClassifiedPattern]:
+    classified: list[ClassifiedPattern] = []
     seen_moves: set[str] = set()
 
     for artifact in artifacts:
@@ -42,40 +42,40 @@ def classify_artifacts(artifacts: list[MoveArtifact]) -> list[ClassifiedWeakness
     return dedupe_by_game_and_theme(classified)
 
 
-def dedupe_by_game_and_theme(classified: list[ClassifiedWeakness]) -> list[ClassifiedWeakness]:
+def dedupe_by_game_and_theme(classified: list[ClassifiedPattern]) -> list[ClassifiedPattern]:
     """Keep one weakness event per game per theme (highest severity).
 
     Recurring weaknesses are patterns across games, not per-move noise. Without
     this, detectors like opening delayed-castling fire on many plies in the same game.
     """
-    best_by_key: dict[tuple[str, int], ClassifiedWeakness] = {}
+    best_by_key: dict[tuple[str, int], ClassifiedPattern] = {}
     for event in classified:
-        key = (event.game_id, event.primary_theme)
+        key = (event.game_id, event.primary_pattern)
         existing = best_by_key.get(key)
         if existing is None or event.severity > existing.severity:
             best_by_key[key] = event
     return sorted(best_by_key.values(), key=lambda item: item.played_at)
 
 
-def aggregate_by_theme(
-    classified: list[ClassifiedWeakness],
+def aggregate_by_pattern(
+    classified: list[ClassifiedPattern],
     *,
     games_analyzed: int,
     reference_time: datetime | None = None,
-) -> list[ThemeAggregation]:
-    grouped: dict[int, ThemeAggregation] = {}
+) -> list[PatternAggregation]:
+    grouped: dict[int, PatternAggregation] = {}
     for event in classified:
-        bucket = grouped.setdefault(event.primary_theme, ThemeAggregation(theme=event.primary_theme))
+        bucket = grouped.setdefault(event.primary_pattern, PatternAggregation(pattern=event.primary_pattern))
         bucket.events.append(event)
 
     for aggregation in grouped.values():
         aggregation.events.sort(key=lambda item: item.played_at)
 
-    return sorted(grouped.values(), key=lambda item: item.theme)
+    return sorted(grouped.values(), key=lambda item: item.pattern)
 
 
 def build_cycles(
-    aggregations: list[ThemeAggregation],
+    aggregations: list[PatternAggregation],
     *,
     games_analyzed: int,
     archived_cycle_numbers: dict[int, int],
@@ -90,7 +90,7 @@ def build_cycles(
 
         frequency = aggregation.games_with_occurrences / max(games_analyzed, 1)
         severity = compute_cycle_severity(aggregation, games_analyzed=games_analyzed, reference_time=now)
-        prior_cycle = archived_cycle_numbers.get(aggregation.theme, 0)
+        prior_cycle = archived_cycle_numbers.get(aggregation.pattern, 0)
         cycle_number = prior_cycle + 1 if prior_cycle else 1
 
         results.append(
@@ -107,7 +107,7 @@ def build_cycles(
 
 
 def compute_cycle_severity(
-    aggregation: ThemeAggregation,
+    aggregation: PatternAggregation,
     *,
     games_analyzed: int,
     reference_time: datetime,
@@ -159,7 +159,7 @@ def _time_pressure_mistake_rates(artifacts: list[MoveArtifact]) -> tuple[float, 
             total_mistakes += 1
 
         under_pressure = any(
-            event.event_type == EVENT_TYPE["time_pressure"] for event in artifact.candidate_events
+            event.event_type == EVENT_TYPE["time_pressure"] for event in artifact.analysis_events
         )
         if under_pressure:
             pressure_moves += 1
@@ -182,7 +182,7 @@ def _standalone_time_pressure_qualifies(
     pressure_mistakes = 0
     for artifact in artifacts:
         under_pressure = any(
-            event.event_type == EVENT_TYPE["time_pressure"] for event in artifact.candidate_events
+            event.event_type == EVENT_TYPE["time_pressure"] for event in artifact.analysis_events
         )
         if not under_pressure or artifact.evaluation is None:
             continue

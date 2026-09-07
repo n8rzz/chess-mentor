@@ -24,7 +24,7 @@ RSpec.describe "Analysis pipeline", type: :integration do
       run_python_analysis(analysis_run_id: analysis_run.id, game_id: game.id)
     end.to change(Move, :count).by(17)
       .and change(MoveEvaluation, :count).by(9)
-      .and change(CandidateEvent, :count).by(at_least: 0)
+      .and change(AnalysisEvent, :count).by(at_least: 0)
 
     analysis_run.reload
     expect(analysis_run).to be_succeeded

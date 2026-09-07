@@ -4,21 +4,22 @@
 #
 # Table name: analysis_runs
 #
-#  id               :string           not null, primary key
-#  analysis_version :string           not null
-#  depth            :integer          not null
-#  engine_name      :string           not null
-#  engine_version   :string           not null
-#  error_details    :jsonb
-#  error_message    :text
-#  finished_at      :datetime
-#  metadata         :jsonb            not null
-#  started_at       :datetime
-#  status           :integer          default("pending"), not null
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  game_id          :string           not null
-#  user_id          :string           not null
+#  id                     :string           not null, primary key
+#  analysis_version       :string           not null
+#  depth                  :integer          not null
+#  engine_name            :string           not null
+#  engine_version         :string           not null
+#  error_details          :jsonb
+#  error_message          :text
+#  finished_at            :datetime
+#  metadata               :jsonb            not null
+#  metric_formula_version :string           default("1.0.0"), not null
+#  started_at             :datetime
+#  status                 :integer          default("pending"), not null
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  game_id                :string           not null
+#  user_id                :string           not null
 #
 # Indexes
 #
@@ -40,7 +41,7 @@ RSpec.describe AnalysisRun, type: :model do
     it { is_expected.to belong_to(:game) }
     it { is_expected.to belong_to(:user) }
     it { is_expected.to have_many(:move_evaluations).dependent(:destroy) }
-    it { is_expected.to have_many(:candidate_events).dependent(:destroy) }
+    it { is_expected.to have_many(:analysis_events).dependent(:destroy) }
   end
 
   describe "enums" do

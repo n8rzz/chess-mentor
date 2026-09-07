@@ -9,10 +9,10 @@
 #  fen        :string           not null
 #  metadata   :jsonb            not null
 #  motif      :integer          not null
+#  pattern    :integer          not null
 #  rating     :integer
 #  solution   :text             not null
 #  source     :integer          default("curated"), not null
-#  theme      :integer          not null
 #  created_at :datetime         not null
 #  updated_at :datetime         not null
 #
@@ -29,7 +29,7 @@ RSpec.describe Puzzle, type: :model do
     it { is_expected.to define_enum_for(:source).with_values(curated: 0, user_generated: 1).backed_by_column_of_type(:integer) }
     it { is_expected.to define_enum_for(:difficulty).with_values(easy: 0, medium: 1, hard: 2).backed_by_column_of_type(:integer) }
     it do
-      expect(puzzle).to define_enum_for(:theme)
+      expect(puzzle).to define_enum_for(:pattern)
         .with_values(
           hanging_pieces: 0,
           missed_tactics: 1,

@@ -35,7 +35,7 @@ bin/dev
 
 Sign in as **`starship@example.com`** / **`skyd!ve`**.
 
-Demo weakness data from `06_demo_weaknesses.rb` (no classifier run required for §2). Live path requires successful `analyze_game` then `classify_weaknesses`.
+Demo weakness data from `06_demo_weaknesses.rb` (no classifier run required for §2). Live path requires successful `analyze_game` then `classify_patterns`.
 
 ---
 
@@ -87,10 +87,10 @@ M5-relevant specs:
 
 | Step | Action | Expected |
 | ---- | ------ | -------- |
-| 5.1 | Import + analyze a game (M3–M4) | `classify_weaknesses` job enqueued after analysis succeeds (deduped) |
+| 5.1 | Import + analyze a game (M3–M4) | `classify_patterns` job enqueued after analysis succeeds (deduped) |
 | 5.2 | Wait for worker | Job **succeeded** |
-| 5.3 | Refresh **Weaknesses** | New or updated `WeaknessCycle` rows |
-| 5.4 | Open cycle detail | `WeaknessEvent`s linked to game/move |
+| 5.3 | Refresh **Weaknesses** | New or updated `PatternCycle` rows |
+| 5.4 | Open cycle detail | `PatternOccurrence`s linked to game/move |
 
 **If cycles never appear:** confirm candidate events exist; check classifier logs; detection window may need multiple games with same theme.
 
@@ -124,7 +124,7 @@ M5-relevant specs:
 | Per-theme classifier rules | Yes | Python unit tests |
 | Determinism | Yes | Python tests |
 | Analysis → classify integration | Partial | `weakness_pipeline_spec` (skips without Stockfish) |
-| Worker queue `classify_weaknesses` E2E | **No** | Manual / pipeline subprocess |
+| Worker queue `classify_patterns` E2E | **No** | Manual / pipeline subprocess |
 | Severity trend visual accuracy | **No** | Manual spot-check |
 
 ---

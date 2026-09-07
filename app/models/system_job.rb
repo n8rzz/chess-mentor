@@ -39,7 +39,7 @@ class SystemJob < ApplicationRecord
   enum :job_type, {
     import_games: 0,
     analyze_game: 1,
-    classify_weaknesses: 2,
+    classify_patterns: 2,
     generate_training_plan: 3,
     update_progress_snapshots: 4
   }, validate: true

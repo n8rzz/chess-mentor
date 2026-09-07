@@ -13,7 +13,7 @@ from worker.weakness_package.handler import run_classification
 logger = logging.getLogger(__name__)
 
 
-def classify_weaknesses_handler(job: SystemJobRow) -> dict[str, Any]:
+def classify_patterns_handler(job: SystemJobRow) -> dict[str, Any]:
     user_id = job.payload.get("user_id") or job.user_id
     if not user_id:
         raise ValueError("user_id is required")

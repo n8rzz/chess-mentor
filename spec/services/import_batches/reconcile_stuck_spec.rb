@@ -38,6 +38,24 @@ RSpec.describe ImportBatches::ReconcileStuck do
 
       job = SystemJob.import_games.pending.last
       expect(job.payload["import_batch_id"]).to eq(batch.id)
+      expect(job.payload["access_token"]).to eq(provider_account.access_token)
+    end
+
+    it "refreshes the access token when retrying a failed import job" do
+      batch = create(:import_batch, :running, user: user, provider_account: provider_account)
+      job = create(
+        :system_job,
+        :import_games,
+        :failed,
+        user: user,
+        payload: { "import_batch_id" => batch.id },
+        attempts_count: 1
+      )
+
+      described_class.call
+
+      expect(job.reload).to be_pending
+      expect(job.payload["access_token"]).to eq(provider_account.access_token)
     end
 
     it "does not enqueue when a pending import job already exists" do

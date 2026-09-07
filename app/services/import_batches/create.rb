@@ -11,6 +11,7 @@ module ImportBatches
     ALLOWED_DAYS = [ 7, 14, 30 ].freeze
     ALLOWED_TIME_CONTROLS = %w[bullet blitz rapid classical].freeze
     MAX_GAMES_LIMIT = 30
+    SYNC_OVERLAP = 1.minute
 
     def self.call(user:, provider_account:, days:, time_controls:, max_games: MAX_GAMES_LIMIT)
       new(user:, provider_account:, days:, time_controls:, max_games:).call
@@ -33,7 +34,7 @@ module ImportBatches
           user: @user,
           provider_account: @provider_account,
           provider: @provider_account.provider,
-          requested_since: @days.days.ago,
+          requested_since: requested_since,
           requested_until: Time.current,
           max_games: @max_games,
           time_controls: @time_controls,
@@ -43,7 +44,7 @@ module ImportBatches
         SystemJobs::Create.call(
           user: @user,
           job_type: :import_games,
-          payload: { "import_batch_id" => batch.id }
+          payload: JobPayload.for(batch: batch, provider_account: @provider_account)
         )
       end
 
@@ -51,6 +52,20 @@ module ImportBatches
     end
 
     private
+
+    def requested_since
+      watermark = sync_watermark
+      lookback = @days.days.ago
+
+      return lookback if watermark.blank?
+
+      [ watermark - SYNC_OVERLAP, lookback ].max
+    end
+
+    def sync_watermark
+      newest_game_played_at = @provider_account.games.maximum(:played_at)
+      [ @provider_account.last_imported_at, newest_game_played_at ].compact.max
+    end
 
     def validate!
       raise ActiveRecord::RecordNotFound unless @provider_account.user_id == @user.id

@@ -5,11 +5,11 @@ from worker.jobs import SystemJobRow
 from worker.training_handlers import generate_training_plan_handler
 from worker.training_package.constants import ASSIGNMENTS_PER_DAY, PLAN_DURATION_DAYS
 from worker.training_package.handler import run_plan_generation
-from worker.weakness_package.constants import WEAKNESS_THEME
+from worker.weakness_package.constants import PATTERN
 from db_helpers import new_id, seed_import_batch
 
 
-def _seed_puzzles(conn, theme: int, count: int = 5) -> list[str]:
+def _seed_puzzles(conn, pattern: int, count: int = 5) -> list[str]:
     now = datetime.now(timezone.utc)
     puzzle_ids = []
     for index in range(count):
@@ -18,7 +18,7 @@ def _seed_puzzles(conn, theme: int, count: int = 5) -> list[str]:
         conn.execute(
             """
             INSERT INTO puzzles (
-              id, source, fen, solution, theme, motif, rating, difficulty, metadata,
+              id, source, fen, solution, pattern, motif, rating, difficulty, metadata,
               created_at, updated_at
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
             """,
@@ -27,11 +27,11 @@ def _seed_puzzles(conn, theme: int, count: int = 5) -> list[str]:
                 0,
                 "6k1/5ppp/8/8/8/8/5PPP/5RK1 w - - 0 1",
                 "f1f8",
-                theme,
+                pattern,
                 0,
                 1000 + index * 50,
                 0,
-                json.dumps({"seed_key": f"test_{theme}_{index}"}),
+                json.dumps({"seed_key": f"test_{pattern}_{index}"}),
                 now,
                 now,
             ),
@@ -46,7 +46,7 @@ def _seed_training_plan(conn) -> dict[str, str]:
     plan_id = new_id()
     game_id = new_id()
     move_id = new_id()
-    theme = WEAKNESS_THEME["missed_tactics"]
+    pattern = PATTERN["missed_tactics"]
 
     conn.execute(
         """
@@ -101,8 +101,8 @@ def _seed_training_plan(conn) -> dict[str, str]:
     )
     conn.execute(
         """
-        INSERT INTO weakness_cycles (
-          id, user_id, theme, status, cycle_number,
+        INSERT INTO pattern_cycles (
+          id, user_id, pattern, status, cycle_number,
           baseline_occurrences, current_occurrences,
           baseline_severity, current_severity,
           detection_window_games, detection_window_days,
@@ -118,7 +118,7 @@ def _seed_training_plan(conn) -> dict[str, str]:
         (
             cycle_id,
             seed["user_id"],
-            theme,
+            pattern,
             1,
             1,
             4,
@@ -135,9 +135,9 @@ def _seed_training_plan(conn) -> dict[str, str]:
     )
     conn.execute(
         """
-        INSERT INTO weakness_events (
-          id, user_id, weakness_cycle_id, game_id, move_id,
-          primary_theme, phase, severity, metadata, created_at, updated_at
+        INSERT INTO pattern_occurrences (
+          id, user_id, pattern_cycle_id, game_id, move_id,
+          primary_pattern, phase, severity, metadata, created_at, updated_at
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
         """,
         (
@@ -146,7 +146,7 @@ def _seed_training_plan(conn) -> dict[str, str]:
             cycle_id,
             game_id,
             move_id,
-            theme,
+            pattern,
             1,
             0.7,
             json.dumps({}),
@@ -157,7 +157,7 @@ def _seed_training_plan(conn) -> dict[str, str]:
     conn.execute(
         """
         INSERT INTO training_plans (
-          id, user_id, weakness_cycle_id, theme, status,
+          id, user_id, pattern_cycle_id, pattern, status,
           baseline_occurrences, current_occurrences, metadata,
           created_at, updated_at
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
@@ -166,7 +166,7 @@ def _seed_training_plan(conn) -> dict[str, str]:
             plan_id,
             seed["user_id"],
             cycle_id,
-            theme,
+            pattern,
             1,
             0,
             0,
@@ -175,7 +175,7 @@ def _seed_training_plan(conn) -> dict[str, str]:
             now,
         ),
     )
-    _seed_puzzles(conn, theme)
+    _seed_puzzles(conn, pattern)
 
     return {"training_plan_id": plan_id, "user_id": seed["user_id"]}
 

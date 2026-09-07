@@ -9,12 +9,12 @@ from worker.weakness_package.constants import (
     MIN_GAMES_FOR_ACTIVE,
     MIN_OCCURRENCES_FOR_ACTIVE,
 )
-from worker.weakness_package.types import CycleBuildResult, ThemeAggregation
+from worker.weakness_package.types import CycleBuildResult, PatternAggregation
 
 
 def build_cycle(
     *,
-    aggregation: ThemeAggregation,
+    aggregation: PatternAggregation,
     games_analyzed: int,
     frequency: float,
     severity: float,
@@ -35,7 +35,7 @@ def build_cycle(
         improvement_percentage = round(MANAGED_THRESHOLD * 100, 2)
 
     return CycleBuildResult(
-        theme=aggregation.theme,
+        pattern=aggregation.pattern,
         cycle_number=cycle_number,
         status=status,
         baseline_occurrences=occurrences,

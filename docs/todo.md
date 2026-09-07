@@ -13,10 +13,10 @@ tags:
 
 ### Domain, versioning & platform concerns
 
-- [ ] Align domain model with Game → Position → Analysis Event → Theme Occurrence → Review Period → Training Goal
-- [ ] Version analysis settings, metric formulas, and theme classifiers
-- [ ] Respect Lichess rate limits and incremental sync
-- [ ] Treat analysis/training data as private user data
+- [x] Align domain model with Game → Position → Analysis Event → Theme Occurrence → Review Period → Training Goal
+- [x] Version analysis settings, metric formulas, and theme classifiers
+- [x] Respect Lichess rate limits and incremental sync
+- [x] Treat analysis/training data as private user data
 
 ### Stockfish analysis
 

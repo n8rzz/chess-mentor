@@ -10,9 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_05_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_07_041457) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "analysis_events", id: :string, force: :cascade do |t|
+    t.string "analysis_run_id", null: false
+    t.decimal "confidence", precision: 5, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.integer "event_type", null: false
+    t.string "game_id", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "move_id", null: false
+    t.decimal "severity", precision: 5, scale: 2, null: false
+    t.datetime "updated_at", null: false
+    t.index ["analysis_run_id"], name: "index_analysis_events_on_analysis_run_id"
+    t.index ["game_id"], name: "index_analysis_events_on_game_id"
+    t.index ["move_id"], name: "index_analysis_events_on_move_id"
+  end
 
   create_table "analysis_runs", id: :string, force: :cascade do |t|
     t.string "analysis_version", null: false
@@ -25,6 +40,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_140000) do
     t.datetime "finished_at"
     t.string "game_id", null: false
     t.jsonb "metadata", default: {}, null: false
+    t.string "metric_formula_version", default: "1.0.0", null: false
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -32,21 +48,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_140000) do
     t.index ["game_id"], name: "index_analysis_runs_on_game_id"
     t.index ["user_id", "status"], name: "index_analysis_runs_on_user_id_and_status"
     t.index ["user_id"], name: "index_analysis_runs_on_user_id"
-  end
-
-  create_table "candidate_events", id: :string, force: :cascade do |t|
-    t.string "analysis_run_id", null: false
-    t.decimal "confidence", precision: 5, scale: 2, null: false
-    t.datetime "created_at", null: false
-    t.integer "event_type", null: false
-    t.string "game_id", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "move_id", null: false
-    t.decimal "severity", precision: 5, scale: 2, null: false
-    t.datetime "updated_at", null: false
-    t.index ["analysis_run_id"], name: "index_candidate_events_on_analysis_run_id"
-    t.index ["game_id"], name: "index_candidate_events_on_game_id"
-    t.index ["move_id"], name: "index_candidate_events_on_move_id"
   end
 
   create_table "games", id: :string, force: :cascade do |t|
@@ -158,25 +159,70 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_140000) do
     t.index ["game_id"], name: "index_moves_on_game_id"
   end
 
+  create_table "pattern_cycles", id: :string, force: :cascade do |t|
+    t.integer "baseline_occurrences", default: 0, null: false
+    t.decimal "baseline_severity", precision: 5, scale: 2
+    t.datetime "created_at", null: false
+    t.integer "current_occurrences", default: 0, null: false
+    t.decimal "current_severity", precision: 5, scale: 2
+    t.integer "cycle_number", default: 1, null: false
+    t.integer "detection_window_days"
+    t.integer "detection_window_games"
+    t.datetime "ended_at"
+    t.decimal "improvement_percentage", precision: 5, scale: 2
+    t.jsonb "metadata", default: {}, null: false
+    t.integer "pattern", null: false
+    t.datetime "started_at"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "user_id", null: false
+    t.index ["user_id", "pattern"], name: "index_pattern_cycles_on_user_id_and_pattern"
+    t.index ["user_id", "status"], name: "index_pattern_cycles_on_user_id_and_status"
+    t.index ["user_id"], name: "index_pattern_cycles_on_user_id"
+  end
+
+  create_table "pattern_occurrences", id: :string, force: :cascade do |t|
+    t.string "classifier"
+    t.string "classifier_version"
+    t.datetime "created_at", null: false
+    t.string "explanation_key"
+    t.string "game_id", null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "move_id", null: false
+    t.boolean "occurred_under_time_pressure", default: false, null: false
+    t.string "pattern_cycle_id", null: false
+    t.string "pattern_taxonomy_version"
+    t.integer "phase", null: false
+    t.integer "primary_pattern", null: false
+    t.integer "secondary_pattern"
+    t.decimal "severity", precision: 5, scale: 2, null: false
+    t.datetime "updated_at", null: false
+    t.string "user_id", null: false
+    t.index ["game_id"], name: "index_pattern_occurrences_on_game_id"
+    t.index ["move_id"], name: "index_pattern_occurrences_on_move_id"
+    t.index ["pattern_cycle_id"], name: "index_pattern_occurrences_on_pattern_cycle_id"
+    t.index ["user_id"], name: "index_pattern_occurrences_on_user_id"
+  end
+
   create_table "progress_snapshots", id: :string, force: :cascade do |t|
     t.decimal "average_centipawn_loss", precision: 8, scale: 2
     t.decimal "blunders_per_game", precision: 5, scale: 2
     t.datetime "created_at", null: false
     t.integer "games_analyzed_count", default: 0, null: false
     t.jsonb "metadata", default: {}, null: false
+    t.string "pattern_cycle_id"
+    t.decimal "pattern_frequency", precision: 5, scale: 2
+    t.decimal "pattern_severity", precision: 5, scale: 2
     t.integer "rating"
     t.datetime "snapshot_at", null: false
     t.integer "time_class", default: 4, null: false
     t.string "training_plan_id"
     t.datetime "updated_at", null: false
     t.string "user_id", null: false
-    t.string "weakness_cycle_id"
-    t.decimal "weakness_frequency", precision: 5, scale: 2
-    t.decimal "weakness_severity", precision: 5, scale: 2
+    t.index ["pattern_cycle_id"], name: "index_progress_snapshots_on_pattern_cycle_id"
     t.index ["training_plan_id"], name: "index_progress_snapshots_on_training_plan_id"
     t.index ["user_id", "snapshot_at"], name: "index_progress_snapshots_on_user_id_and_snapshot_at"
     t.index ["user_id"], name: "index_progress_snapshots_on_user_id"
-    t.index ["weakness_cycle_id"], name: "index_progress_snapshots_on_weakness_cycle_id"
   end
 
   create_table "provider_accounts", id: :string, force: :cascade do |t|
@@ -201,11 +247,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_140000) do
     t.string "fen", null: false
     t.jsonb "metadata", default: {}, null: false
     t.integer "motif", null: false
+    t.integer "pattern", null: false
     t.integer "rating"
     t.text "solution", null: false
     t.integer "source", default: 0, null: false
-    t.integer "theme", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "review_period_games", id: :string, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "game_id", null: false
+    t.string "review_period_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["game_id"], name: "index_review_period_games_on_game_id"
+    t.index ["review_period_id", "game_id"], name: "index_review_period_games_on_review_period_id_and_game_id", unique: true
+    t.index ["review_period_id"], name: "index_review_period_games_on_review_period_id"
+  end
+
+  create_table "review_periods", id: :string, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "ends_at", null: false
+    t.string "label", null: false
+    t.integer "max_games"
+    t.jsonb "metadata", default: {}, null: false
+    t.datetime "starts_at", null: false
+    t.integer "status", default: 0, null: false
+    t.integer "time_class"
+    t.datetime "updated_at", null: false
+    t.string "user_id", null: false
+    t.index ["user_id", "starts_at", "ends_at"], name: "index_review_periods_on_user_id_and_starts_at_and_ends_at"
+    t.index ["user_id"], name: "index_review_periods_on_user_id"
   end
 
   create_table "system_jobs", id: :string, force: :cascade do |t|
@@ -257,17 +328,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_140000) do
     t.decimal "improvement_threshold", precision: 5, scale: 2
     t.decimal "managed_threshold", precision: 5, scale: 2
     t.jsonb "metadata", default: {}, null: false
+    t.integer "pattern", null: false
+    t.string "pattern_cycle_id", null: false
     t.decimal "progress_percentage", precision: 5, scale: 2
     t.datetime "starts_at"
     t.integer "status", default: 0, null: false
-    t.integer "theme", null: false
     t.datetime "updated_at", null: false
     t.string "user_id", null: false
-    t.string "weakness_cycle_id", null: false
+    t.index ["pattern_cycle_id"], name: "index_training_plans_on_pattern_cycle_id"
     t.index ["user_id", "status"], name: "index_training_plans_on_user_id_and_status"
     t.index ["user_id"], name: "index_training_plans_on_user_id"
     t.index ["user_id"], name: "index_training_plans_one_active_per_user", unique: true, where: "(status = 1)"
-    t.index ["weakness_cycle_id"], name: "index_training_plans_on_weakness_cycle_id"
   end
 
   create_table "users", id: :string, force: :cascade do |t|
@@ -290,53 +361,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_140000) do
     t.index ["username"], name: "index_users_on_username", unique: true
   end
 
-  create_table "weakness_cycles", id: :string, force: :cascade do |t|
-    t.integer "baseline_occurrences", default: 0, null: false
-    t.decimal "baseline_severity", precision: 5, scale: 2
-    t.datetime "created_at", null: false
-    t.integer "current_occurrences", default: 0, null: false
-    t.decimal "current_severity", precision: 5, scale: 2
-    t.integer "cycle_number", default: 1, null: false
-    t.integer "detection_window_days"
-    t.integer "detection_window_games"
-    t.datetime "ended_at"
-    t.decimal "improvement_percentage", precision: 5, scale: 2
-    t.jsonb "metadata", default: {}, null: false
-    t.datetime "started_at"
-    t.integer "status", default: 0, null: false
-    t.integer "theme", null: false
-    t.datetime "updated_at", null: false
-    t.string "user_id", null: false
-    t.index ["user_id", "status"], name: "index_weakness_cycles_on_user_id_and_status"
-    t.index ["user_id", "theme"], name: "index_weakness_cycles_on_user_id_and_theme"
-    t.index ["user_id"], name: "index_weakness_cycles_on_user_id"
-  end
-
-  create_table "weakness_events", id: :string, force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "explanation_key"
-    t.string "game_id", null: false
-    t.jsonb "metadata", default: {}, null: false
-    t.string "move_id", null: false
-    t.boolean "occurred_under_time_pressure", default: false, null: false
-    t.integer "phase", null: false
-    t.integer "primary_theme", null: false
-    t.integer "secondary_theme"
-    t.decimal "severity", precision: 5, scale: 2, null: false
-    t.datetime "updated_at", null: false
-    t.string "user_id", null: false
-    t.string "weakness_cycle_id", null: false
-    t.index ["game_id"], name: "index_weakness_events_on_game_id"
-    t.index ["move_id"], name: "index_weakness_events_on_move_id"
-    t.index ["user_id"], name: "index_weakness_events_on_user_id"
-    t.index ["weakness_cycle_id"], name: "index_weakness_events_on_weakness_cycle_id"
-  end
-
+  add_foreign_key "analysis_events", "analysis_runs", on_delete: :cascade
+  add_foreign_key "analysis_events", "games", on_delete: :cascade
+  add_foreign_key "analysis_events", "moves", on_delete: :cascade
   add_foreign_key "analysis_runs", "games", on_delete: :cascade
   add_foreign_key "analysis_runs", "users", on_delete: :cascade
-  add_foreign_key "candidate_events", "analysis_runs", on_delete: :cascade
-  add_foreign_key "candidate_events", "games", on_delete: :cascade
-  add_foreign_key "candidate_events", "moves", on_delete: :cascade
   add_foreign_key "games", "import_batches", on_delete: :cascade
   add_foreign_key "games", "provider_accounts", on_delete: :cascade
   add_foreign_key "games", "users", on_delete: :cascade
@@ -348,20 +377,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_140000) do
   add_foreign_key "move_evaluations", "games", on_delete: :cascade
   add_foreign_key "move_evaluations", "moves", on_delete: :cascade
   add_foreign_key "moves", "games", on_delete: :cascade
+  add_foreign_key "pattern_cycles", "users", on_delete: :cascade
+  add_foreign_key "pattern_occurrences", "games", on_delete: :cascade
+  add_foreign_key "pattern_occurrences", "moves", on_delete: :cascade
+  add_foreign_key "pattern_occurrences", "pattern_cycles", on_delete: :cascade
+  add_foreign_key "pattern_occurrences", "users", on_delete: :cascade
+  add_foreign_key "progress_snapshots", "pattern_cycles", on_delete: :nullify
   add_foreign_key "progress_snapshots", "training_plans", on_delete: :nullify
   add_foreign_key "progress_snapshots", "users", on_delete: :cascade
-  add_foreign_key "progress_snapshots", "weakness_cycles", on_delete: :nullify
   add_foreign_key "provider_accounts", "users", on_delete: :cascade
+  add_foreign_key "review_period_games", "games", on_delete: :cascade
+  add_foreign_key "review_period_games", "review_periods", on_delete: :cascade
+  add_foreign_key "review_periods", "users", on_delete: :cascade
   add_foreign_key "system_jobs", "users", on_delete: :cascade
   add_foreign_key "training_assignments", "games", column: "source_game_id", on_delete: :nullify
   add_foreign_key "training_assignments", "moves", column: "source_move_id", on_delete: :nullify
   add_foreign_key "training_assignments", "puzzles", on_delete: :nullify
   add_foreign_key "training_assignments", "training_plans", on_delete: :cascade
+  add_foreign_key "training_plans", "pattern_cycles", on_delete: :cascade
   add_foreign_key "training_plans", "users", on_delete: :cascade
-  add_foreign_key "training_plans", "weakness_cycles", on_delete: :cascade
-  add_foreign_key "weakness_cycles", "users", on_delete: :cascade
-  add_foreign_key "weakness_events", "games", on_delete: :cascade
-  add_foreign_key "weakness_events", "moves", on_delete: :cascade
-  add_foreign_key "weakness_events", "users", on_delete: :cascade
-  add_foreign_key "weakness_events", "weakness_cycles", on_delete: :cascade
 end

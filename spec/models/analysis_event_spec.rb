@@ -2,7 +2,7 @@
 
 # == Schema Information
 #
-# Table name: candidate_events
+# Table name: analysis_events
 #
 #  id              :string           not null, primary key
 #  confidence      :decimal(5, 2)    not null
@@ -17,9 +17,9 @@
 #
 # Indexes
 #
-#  index_candidate_events_on_analysis_run_id  (analysis_run_id)
-#  index_candidate_events_on_game_id          (game_id)
-#  index_candidate_events_on_move_id          (move_id)
+#  index_analysis_events_on_analysis_run_id  (analysis_run_id)
+#  index_analysis_events_on_game_id          (game_id)
+#  index_analysis_events_on_move_id          (move_id)
 #
 # Foreign Keys
 #
@@ -29,8 +29,8 @@
 #
 require "rails_helper"
 
-RSpec.describe CandidateEvent, type: :model do
-  subject(:candidate_event) { build(:candidate_event) }
+RSpec.describe AnalysisEvent, type: :model do
+  subject(:analysis_event) { build(:analysis_event) }
 
   describe "associations" do
     it { is_expected.to belong_to(:analysis_run) }
@@ -40,7 +40,7 @@ RSpec.describe CandidateEvent, type: :model do
 
   describe "enums" do
     it do
-      expect(candidate_event).to define_enum_for(:event_type)
+      expect(analysis_event).to define_enum_for(:event_type)
         .with_values(
           material: 0,
           tactical: 1,
@@ -63,9 +63,9 @@ RSpec.describe CandidateEvent, type: :model do
 
   describe "ULID primary key" do
     it "assigns a ULID on create" do
-      candidate_event.save!
+      analysis_event.save!
 
-      expect(candidate_event.id).to match(/\A[0-9A-HJKMNP-TV-Z]{26}\z/)
+      expect(analysis_event.id).to match(/\A[0-9A-HJKMNP-TV-Z]{26}\z/)
     end
   end
 end

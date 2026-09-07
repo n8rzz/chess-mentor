@@ -28,7 +28,7 @@ flowchart TD
     Engine --> Class[classifier]
     Class --> Evals[(move_evaluations)]
     Run --> Det[detectors.run_detectors]
-    Det --> Events[(candidate_events)]
+    Det --> Events[(analysis_events)]
     Run --> RunStatus[analysis_runs status]
 ```
 
@@ -36,9 +36,9 @@ flowchart TD
 2. The worker handler opens a DB connection and calls `run_analysis`.
 3. The run is marked `running`, PGN is parsed, and moves are inserted once per game (idempotent).
 4. Stockfish evaluates **user moves only** at the configured depth (default 15).
-5. Detectors run per move and insert `candidate_events`.
+5. Detectors run per move and insert `analysis_events`.
 6. On success the run is `succeeded`; structured errors mark it `failed`.
-7. A deduped `classify_weaknesses` job is enqueued for the user (see [weakness-classifier-engine.md](weakness-classifier-engine.md)).
+7. A deduped `classify_patterns` job is enqueued for the user (see [weakness-classifier-engine.md](weakness-classifier-engine.md)).
 
 Moves are **game-scoped** (parsed once). Evaluations and candidate events are **run-scoped** (one row set per `analysis_run`).
 
@@ -109,7 +109,7 @@ The thin job entry point is [`analysis/worker/analyze_handlers.py`](../analysis/
 
 ### Detectors (`detectors/`)
 
-Each detector returns zero or more `CandidateEventData` objects (`event_type`, `severity`, `confidence`, `metadata`). They do **not** assign weakness themes (Milestone 5).
+Each detector returns zero or more `AnalysisEventData` objects (`event_type`, `severity`, `confidence`, `metadata`). They do **not** assign weakness themes (Milestone 5).
 
 | Detector            | Signal                                                         |
 | ------------------- | -------------------------------------------------------------- |
@@ -129,7 +129,7 @@ Registry: `detectors/__init__.py` → `run_detectors()`.
 - `insert_moves` skips when the game already has move rows; uses `ON CONFLICT (game_id, ply) DO NOTHING` so concurrent workers do not raise unique violations.
 - `insert_move_evaluation` uses `ON CONFLICT (analysis_run_id, move_id) DO NOTHING`; retries skip moves that already have evaluations and candidate events.
 - `run_analysis` returns immediately when the analysis run is already `succeeded`.
-- `insert_move_evaluation` and `insert_candidate_event` keyed by `analysis_run_id`.
+- `insert_move_evaluation` and `insert_analysis_event` keyed by `analysis_run_id`.
 - Failures store `error_message` and structured `error_details`.
 
 ## Rails consumption

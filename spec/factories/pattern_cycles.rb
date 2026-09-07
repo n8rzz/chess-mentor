@@ -2,7 +2,7 @@
 
 # == Schema Information
 #
-# Table name: weakness_cycles
+# Table name: pattern_cycles
 #
 #  id                     :string           not null, primary key
 #  baseline_occurrences   :integer          default(0), not null
@@ -15,27 +15,27 @@
 #  ended_at               :datetime
 #  improvement_percentage :decimal(5, 2)
 #  metadata               :jsonb            not null
+#  pattern                :integer          not null
 #  started_at             :datetime
 #  status                 :integer          default("detected"), not null
-#  theme                  :integer          not null
 #  created_at             :datetime         not null
 #  updated_at             :datetime         not null
 #  user_id                :string           not null
 #
 # Indexes
 #
-#  index_weakness_cycles_on_user_id             (user_id)
-#  index_weakness_cycles_on_user_id_and_status  (user_id,status)
-#  index_weakness_cycles_on_user_id_and_theme   (user_id,theme)
+#  index_pattern_cycles_on_user_id              (user_id)
+#  index_pattern_cycles_on_user_id_and_pattern  (user_id,pattern)
+#  index_pattern_cycles_on_user_id_and_status   (user_id,status)
 #
 # Foreign Keys
 #
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
 #
 FactoryBot.define do
-  factory :weakness_cycle do
+  factory :pattern_cycle do
     user
-    theme { :missed_tactics }
+    pattern { :missed_tactics }
     status { :detected }
     cycle_number { 1 }
     baseline_occurrences { 5 }

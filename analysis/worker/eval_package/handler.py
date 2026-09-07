@@ -17,7 +17,7 @@ from worker.eval_package.engine import StockfishEvaluator
 from worker.eval_package.errors import AnalysisError
 from worker.eval_package.positions import MovePosition, generate_positions
 from worker.eval_package.repository import AnalysisRepository, StoredMove
-from worker.weakness_package.repository import WeaknessRepository
+from worker.weakness_package.repository import PatternRepository
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
                         )
                     user_moves_evaluated += 1
 
-                if not repo.move_has_candidate_events(context.analysis_run_id, move.id):
+                if not repo.move_has_analysis_events(context.analysis_run_id, move.id):
                     events = run_detectors(
                         context=context,
                         move=move,
@@ -114,7 +114,7 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
                         cpl=cpl,
                     )
                     for event in events:
-                        repo.insert_candidate_event(
+                        repo.insert_analysis_event(
                             analysis_run_id=context.analysis_run_id,
                             game_id=context.game_id,
                             move_id=move.id,
@@ -125,7 +125,7 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
                         )
                         events_detected += 1
 
-        total_events = repo.count_candidate_events(context.analysis_run_id)
+        total_events = repo.count_analysis_events(context.analysis_run_id)
         repo.mark_succeeded(
             context.analysis_run_id,
             metadata_patch={
@@ -137,7 +137,7 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
         )
         events_detected = total_events
 
-        WeaknessRepository(conn).enqueue_classification_if_needed(context.user_id)
+        PatternRepository(conn).enqueue_classification_if_needed(context.user_id)
 
     return {
         "analysis_run_id": context.analysis_run_id,

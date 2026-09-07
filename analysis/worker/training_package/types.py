@@ -8,8 +8,8 @@ from datetime import date
 class PlanRow:
     id: str
     user_id: str
-    weakness_cycle_id: str
-    theme: int
+    pattern_cycle_id: str
+    pattern: int
     status: int
     starts_at: object | None
     ends_at: object | None
@@ -21,7 +21,7 @@ class PlanRow:
 
 
 @dataclass(frozen=True)
-class WeaknessEventRow:
+class PatternOccurrenceRow:
     id: str
     game_id: str
     move_id: str
@@ -31,7 +31,7 @@ class WeaknessEventRow:
 @dataclass(frozen=True)
 class PuzzleRow:
     id: str
-    theme: int
+    pattern: int
     rating: int | None
 
 

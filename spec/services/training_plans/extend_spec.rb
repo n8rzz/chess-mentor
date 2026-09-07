@@ -4,13 +4,13 @@ require "rails_helper"
 
 RSpec.describe TrainingPlans::Extend do
   let(:user) { create(:user) }
-  let(:weakness_cycle) { create(:weakness_cycle, :active, user: user) }
+  let(:pattern_cycle) { create(:pattern_cycle, :active, user: user) }
   let(:plan) do
     create(
       :training_plan,
       :active,
       user: user,
-      weakness_cycle: weakness_cycle,
+      pattern_cycle: pattern_cycle,
       starts_at: 20.days.ago,
       ends_at: 2.days.ago,
       progress_percentage: 20.0,

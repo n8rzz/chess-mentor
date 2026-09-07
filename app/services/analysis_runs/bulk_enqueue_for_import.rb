@@ -2,10 +2,11 @@
 
 module AnalysisRuns
   class BulkEnqueueForImport
-    DEFAULT_ENGINE_NAME = "Stockfish"
-    DEFAULT_ENGINE_VERSION = "16.1"
-    DEFAULT_ANALYSIS_VERSION = "1.0.0"
-    DEFAULT_DEPTH = 15
+    DEFAULT_ENGINE_NAME = AnalysisVersions::ENGINE_NAME
+    DEFAULT_ENGINE_VERSION = AnalysisVersions::ENGINE_VERSION
+    DEFAULT_ANALYSIS_VERSION = AnalysisVersions::ANALYSIS_VERSION
+    DEFAULT_METRIC_FORMULA_VERSION = AnalysisVersions::METRIC_FORMULA_VERSION
+    DEFAULT_DEPTH = AnalysisVersions::DEFAULT_DEPTH
 
     def self.call(import_batch:)
       new(import_batch:).call
@@ -30,6 +31,7 @@ module AnalysisRuns
             engine_name: DEFAULT_ENGINE_NAME,
             engine_version: DEFAULT_ENGINE_VERSION,
             analysis_version: DEFAULT_ANALYSIS_VERSION,
+            metric_formula_version: DEFAULT_METRIC_FORMULA_VERSION,
             depth: DEFAULT_DEPTH,
             metadata: { "import_batch_id" => @import_batch.id }
           )

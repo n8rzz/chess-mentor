@@ -5,7 +5,7 @@ from typing import Any
 
 
 @dataclass(frozen=True)
-class CandidateEventData:
+class AnalysisEventData:
     event_type: int
     severity: float
     confidence: float

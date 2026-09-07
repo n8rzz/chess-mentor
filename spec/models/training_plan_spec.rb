@@ -12,26 +12,26 @@
 #  improvement_threshold :decimal(5, 2)
 #  managed_threshold     :decimal(5, 2)
 #  metadata              :jsonb            not null
+#  pattern               :integer          not null
 #  progress_percentage   :decimal(5, 2)
 #  starts_at             :datetime
 #  status                :integer          default("recommended"), not null
-#  theme                 :integer          not null
 #  created_at            :datetime         not null
 #  updated_at            :datetime         not null
+#  pattern_cycle_id      :string           not null
 #  user_id               :string           not null
-#  weakness_cycle_id     :string           not null
 #
 # Indexes
 #
+#  index_training_plans_on_pattern_cycle_id    (pattern_cycle_id)
 #  index_training_plans_on_user_id             (user_id)
 #  index_training_plans_on_user_id_and_status  (user_id,status)
-#  index_training_plans_on_weakness_cycle_id   (weakness_cycle_id)
 #  index_training_plans_one_active_per_user    (user_id) UNIQUE WHERE (status = 1)
 #
 # Foreign Keys
 #
+#  fk_rails_...  (pattern_cycle_id => pattern_cycles.id) ON DELETE => cascade
 #  fk_rails_...  (user_id => users.id) ON DELETE => cascade
-#  fk_rails_...  (weakness_cycle_id => weakness_cycles.id) ON DELETE => cascade
 #
 require "rails_helper"
 
@@ -40,7 +40,7 @@ RSpec.describe TrainingPlan, type: :model do
 
   describe "associations" do
     it { is_expected.to belong_to(:user) }
-    it { is_expected.to belong_to(:weakness_cycle) }
+    it { is_expected.to belong_to(:pattern_cycle) }
     it { is_expected.to have_many(:training_assignments).dependent(:destroy) }
   end
 

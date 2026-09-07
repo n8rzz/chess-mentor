@@ -19,6 +19,28 @@ def test_load_context_reads_batch_and_account(db_conn) -> None:
     assert context.time_controls == ["blitz", "rapid"]
 
 
+def test_load_context_prefers_access_token_override(db_conn) -> None:
+    ids = seed_import_batch(db_conn, access_token="db-token")
+    repo = ImportRepository(db_conn)
+
+    context = repo.load_context(
+        ids["import_batch_id"],
+        access_token_override="payload-token",
+    )
+
+    assert context.access_token == "payload-token"
+
+
+def test_load_context_ignores_active_record_ciphertext(db_conn) -> None:
+    ciphertext = '{"p":"cipher","h":{"iv":"abc","at":"def"}}'
+    ids = seed_import_batch(db_conn, access_token=ciphertext)
+    repo = ImportRepository(db_conn)
+
+    context = repo.load_context(ids["import_batch_id"])
+
+    assert context.access_token is None
+
+
 def test_mark_batch_running_updates_status(db_conn) -> None:
     ids = seed_import_batch(db_conn)
     repo = ImportRepository(db_conn)

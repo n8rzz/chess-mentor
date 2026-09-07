@@ -1,28 +1,28 @@
 # frozen_string_literal: true
 
-class WeaknessesController < ApplicationController
+class PatternCyclesController < ApplicationController
   layout "dashboard"
 
   before_action :authenticate_user!
-  before_action :set_weakness_cycle, only: :show
+  before_action :set_pattern_cycle, only: :show
 
   VISIBLE_STATUSES = %i[detected active improving managed].freeze
 
   def index
-    @weakness_cycles = current_user.weakness_cycles
+    @pattern_cycles = current_user.pattern_cycles
       .where(status: VISIBLE_STATUSES)
       .order(current_severity: :desc, current_occurrences: :desc)
   end
 
   def show
-    @weakness_events = @weakness_cycle.weakness_events
+    @pattern_occurrences = @pattern_cycle.pattern_occurrences
       .includes(:game, :move)
       .order(created_at: :desc)
   end
 
   private
 
-  def set_weakness_cycle
-    @weakness_cycle = current_user.weakness_cycles.find(params[:id])
+  def set_pattern_cycle
+    @pattern_cycle = current_user.pattern_cycles.find(params[:id])
   end
 end

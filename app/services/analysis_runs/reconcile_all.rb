@@ -54,6 +54,7 @@ module AnalysisRuns
         engine_name: BulkEnqueueForImport::DEFAULT_ENGINE_NAME,
         engine_version: BulkEnqueueForImport::DEFAULT_ENGINE_VERSION,
         analysis_version: BulkEnqueueForImport::DEFAULT_ANALYSIS_VERSION,
+        metric_formula_version: BulkEnqueueForImport::DEFAULT_METRIC_FORMULA_VERSION,
         depth: BulkEnqueueForImport::DEFAULT_DEPTH,
         metadata: { "import_batch_id" => game.import_batch_id }
       )

@@ -132,7 +132,7 @@ unless SystemJob.exists?([ "payload->>'import_batch_id' = ?", pending_batch.id ]
   SystemJobs::Create.call(
     user: user,
     job_type: :import_games,
-    payload: { "import_batch_id" => pending_batch.id }
+    payload: ImportBatches::JobPayload.for(batch: pending_batch, provider_account: provider_account)
   )
 end
 

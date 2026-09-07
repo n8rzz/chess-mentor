@@ -1,23 +1,23 @@
 """Integer enums and tunable thresholds for the weakness classifier.
 
-All integer values mirror the Rails contract (`WeaknessThemeable`, `WeaknessCycle`,
-`WeaknessEvent`, `SystemJob`) so Python writers and the UI read the same semantics.
+All integer values mirror the Rails contract (`Patternable`, `PatternCycle`,
+`PatternOccurrence`, `SystemJob`) so Python writers and the UI read the same semantics.
 
 Usage:
-    from worker.weakness_package.constants import WEAKNESS_THEME, DETECTION_WINDOW_GAMES
+    from worker.weakness_package.constants import PATTERN, DETECTION_WINDOW_GAMES
 
-    theme = WEAKNESS_THEME["missed_tactics"]
+    theme = PATTERN["missed_tactics"]
     if occurrences >= MIN_OCCURRENCES_FOR_ACTIVE:
         status = CYCLE_STATUS["active"]
 """
 
 from worker.eval_package.constants import CPL_THRESHOLDS
 
-# Maps weakness theme names to integers persisted on `weakness_events.primary_theme`,
-# `weakness_events.secondary_theme`, and `weakness_cycles.theme`.
+# Maps weakness theme names to integers persisted on `pattern_occurrences.primary_pattern`,
+# `pattern_occurrences.secondary_pattern`, and `pattern_cycles.theme`.
 # Use string keys in application logic; write integers to SQL.
-# Must stay aligned with `WeaknessThemeable::THEMES` in Rails.
-WEAKNESS_THEME = {
+# Must stay aligned with `Patternable::PATTERNS` in Rails.
+PATTERN = {
     "hanging_pieces": 0,
     "missed_tactics": 1,
     "ignored_threats": 2,
@@ -29,7 +29,7 @@ WEAKNESS_THEME = {
     "time_pressure": 8,
 }
 
-# Game phase integers for `weakness_events.phase`.
+# Game phase integers for `pattern_occurrences.phase`.
 # Derived from move number and endgame detector signals in `theme_rules.py`.
 # Must match `GamePhaseable::PHASES` in Rails.
 GAME_PHASE = {
@@ -38,7 +38,7 @@ GAME_PHASE = {
     "endgame": 2,
 }
 
-# Lifecycle states for `weakness_cycles.status`.
+# Lifecycle states for `pattern_cycles.status`.
 # Transitions are computed in `cycles.py` from occurrence counts and improvement %.
 # `active` cycles are eligible for training-plan targeting (Milestone 6).
 CYCLE_STATUS = {
@@ -51,7 +51,7 @@ CYCLE_STATUS = {
 
 # `SystemJob#job_type` value for weakness classification.
 # Used when enqueueing after analysis (`repository.enqueue_classification_if_needed`).
-JOB_TYPE_CLASSIFY_WEAKNESSES = 2
+JOB_TYPE_CLASSIFY_PATTERNS = 2
 
 # Non-terminal `SystemJob#status` values checked when deduping classify jobs.
 # Skip enqueue if the user already has a classify job in one of these states.
@@ -107,6 +107,11 @@ SEVERITY_WEIGHTS = {
 # Half-life for exponential recency decay in severity scoring (days).
 # Recent weakness events contribute more to `current_severity` than older ones.
 RECENCY_HALF_LIFE_DAYS = 10
+
+# Version stamps persisted on pattern_occurrences (keep in sync with Rails AnalysisVersions).
+PATTERN_CLASSIFIER_NAME = "rules_v1"
+PATTERN_CLASSIFIER_VERSION = "1.0.0"
+PATTERN_TAXONOMY_VERSION = "1.0.0"
 
 # Re-exported CPL cutoffs from the evaluation engine for theme rule consistency.
 # `INACCURACY_CPL`: minimum eval loss for positional/threat themes.

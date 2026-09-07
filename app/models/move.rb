@@ -31,8 +31,8 @@
 class Move < ApplicationRecord
   belongs_to :game
   has_one :move_evaluation, dependent: :destroy
-  has_many :candidate_events, dependent: :destroy
-  has_many :weakness_events, dependent: :destroy
+  has_many :analysis_events, dependent: :destroy
+  has_many :pattern_occurrences, dependent: :destroy
 
   enum :color, { white: 0, black: 1 }, validate: true
 

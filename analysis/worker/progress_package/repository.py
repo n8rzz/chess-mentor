@@ -11,7 +11,7 @@ from worker.import_package.ids import new_ulid
 from worker.progress_package.calculators import (
     compute_plan_progress_percentage,
     compute_training_completion_percentage,
-    compute_weakness_frequency,
+    compute_pattern_frequency,
 )
 from worker.progress_package.constants import (
     ANALYSIS_RUN_SUCCEEDED,
@@ -145,11 +145,11 @@ class ProgressRepository:
             "average_centipawn_loss": average_centipawn_loss,
         }
 
-    def load_tracked_weakness_cycles(self, user_id: str) -> list[dict[str, Any]]:
+    def load_tracked_pattern_cycles(self, user_id: str) -> list[dict[str, Any]]:
         rows = self._conn.execute(
             """
             SELECT id, current_occurrences, current_severity, detection_window_games, metadata
-            FROM weakness_cycles
+            FROM pattern_cycles
             WHERE user_id = %s
               AND status = ANY(%s)
             ORDER BY current_severity DESC NULLS LAST, current_occurrences DESC
@@ -166,7 +166,7 @@ class ProgressRepository:
                     "current_severity": row[2],
                     "detection_window_games": row[3],
                     "metadata": metadata,
-                    "weakness_frequency": compute_weakness_frequency(row[1], row[3], metadata),
+                    "pattern_frequency": compute_pattern_frequency(row[1], row[3], metadata),
                 }
             )
         return cycles
@@ -174,7 +174,7 @@ class ProgressRepository:
     def load_current_training_plans(self, user_id: str) -> list[dict[str, Any]]:
         rows = self._conn.execute(
             """
-            SELECT id, weakness_cycle_id, baseline_occurrences, current_occurrences, progress_percentage
+            SELECT id, pattern_cycle_id, baseline_occurrences, current_occurrences, progress_percentage
             FROM training_plans
             WHERE user_id = %s
               AND status = ANY(%s)
@@ -210,7 +210,7 @@ class ProgressRepository:
             plans.append(
                 {
                     "id": plan_id,
-                    "weakness_cycle_id": row[1],
+                    "pattern_cycle_id": row[1],
                     "plan_progress_percentage": float(plan_progress),
                     "training_completion_percentage": compute_training_completion_percentage(
                         completed_through_today,
@@ -228,10 +228,10 @@ class ProgressRepository:
         kind: str,
         time_class: int = TIME_CLASS["unknown"],
         rating: int | None = None,
-        weakness_cycle_id: str | None = None,
+        pattern_cycle_id: str | None = None,
         training_plan_id: str | None = None,
-        weakness_frequency: float | None = None,
-        weakness_severity: float | None = None,
+        pattern_frequency: float | None = None,
+        pattern_severity: float | None = None,
         blunders_per_game: Decimal | None = None,
         average_centipawn_loss: Decimal | None = None,
         games_analyzed_count: int = 0,
@@ -243,8 +243,8 @@ class ProgressRepository:
         self._conn.execute(
             """
             INSERT INTO progress_snapshots (
-              id, user_id, training_plan_id, weakness_cycle_id,
-              time_class, rating, weakness_frequency, weakness_severity,
+              id, user_id, training_plan_id, pattern_cycle_id,
+              time_class, rating, pattern_frequency, pattern_severity,
               blunders_per_game, average_centipawn_loss, games_analyzed_count,
               snapshot_at, metadata, created_at, updated_at
             ) VALUES (
@@ -258,11 +258,11 @@ class ProgressRepository:
                 snapshot_id,
                 user_id,
                 training_plan_id,
-                weakness_cycle_id,
+                pattern_cycle_id,
                 time_class,
                 rating,
-                weakness_frequency,
-                weakness_severity,
+                pattern_frequency,
+                pattern_severity,
                 blunders_per_game,
                 average_centipawn_loss,
                 games_analyzed_count,

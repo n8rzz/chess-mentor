@@ -3,11 +3,11 @@ from __future__ import annotations
 import chess
 
 from worker.eval_package.constants import EVENT_TYPE, PIECE_VALUES
-from worker.eval_package.detectors.types import CandidateEventData
+from worker.eval_package.detectors.types import AnalysisEventData
 from worker.eval_package.positions import MovePosition
 
 
-def detect_material(*, position: MovePosition) -> list[CandidateEventData]:
+def detect_material(*, position: MovePosition) -> list[AnalysisEventData]:
     board_before = chess.Board(position.fen_before)
     board_after = chess.Board(position.fen_after)
     if not position.parsed.played_by_user:
@@ -25,7 +25,7 @@ def detect_material(*, position: MovePosition) -> list[CandidateEventData]:
     severity = min(1.0, loss / 9.0)
     confidence = 0.9 if loss >= 3 else 0.75
     return [
-        CandidateEventData(
+        AnalysisEventData(
             event_type=EVENT_TYPE["material"],
             severity=round(severity, 2),
             confidence=round(confidence, 2),

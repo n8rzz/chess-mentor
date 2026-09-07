@@ -3,11 +3,11 @@ from __future__ import annotations
 import chess
 
 from worker.eval_package.constants import EVENT_TYPE, USER_COLOR
-from worker.eval_package.detectors.types import CandidateEventData
+from worker.eval_package.detectors.types import AnalysisEventData
 from worker.eval_package.positions import MovePosition
 
 
-def detect_pawn_structure(*, position: MovePosition) -> list[CandidateEventData]:
+def detect_pawn_structure(*, position: MovePosition) -> list[AnalysisEventData]:
     if not position.parsed.played_by_user:
         return []
 
@@ -23,7 +23,7 @@ def detect_pawn_structure(*, position: MovePosition) -> list[CandidateEventData]
         return []
 
     return [
-        CandidateEventData(
+        AnalysisEventData(
             event_type=EVENT_TYPE["pawn_structure"],
             severity=round(min(1.0, 0.35 + 0.15 * len(new_issues)), 2),
             confidence=0.7,

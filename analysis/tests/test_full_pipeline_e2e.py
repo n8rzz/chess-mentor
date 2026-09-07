@@ -8,7 +8,7 @@ import pytest
 from worker.eval_package.handler import run_analysis
 from worker.training_package.constants import ASSIGNMENTS_PER_DAY, PLAN_DURATION_DAYS
 from worker.training_package.handler import run_plan_generation
-from worker.weakness_package.constants import WEAKNESS_THEME
+from worker.weakness_package.constants import PATTERN
 from worker.weakness_package.handler import run_classification
 
 from db_helpers import new_id, seed_game_with_analysis_run
@@ -47,7 +47,7 @@ def test_full_pipeline_pgn_to_training_plan(db_conn) -> None:
     assert classification_summary["cycles_considered"] >= 0
 
     cycle_rows = db_conn.execute(
-        "SELECT id, theme FROM weakness_cycles WHERE user_id = %s",
+        "SELECT id, pattern FROM pattern_cycles WHERE user_id = %s",
         (user_id,),
     ).fetchall()
     assert cycle_rows, "expected at least one weakness cycle after classification"
@@ -60,7 +60,7 @@ def test_full_pipeline_pgn_to_training_plan(db_conn) -> None:
     db_conn.execute(
         """
         INSERT INTO training_plans (
-          id, user_id, weakness_cycle_id, theme, status,
+          id, user_id, pattern_cycle_id, pattern, status,
           baseline_occurrences, current_occurrences, metadata,
           created_at, updated_at
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
@@ -102,4 +102,4 @@ def test_full_pipeline_pgn_to_training_plan(db_conn) -> None:
     assert plan_row[2] >= 0
 
     themes = {row[1] for row in cycle_rows}
-    assert themes.intersection(set(WEAKNESS_THEME.values())) == themes
+    assert themes.intersection(set(PATTERN.values())) == themes

@@ -112,7 +112,7 @@ user_moves.zip(evaluation_specs).each do |move, spec|
 end
 
 mistake_move = user_moves[4]
-CandidateEvent.find_or_initialize_by(
+AnalysisEvent.find_or_initialize_by(
   analysis_run: succeeded_run,
   move: mistake_move,
   event_type: :king_safety
@@ -142,7 +142,7 @@ partial_user_moves.first(3).zip(evaluation_specs.first(3)).each do |move, spec|
 end
 
 partial_user_moves.first(2).each do |move|
-  CandidateEvent.find_or_initialize_by(
+  AnalysisEvent.find_or_initialize_by(
     analysis_run: partial_run,
     move: move,
     event_type: :tactical

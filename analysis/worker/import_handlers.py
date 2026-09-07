@@ -17,10 +17,14 @@ def import_games_handler(job: SystemJobRow) -> dict[str, Any]:
     if not import_batch_id:
         raise ValueError("import_batch_id is required")
 
+    # Rails decrypts the OAuth token and places it on the job payload. The worker
+    # must not use provider_accounts.access_token from SQL (Active Record ciphertext).
+    access_token = job.payload.get("access_token")
+
     config = load_config()
     with psycopg.connect(config.database_url) as conn:
         try:
-            result = run_import(conn, import_batch_id)
+            result = run_import(conn, import_batch_id, access_token=access_token)
             conn.commit()
             return result
         except Exception:

@@ -83,7 +83,7 @@ RSpec.describe "Dashboard", type: :system do
   it "renders chart canvases when progress snapshots exist" do
     user = create(:user, password: password)
     plan = create(:training_plan, :active, user: user)
-    cycle = plan.weakness_cycle
+    cycle = plan.pattern_cycle
     2.times do |index|
       snapshot_at = (index + 1).days.ago
       create(
@@ -97,8 +97,8 @@ RSpec.describe "Dashboard", type: :system do
       create(
         :progress_snapshot,
         user:,
-        weakness_cycle: cycle,
-        weakness_frequency: 0.5,
+        pattern_cycle: cycle,
+        pattern_frequency: 0.5,
         snapshot_at:,
         metadata: { "kind" => "weakness", "current_occurrences" => 3 - index }
       )

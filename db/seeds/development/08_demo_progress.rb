@@ -7,7 +7,7 @@ user = User.find_by(email: "starship@example.com")
 return unless user
 
 plan = TrainingPlan.find_by("metadata->>'seed_key' = ?", "demo_training_plan")
-cycle = plan&.weakness_cycle
+cycle = plan&.pattern_cycle
 return unless plan && cycle
 
 seed_key = "demo_progress_snapshots"
@@ -42,9 +42,9 @@ return if ProgressSnapshot.exists?([ "metadata->>'seed_key' = ?", seed_key ])
 
   ProgressSnapshot.create!(
     user: user,
-    weakness_cycle: cycle,
-    weakness_frequency: frequency,
-    weakness_severity: cycle.current_severity,
+    pattern_cycle: cycle,
+    pattern_frequency: frequency,
+    pattern_severity: cycle.current_severity,
     snapshot_at: snapshot_at,
     metadata: {
       "kind" => "weakness",
@@ -56,7 +56,7 @@ return if ProgressSnapshot.exists?([ "metadata->>'seed_key' = ?", seed_key ])
   ProgressSnapshot.create!(
     user: user,
     training_plan: plan,
-    weakness_cycle: cycle,
+    pattern_cycle: cycle,
     snapshot_at: snapshot_at,
     metadata: {
       "kind" => "training",

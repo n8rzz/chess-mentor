@@ -6,7 +6,7 @@ return unless Rails.env.development?
 user = User.find_by(email: "starship@example.com")
 return unless user
 
-cycle = WeaknessCycle.find_by(user: user, theme: :missed_tactics, status: :active)
+cycle = PatternCycle.find_by(user: user, pattern: :missed_tactics, status: :active)
 return unless cycle
 
 seed_key = "demo_training_plan"
@@ -15,8 +15,8 @@ plan = TrainingPlan.find_by("metadata->>'seed_key' = ?", seed_key)
 unless plan
   plan = TrainingPlan.create!(
     user: user,
-    weakness_cycle: cycle,
-    theme: cycle.theme,
+    pattern_cycle: cycle,
+    pattern: cycle.pattern,
     status: :active,
     starts_at: Time.current.beginning_of_day,
     ends_at: 14.days.from_now.end_of_day,
@@ -30,9 +30,9 @@ unless plan
 end
 
 def seed_demo_training_assignments!(plan, cycle)
-  events = cycle.weakness_events.includes(:game, :move).order(created_at: :desc).to_a
-  puzzles = Puzzle.curated.where(theme: plan.theme).order(:rating, :id).limit(5).to_a
-  theme_label = plan.theme_label
+  events = cycle.pattern_occurrences.includes(:game, :move).order(created_at: :desc).to_a
+  puzzles = Puzzle.curated.where(pattern: plan.pattern).order(:rating, :id).limit(5).to_a
+  pattern_label = plan.pattern_label
 
   14.times do |day_index|
     due_on = plan.starts_at.to_date + day_index
@@ -66,7 +66,7 @@ def seed_demo_training_assignments!(plan, cycle)
       assignment_type: :play_game,
       due_on: due_on,
       status: :pending,
-      prompt: "Play 1 rapid game focusing on #{theme_label}.",
+      prompt: "Play 1 rapid game focusing on #{pattern_label}.",
       metadata: { "seed_key" => "demo_play_#{day_index}" }
     )
 
@@ -86,8 +86,8 @@ stale_plan = plan.archived? || plan.completed? || plan.ends_at&.past? || plan.as
 if stale_plan
   plan.training_assignments.destroy_all
   plan.update!(
-    weakness_cycle: cycle,
-    theme: cycle.theme,
+    pattern_cycle: cycle,
+    pattern: cycle.pattern,
     status: :active,
     completed_at: nil,
     starts_at: Time.current.beginning_of_day,
@@ -103,4 +103,4 @@ elsif plan.training_assignments.none?
   seed_demo_training_assignments!(plan, cycle)
 end
 
-puts "Seeded demo training plan for #{user.email}: #{plan.theme_label} (#{plan.training_assignments.count} assignments, #{plan.assignments_for_today.count} due today)"
+puts "Seeded demo training plan for #{user.email}: #{plan.pattern_label} (#{plan.training_assignments.count} assignments, #{plan.assignments_for_today.count} due today)"

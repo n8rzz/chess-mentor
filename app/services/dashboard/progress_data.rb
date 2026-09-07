@@ -72,9 +72,9 @@ module Dashboard
 
     def weakness_series(snapshots)
       weakness_snapshots = snapshots_for_kind(snapshots, SNAPSHOT_KINDS[:weakness])
-      cycle_id = @active_plan&.weakness_cycle_id
+      cycle_id = @active_plan&.pattern_cycle_id
       filtered = if cycle_id.present?
-        weakness_snapshots.select { |snapshot| snapshot.weakness_cycle_id == cycle_id }
+        weakness_snapshots.select { |snapshot| snapshot.pattern_cycle_id == cycle_id }
       else
         weakness_snapshots
       end
@@ -83,8 +83,8 @@ module Dashboard
         WeaknessPoint.new(
           at: snapshot.snapshot_at,
           occurrences: snapshot.metadata["current_occurrences"],
-          frequency: snapshot.weakness_frequency&.to_f,
-          severity: snapshot.weakness_severity&.to_f
+          frequency: snapshot.pattern_frequency&.to_f,
+          severity: snapshot.pattern_severity&.to_f
         )
       end
       limit_series(points)

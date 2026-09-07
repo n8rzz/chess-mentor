@@ -15,9 +15,9 @@ module TrainingPlans
     end
 
     def call
-      return WeaknessCycle.none if blocking_plan?
+      return PatternCycle.none if blocking_plan?
 
-      @user.weakness_cycles
+      @user.pattern_cycles
         .where(status: ELIGIBLE_CYCLE_STATUSES)
         .order(current_severity: :desc, current_occurrences: :desc)
         .limit(LIMIT)

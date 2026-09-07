@@ -4,21 +4,22 @@
 #
 # Table name: analysis_runs
 #
-#  id               :string           not null, primary key
-#  analysis_version :string           not null
-#  depth            :integer          not null
-#  engine_name      :string           not null
-#  engine_version   :string           not null
-#  error_details    :jsonb
-#  error_message    :text
-#  finished_at      :datetime
-#  metadata         :jsonb            not null
-#  started_at       :datetime
-#  status           :integer          default("pending"), not null
-#  created_at       :datetime         not null
-#  updated_at       :datetime         not null
-#  game_id          :string           not null
-#  user_id          :string           not null
+#  id                     :string           not null, primary key
+#  analysis_version       :string           not null
+#  depth                  :integer          not null
+#  engine_name            :string           not null
+#  engine_version         :string           not null
+#  error_details          :jsonb
+#  error_message          :text
+#  finished_at            :datetime
+#  metadata               :jsonb            not null
+#  metric_formula_version :string           default("1.0.0"), not null
+#  started_at             :datetime
+#  status                 :integer          default("pending"), not null
+#  created_at             :datetime         not null
+#  updated_at             :datetime         not null
+#  game_id                :string           not null
+#  user_id                :string           not null
 #
 # Indexes
 #
@@ -38,7 +39,8 @@ FactoryBot.define do
     status { :pending }
     engine_name { "Stockfish" }
     engine_version { "16.1" }
-    analysis_version { "1.0.0" }
+    analysis_version { AnalysisVersions::ANALYSIS_VERSION }
+    metric_formula_version { AnalysisVersions::METRIC_FORMULA_VERSION }
     depth { 15 }
     metadata { {} }
 

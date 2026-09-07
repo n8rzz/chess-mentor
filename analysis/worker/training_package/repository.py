@@ -15,7 +15,7 @@ from worker.training_package.constants import (
     PUZZLE_SOURCE,
 )
 from worker.training_package.generator import generate_assignments
-from worker.training_package.types import PlanRow, PuzzleRow, WeaknessEventRow
+from worker.training_package.types import PlanRow, PuzzleRow, PatternOccurrenceRow
 
 
 class TrainingRepository:
@@ -25,7 +25,7 @@ class TrainingRepository:
     def load_plan(self, training_plan_id: str) -> PlanRow | None:
         row = self._conn.execute(
             """
-            SELECT id, user_id, weakness_cycle_id, theme, status,
+            SELECT id, user_id, pattern_cycle_id, pattern, status,
                    starts_at, ends_at, baseline_occurrences, current_occurrences,
                    improvement_threshold, managed_threshold, metadata
             FROM training_plans
@@ -39,8 +39,8 @@ class TrainingRepository:
         return PlanRow(
             id=row[0],
             user_id=row[1],
-            weakness_cycle_id=row[2],
-            theme=row[3],
+            pattern_cycle_id=row[2],
+            pattern=row[3],
             status=row[4],
             starts_at=row[5],
             ends_at=row[6],
@@ -71,44 +71,44 @@ class TrainingRepository:
             return None
         return int(row[0])
 
-    def load_weakness_events(self, weakness_cycle_id: str) -> list[WeaknessEventRow]:
+    def load_pattern_occurrences(self, pattern_cycle_id: str) -> list[PatternOccurrenceRow]:
         rows = self._conn.execute(
             """
             SELECT id, game_id, move_id, created_at
-            FROM weakness_events
-            WHERE weakness_cycle_id = %s
+            FROM pattern_occurrences
+            WHERE pattern_cycle_id = %s
             ORDER BY created_at DESC, id DESC
             """,
-            (weakness_cycle_id,),
+            (pattern_cycle_id,),
         ).fetchall()
         return [
-            WeaknessEventRow(id=row[0], game_id=row[1], move_id=row[2], created_at=row[3])
+            PatternOccurrenceRow(id=row[0], game_id=row[1], move_id=row[2], created_at=row[3])
             for row in rows
         ]
 
-    def load_theme_puzzles(self, theme: int) -> list[PuzzleRow]:
+    def load_theme_puzzles(self, pattern: int) -> list[PuzzleRow]:
         rows = self._conn.execute(
             """
-            SELECT id, theme, rating
+            SELECT id, pattern, rating
             FROM puzzles
-            WHERE theme = %s AND source = %s
+            WHERE pattern = %s AND source = %s
             ORDER BY rating ASC NULLS LAST, id ASC
             """,
-            (theme, PUZZLE_SOURCE["curated"]),
+            (pattern, PUZZLE_SOURCE["curated"]),
         ).fetchall()
-        return [PuzzleRow(id=row[0], theme=row[1], rating=row[2]) for row in rows]
+        return [PuzzleRow(id=row[0], pattern=row[1], rating=row[2]) for row in rows]
 
-    def load_cycle_occurrences(self, weakness_cycle_id: str) -> tuple[int, int]:
+    def load_cycle_occurrences(self, pattern_cycle_id: str) -> tuple[int, int]:
         row = self._conn.execute(
             """
             SELECT baseline_occurrences, current_occurrences
-            FROM weakness_cycles
+            FROM pattern_cycles
             WHERE id = %s
             """,
-            (weakness_cycle_id,),
+            (pattern_cycle_id,),
         ).fetchone()
         if row is None:
-            raise ValueError(f"weakness_cycle not found: {weakness_cycle_id}")
+            raise ValueError(f"pattern_cycle not found: {pattern_cycle_id}")
         return int(row[0]), int(row[1])
 
     def generate_plan_assignments(
@@ -125,9 +125,9 @@ class TrainingRepository:
         if existing_count > 0 and not extension:
             return 0
 
-        baseline, current = self.load_cycle_occurrences(plan.weakness_cycle_id)
-        events = self.load_weakness_events(plan.weakness_cycle_id)
-        puzzles = self.load_theme_puzzles(plan.theme)
+        baseline, current = self.load_cycle_occurrences(plan.pattern_cycle_id)
+        events = self.load_pattern_occurrences(plan.pattern_cycle_id)
+        puzzles = self.load_theme_puzzles(plan.pattern)
 
         now = _utcnow()
         starts_at = plan.starts_at or now

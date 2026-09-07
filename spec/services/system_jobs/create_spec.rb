@@ -23,7 +23,7 @@ RSpec.describe SystemJobs::Create do
     end
 
     it "defaults payload to an empty hash" do
-      job = described_class.call(user: user, job_type: :classify_weaknesses)
+      job = described_class.call(user: user, job_type: :classify_patterns)
 
       expect(job.payload).to eq({})
     end

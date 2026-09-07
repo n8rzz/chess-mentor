@@ -3,11 +3,11 @@ from __future__ import annotations
 import chess
 
 from worker.eval_package.constants import EVENT_TYPE
-from worker.eval_package.detectors.types import CandidateEventData
+from worker.eval_package.detectors.types import AnalysisEventData
 from worker.eval_package.positions import MovePosition
 
 
-def detect_endgame_phase(*, position: MovePosition) -> list[CandidateEventData]:
+def detect_endgame_phase(*, position: MovePosition) -> list[AnalysisEventData]:
     board_before = chess.Board(position.fen_before)
     board_after = chess.Board(position.fen_after)
     phase_before = _phase(board_before)
@@ -17,7 +17,7 @@ def detect_endgame_phase(*, position: MovePosition) -> list[CandidateEventData]:
         return []
 
     return [
-        CandidateEventData(
+        AnalysisEventData(
             event_type=EVENT_TYPE["endgame_phase"],
             severity=0.5,
             confidence=0.8,

@@ -91,8 +91,8 @@ Puzzle.curated.count >= 45
 | ---- | ------ | -------- |
 | 2.5.1 | `bin/rails db:seed` | Puzzle seeds load with symbol motif values |
 | 2.5.2 | `Puzzle.curated.first.motif` in console | Symbol enum (e.g. `:fork`), not free-form string |
-| 2.5.3 | `WeaknessEvent.first.phase` (after M5 seeds) | `:opening`, `:middlegame`, or `:endgame` |
-| 2.5.4 | `bundle exec rspec spec/models/puzzle_spec.rb spec/models/weakness_event_spec.rb` | Enum definitions pass |
+| 2.5.3 | `PatternOccurrence.first.phase` (after M5 seeds) | `:opening`, `:middlegame`, or `:endgame` |
+| 2.5.4 | `bundle exec rspec spec/models/puzzle_spec.rb spec/models/pattern_occurrence_spec.rb` | Enum definitions pass |
 
 ---
 

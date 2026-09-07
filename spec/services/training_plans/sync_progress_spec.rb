@@ -4,13 +4,13 @@ require "rails_helper"
 
 RSpec.describe TrainingPlans::SyncProgress do
   let(:user) { create(:user) }
-  let(:weakness_cycle) { create(:weakness_cycle, :active, user: user, baseline_occurrences: 10, current_occurrences: 10) }
+  let(:pattern_cycle) { create(:pattern_cycle, :active, user: user, baseline_occurrences: 10, current_occurrences: 10) }
   let(:plan) do
     create(
       :training_plan,
       :active,
       user: user,
-      weakness_cycle: weakness_cycle,
+      pattern_cycle: pattern_cycle,
       baseline_occurrences: 10,
       current_occurrences: 10,
       progress_percentage: 0.0,
@@ -20,7 +20,7 @@ RSpec.describe TrainingPlans::SyncProgress do
   end
 
   it "marks the plan improving at the 30% threshold" do
-    weakness_cycle.update!(current_occurrences: 7)
+    pattern_cycle.update!(current_occurrences: 7)
 
     described_class.call(plan: plan)
 
@@ -30,7 +30,7 @@ RSpec.describe TrainingPlans::SyncProgress do
   end
 
   it "marks the plan managed at the 75% threshold" do
-    weakness_cycle.update!(current_occurrences: 2)
+    pattern_cycle.update!(current_occurrences: 2)
 
     described_class.call(plan: plan)
 
@@ -40,7 +40,7 @@ RSpec.describe TrainingPlans::SyncProgress do
 
   it "keeps paused plans paused" do
     plan.update!(status: :paused)
-    weakness_cycle.update!(current_occurrences: 2)
+    pattern_cycle.update!(current_occurrences: 2)
 
     described_class.call(plan: plan)
 

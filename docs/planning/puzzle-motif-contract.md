@@ -10,7 +10,7 @@ tags:
 
 # Puzzle Motif & Game Phase — Database Contract
 
-Rails and Python workers read/write integer-backed enums on `puzzles.motif` and `weakness_events.phase`. Use the string keys below in application code; persist integers in SQL.
+Rails and Python workers read/write integer-backed enums on `puzzles.motif` and `pattern_occurrences.phase`. Use the string keys below in application code; persist integers in SQL.
 
 ## Puzzle motif enum (`puzzles.motif`)
 
@@ -45,7 +45,7 @@ Rails and Python workers read/write integer-backed enums on `puzzles.motif` and 
 
 Source of truth: `PuzzleMotifable::MOTIFS` in [`app/models/concerns/puzzle_motifable.rb`](../../app/models/concerns/puzzle_motifable.rb).
 
-## Game phase enum (`weakness_events.phase`)
+## Game phase enum (`pattern_occurrences.phase`)
 
 | Integer | String        |
 | ------- | ------------- |
@@ -57,5 +57,5 @@ Source of truth: `GamePhaseable::PHASES` in [`app/models/concerns/game_phaseable
 
 ## Notes
 
-- `WeaknessEvent#explanation_key` remains a free-form string (versioned i18n key).
+- `PatternOccurrence#explanation_key` remains a free-form string (versioned i18n key).
 - Align tactical motifs with [evaluation-engine §11](evaluation-engine.md); game phases with [evaluation-engine §15](evaluation-engine.md).

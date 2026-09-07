@@ -48,7 +48,7 @@ Rails reconcilers (invoked from `AnalysisRuns::ReconcileJob`):
 | ------- | ------- |
 | `ImportBatches::ReconcileStuck` | Retry failed `import_games` jobs; enqueue imports for stuck `pending`/`running` batches without an active job |
 | `AnalysisRuns::ReconcileAll` | Enqueue analysis for terminal imports and stuck pending `AnalysisRun` rows |
-| `SystemJobs::ReconcileFailed` | Retry failed `classify_weaknesses` / `generate_training_plan` when parent entity still pending |
+| `SystemJobs::ReconcileFailed` | Retry failed `classify_patterns` / `generate_training_plan` when parent entity still pending |
 
 `SystemJobs::Retry` resets a failed job to `pending`, clears errors, keeps `attempts_count`. Retry is allowed while `attempts_count < MAX_ATTEMPTS` (3).
 
@@ -60,7 +60,7 @@ Import handler idempotency: re-running `import_games` on a terminal `ImportBatch
 | ------- | --------------------------- |
 | 0       | `import_games`              |
 | 1       | `analyze_game`              |
-| 2       | `classify_weaknesses`       |
+| 2       | `classify_patterns`       |
 | 3       | `generate_training_plan`    |
 | 4       | `update_progress_snapshots` |
 
@@ -74,7 +74,7 @@ JSON object, string keys. Required keys per type when parent tables exist:
 | --------------------------- | --------------------------------------------- |
 | `import_games`              | `import_batch_id`                             |
 | `analyze_game`              | `analysis_run_id`, `game_id`                  |
-| `classify_weaknesses`       | optional `user_id` if not inferred from row   |
+| `classify_patterns`       | optional `user_id` if not inferred from row   |
 | `generate_training_plan`    | `training_plan_id`                            |
 | `update_progress_snapshots` | optional `user_id` if not inferred from row   |
 

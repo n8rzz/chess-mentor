@@ -1,6 +1,6 @@
 ---
 title: Domain Models
-last_modified: 2026-06-01
+last_modified: 2026-09-06
 tags:
   - architecture
   - domain
@@ -10,7 +10,7 @@ tags:
 
 # 1. Overview
 
-This document defines the core domain objects for Chess Coach.
+This document defines the core domain objects for Chess Mentor.
 
 The application is Rails-managed. Rails owns:
 
@@ -28,11 +28,43 @@ Python owns:
 
 - PGN parsing
 - Stockfish evaluation
-- Candidate event generation
-- Weakness classification
+- Analysis event generation
+- Pattern classification
 - Training plan generation logic, where applicable
 
 Python does not own schema migrations.
+
+---
+
+# 1.1 PRD Phase 1.2 mapping
+
+Phase 1.2 PRD vocabulary (see `docs/prd-phase1.2.md` §6 / §29) maps to implemented models as follows.
+
+Intentional vocabulary choices:
+
+- **Theme → Pattern.** The PRD says “theme”; we use **Pattern** for the taxonomy of recurring play labels (strengths and mistakes). “Weakness” / “strength” are polarity or report-section labels only.
+- **Theme Occurrence → PatternOccurrence.**
+- **Analysis Event** matches the PRD name (formerly AnalysisEvent).
+- **PatternCycle** is an implementation bridge not named in the PRD; it aggregates recurring PatternOccurrences and feeds TrainingPlan.
+
+| PRD entity | Implemented as | Notes |
+| --- | --- | --- |
+| Game | `Game` | — |
+| Position | `Move` (`fen_before` / `fen_after`) + `MoveEvaluation` | No separate `positions` table; `move_id` is the position handle |
+| EngineAnalysis | `AnalysisRun` + `MoveEvaluation` | Version fields on `AnalysisRun` |
+| AnalysisEvent | `AnalysisEvent` | Objective evidence layer |
+| Theme | Pattern enum via `Patternable` | No `patterns` lookup table yet; `pattern_taxonomy_version` stamps writes |
+| ThemeOccurrence | `PatternOccurrence` | Classifier version stamped per row |
+| *(unnamed)* | `PatternCycle` | Per-user, per-pattern campaign / lifecycle |
+| ReviewPeriod | `ReviewPeriod` + `review_period_games` | Game membership for period comparisons |
+| TrainingGoal | `TrainingPlan` (MVP) | One active plan per user; plan ≈ goal container |
+| Exercise / Attempt | `TrainingAssignment` | — |
+
+Privacy: Lichess games may mirror public provider data. Analysis runs, analysis events, pattern occurrences/cycles, training plans/assignments, and progress snapshots are **private user data** and must never be exposed cross-user.
+
+Disconnect vs wipe: disconnecting a provider removes the provider link and cascaded games; user-owned pattern/training rows remain until account deletion. Selective delete of games/analysis/training is deferred.
+
+Incremental Lichess sync: find newest stored game (or `last_imported_at`) → request games since that watermark → import new → queue analysis (PRD §33).
 
 ---
 
@@ -44,11 +76,12 @@ The product is organized around these domains:
 2. Imports
 3. Games and Moves
 4. Evaluation
-5. Weaknesses
+5. Patterns
 6. Training Plans
 7. Puzzles
 8. Progress Tracking
 9. Jobs and Workflow State
+10. Review Periods
 
 ---
 
@@ -359,7 +392,7 @@ Represents Stockfish evaluation for a user move.
 
 ---
 
-# 11. CandidateEvent
+# 11. AnalysisEvent
 
 Represents objective evidence produced by the Evaluation Engine.
 
@@ -392,7 +425,7 @@ Candidate events are not weaknesses yet.
 
 ---
 
-# 12. WeaknessEvent
+# 12. PatternOccurrence
 
 Represents a classified weakness occurrence.
 
@@ -407,9 +440,9 @@ Represents a classified weakness occurrence.
 - user_id
 - game_id
 - move_id
-- weakness_cycle_id
-- primary_theme
-- secondary_theme
+- pattern_cycle_id
+- primary_pattern
+- secondary_pattern
 - severity
 - phase (enum: `opening`, `middlegame`, `endgame`)
 - occurred_under_time_pressure
@@ -434,7 +467,7 @@ Represents a classified weakness occurrence.
 - endgame_technique
 - time_pressure
 
-# 13. WeaknessCycle
+# 13. PatternCycle
 
 Represents an active or historical period of a weakness.
 
@@ -503,7 +536,7 @@ Represents a focused improvement plan.
 ## Fields
 
 - user_id
-- weakness_cycle_id
+- pattern_cycle_id
 - theme
 - status
 - starts_at
@@ -601,11 +634,11 @@ Represents a point-in-time progress measurement.
 
 - user_id
 - training_plan_id
-- weakness_cycle_id
+- pattern_cycle_id
 - time_class
 - rating
-- weakness_frequency
-- weakness_severity
+- pattern_frequency
+- pattern_severity
 - blunders_per_game
 - average_centipawn_loss
 - games_analyzed_count
@@ -631,7 +664,7 @@ This may wrap Active Job, Sidekiq, or Python worker coordination. MVP uses Postg
 
 - import_games
 - analyze_game
-- classify_weaknesses
+- classify_patterns
 - generate_training_plan
 - update_progress_snapshots
 
@@ -682,7 +715,7 @@ This may wrap Active Job, Sidekiq, or Python worker coordination. MVP uses Postg
 4. Python parses PGN.
 5. Python creates Moves.
 6. Python creates MoveEvaluations.
-7. Python creates CandidateEvents.
+7. Python creates AnalysisEvents.
 8. Python marks AnalysisRun succeeded or failed.
 9. Rails UI displays analysis status.
 
@@ -691,9 +724,9 @@ This may wrap Active Job, Sidekiq, or Python worker coordination. MVP uses Postg
 # 21. Workflow: Classify Weaknesses
 
 1. Rails or Python creates classification job.
-2. Python reads CandidateEvents and MoveEvaluations.
-3. Python creates WeaknessEvents.
-4. Python updates or creates WeaknessCycles.
+2. Python reads AnalysisEvents and MoveEvaluations.
+3. Python creates PatternOccurrences.
+4. Python updates or creates PatternCycles.
 5. Python stores severity and lifecycle status.
 6. Rails UI displays weakness report.
 
