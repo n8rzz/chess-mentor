@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_07_041457) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_07_070000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -33,6 +33,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_041457) do
     t.string "analysis_version", null: false
     t.datetime "created_at", null: false
     t.integer "depth", null: false
+    t.integer "depth_critical", default: 20, null: false
     t.string "engine_name", null: false
     t.string "engine_version", null: false
     t.jsonb "error_details", default: {}
@@ -41,6 +42,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_041457) do
     t.string "game_id", null: false
     t.jsonb "metadata", default: {}, null: false
     t.string "metric_formula_version", default: "1.0.0", null: false
+    t.integer "multipv", default: 3, null: false
     t.datetime "started_at"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -48,6 +50,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_041457) do
     t.index ["game_id"], name: "index_analysis_runs_on_game_id"
     t.index ["user_id", "status"], name: "index_analysis_runs_on_user_id_and_status"
     t.index ["user_id"], name: "index_analysis_runs_on_user_id"
+  end
+
+  create_table "engine_position_evals", id: :string, force: :cascade do |t|
+    t.string "analysis_version", null: false
+    t.datetime "created_at", null: false
+    t.integer "depth", null: false
+    t.string "engine_name", null: false
+    t.string "engine_version", null: false
+    t.integer "multipv", null: false
+    t.string "position_key", null: false
+    t.jsonb "result", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["position_key", "engine_name", "engine_version", "depth", "multipv", "analysis_version"], name: "index_engine_position_evals_on_cache_key", unique: true
   end
 
   create_table "games", id: :string, force: :cascade do |t|
@@ -122,9 +137,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_041457) do
     t.string "analysis_run_id", null: false
     t.string "best_move_san"
     t.string "best_move_uci"
+    t.jsonb "candidates", default: [], null: false
     t.integer "centipawn_loss", null: false
     t.integer "classification", null: false
     t.datetime "created_at", null: false
+    t.boolean "critical_position", default: false, null: false
+    t.decimal "criticality_score", precision: 5, scale: 2, default: "0.0", null: false
     t.integer "depth", null: false
     t.integer "eval_after_cp"
     t.integer "eval_before_cp"

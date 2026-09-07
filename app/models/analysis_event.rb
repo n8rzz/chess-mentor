@@ -39,7 +39,8 @@ class AnalysisEvent < ApplicationRecord
     king_safety: 3,
     pawn_structure: 4,
     endgame_phase: 5,
-    time_pressure: 6
+    time_pressure: 6,
+    critical_position: 7
   }, validate: true
 
   validates :severity, :confidence, presence: true

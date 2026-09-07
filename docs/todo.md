@@ -20,13 +20,13 @@ tags:
 
 ### Stockfish analysis
 
-- [ ] Evaluate player moves (eval before/after, best vs played, CPL, PV, mates)
-- [ ] Two-pass analysis: shallow scan, then deeper MultiPV on critical positions
-- [ ] Persist engine results and avoid identical reanalysis; run analysis asynchronously
+- [x] Evaluate player moves (eval before/after, best vs played, CPL, PV, mates)
+- [x] Two-pass analysis: shallow scan, then deeper MultiPV on critical positions
+- [x] Persist engine results and avoid identical reanalysis; run analysis asynchronously
 
 ### Critical positions & game phases
 
-- [ ] Detect critical positions beyond CPL alone (eval swings, forced lines, time pressure, candidate dispersion)
+- [x] Detect critical positions beyond CPL alone (eval swings, forced lines, time pressure, candidate dispersion)
 - [ ] Classify positions as opening / middlegame / endgame
 
 ### Performance metrics

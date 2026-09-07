@@ -7,6 +7,7 @@
 #  id                     :string           not null, primary key
 #  analysis_version       :string           not null
 #  depth                  :integer          not null
+#  depth_critical         :integer          default(20), not null
 #  engine_name            :string           not null
 #  engine_version         :string           not null
 #  error_details          :jsonb
@@ -14,6 +15,7 @@
 #  finished_at            :datetime
 #  metadata               :jsonb            not null
 #  metric_formula_version :string           default("1.0.0"), not null
+#  multipv                :integer          default(3), not null
 #  started_at             :datetime
 #  status                 :integer          default("pending"), not null
 #  created_at             :datetime         not null
@@ -65,6 +67,8 @@ RSpec.describe AnalysisRun, type: :model do
     it { is_expected.to validate_presence_of(:engine_version) }
     it { is_expected.to validate_presence_of(:analysis_version) }
     it { is_expected.to validate_presence_of(:depth) }
+    it { is_expected.to validate_presence_of(:depth_critical) }
+    it { is_expected.to validate_presence_of(:multipv) }
 
     it "prevents updates to terminal runs" do
       run = create(:analysis_run, :succeeded)
@@ -118,6 +122,26 @@ RSpec.describe AnalysisRun, type: :model do
       analysis_run.save!
 
       expect(analysis_run.id).to match(/\A[0-9A-HJKMNP-TV-Z]{26}\z/)
+    end
+  end
+
+  describe "#status_label" do
+    it "returns Queued for pending runs" do
+      expect(build(:analysis_run).status_label).to eq("Queued")
+    end
+
+    it "returns the phase label while running" do
+      run = build(:analysis_run, :running, metadata: { "phase" => "detect" })
+
+      expect(run.status_label).to eq("Detect")
+    end
+
+    it "returns Running when no phase is set" do
+      expect(build(:analysis_run, :running).status_label).to eq("Running")
+    end
+
+    it "returns Succeeded for completed runs" do
+      expect(build(:analysis_run, :succeeded).status_label).to eq("Succeeded")
     end
   end
 end

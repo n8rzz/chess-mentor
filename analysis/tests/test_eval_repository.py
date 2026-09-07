@@ -1,3 +1,7 @@
+import os
+
+import psycopg
+
 from worker.eval_package.constants import ANALYSIS_RUN_STATUS, USER_COLOR
 from worker.eval_package.positions import generate_positions
 from worker.eval_package.repository import AnalysisRepository
@@ -74,3 +78,22 @@ def test_repository_marks_analysis_run_succeeded(db_conn):
     ).fetchone()
     assert row[0] == ANALYSIS_RUN_STATUS["succeeded"]
     assert row[1]["moves_parsed"] == 17
+
+
+def test_set_phase_is_visible_outside_open_transaction(db_conn):
+    seed = seed_game_with_analysis_run(db_conn)
+    repo = AnalysisRepository(db_conn)
+    repo.mark_running(seed["analysis_run_id"])
+
+    with db_conn.transaction():
+        repo.set_phase(seed["analysis_run_id"], "scan")
+        # Separate connection must see the phase before this transaction commits.
+        with psycopg.connect(
+            f"postgresql://{os.environ['DATABASE_USERNAME']}:{os.environ['DATABASE_PASSWORD']}"
+            f"@{os.environ['DATABASE_HOST']}:{os.environ['DATABASE_PORT']}/{os.environ['DATABASE_NAME']}"
+        ) as other:
+            phase = other.execute(
+                "SELECT metadata->>'phase' FROM analysis_runs WHERE id = %s",
+                (seed["analysis_run_id"],),
+            ).fetchone()[0]
+            assert phase == "scan"

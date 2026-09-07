@@ -42,13 +42,24 @@ Terminal rows (`succeeded`, `failed`, `cancelled`) must not be updated by Rails 
 
 ## Retry and reconciliation (M9)
 
-Rails reconcilers (invoked from `AnalysisRuns::ReconcileJob`):
+Rails reconcilers (invoked from `AnalysisRuns::ReconcileJob` every ~30s):
 
 | Service | Purpose |
 | ------- | ------- |
 | `ImportBatches::ReconcileStuck` | Retry failed `import_games` jobs; enqueue imports for stuck `pending`/`running` batches without an active job |
+| `SystemJobs::ReconcileStuckProcessing` | Fail orphaned `claimed`/`processing` jobs whose lease (`updated_at`) exceeded the type timeout; retry when attempts remain; fail pending/running `AnalysisRun` when analyze retries are exhausted |
 | `AnalysisRuns::ReconcileAll` | Enqueue analysis for terminal imports and stuck pending `AnalysisRun` rows |
 | `SystemJobs::ReconcileFailed` | Retry failed `classify_patterns` / `generate_training_plan` when parent entity still pending |
+
+Lease timeouts (override with `SYSTEM_JOB_STUCK_TIMEOUT_<JOB_TYPE>_SECONDS`):
+
+| job_type | Default |
+| -------- | ------- |
+| `import_games` | 20 minutes |
+| `analyze_game` | 30 minutes |
+| `classify_patterns` / `generate_training_plan` / `update_progress_snapshots` | 15 minutes |
+
+Python workers heartbeat in-progress jobs every `SYSTEM_JOB_HEARTBEAT_SECONDS` (default 30) by bumping `updated_at`, so live long Stockfish runs are not marked stuck.
 
 `SystemJobs::Retry` resets a failed job to `pending`, clears errors, keeps `attempts_count`. Retry is allowed while `attempts_count < MAX_ATTEMPTS` (3).
 

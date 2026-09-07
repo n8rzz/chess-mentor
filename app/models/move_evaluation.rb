@@ -7,8 +7,11 @@
 #  id                  :string           not null, primary key
 #  best_move_san       :string
 #  best_move_uci       :string
+#  candidates          :jsonb            not null
 #  centipawn_loss      :integer          not null
 #  classification      :integer          not null
+#  critical_position   :boolean          default(FALSE), not null
+#  criticality_score   :decimal(5, 2)    default(0.0), not null
 #  depth               :integer          not null
 #  eval_after_cp       :integer
 #  eval_before_cp      :integer
@@ -48,5 +51,6 @@ class MoveEvaluation < ApplicationRecord
   }, validate: true
 
   validates :centipawn_loss, :depth, presence: true
+  validates :criticality_score, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 1 }
   validates :move_id, uniqueness: { scope: :analysis_run_id }
 end

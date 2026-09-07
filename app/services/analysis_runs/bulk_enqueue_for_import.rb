@@ -6,7 +6,9 @@ module AnalysisRuns
     DEFAULT_ENGINE_VERSION = AnalysisVersions::ENGINE_VERSION
     DEFAULT_ANALYSIS_VERSION = AnalysisVersions::ANALYSIS_VERSION
     DEFAULT_METRIC_FORMULA_VERSION = AnalysisVersions::METRIC_FORMULA_VERSION
-    DEFAULT_DEPTH = AnalysisVersions::DEFAULT_DEPTH
+    DEFAULT_DEPTH = AnalysisVersions::DEPTH_SCAN
+    DEFAULT_DEPTH_CRITICAL = AnalysisVersions::DEPTH_CRITICAL
+    DEFAULT_MULTIPV = AnalysisVersions::MULTIPV
 
     def self.call(import_batch:)
       new(import_batch:).call
@@ -23,7 +25,7 @@ module AnalysisRuns
       ActiveRecord::Base.transaction do
         imported_records.find_each do |record|
           next if record.game_id.blank?
-          next if existing_run?(record.game_id)
+          next if skip_enqueue?(record.game_id)
 
           analysis_run = AnalysisRun.create!(
             game_id: record.game_id,
@@ -33,6 +35,8 @@ module AnalysisRuns
             analysis_version: DEFAULT_ANALYSIS_VERSION,
             metric_formula_version: DEFAULT_METRIC_FORMULA_VERSION,
             depth: DEFAULT_DEPTH,
+            depth_critical: DEFAULT_DEPTH_CRITICAL,
+            multipv: DEFAULT_MULTIPV,
             metadata: { "import_batch_id" => @import_batch.id }
           )
 
@@ -68,8 +72,39 @@ module AnalysisRuns
       @import_batch.import_records.imported.includes(:game)
     end
 
-    def existing_run?(game_id)
-      AnalysisRun.in_progress.exists?(game_id: game_id)
+    def skip_enqueue?(game_id)
+      if AnalysisRun.in_progress.exists?(game_id: game_id)
+        Rails.logger.info(
+          "analysis.enqueue_skip reason=in_progress game_id=#{game_id}"
+        )
+        return true
+      end
+
+      matching = matching_succeeded_run(game_id)
+      if matching
+        Rails.logger.info(
+          "analysis.enqueue_skip reason=identical_succeeded_run " \
+          "game_id=#{game_id} analysis_run_id=#{matching.id} " \
+          "analysis_version=#{matching.analysis_version} " \
+          "depth=#{matching.depth} depth_critical=#{matching.depth_critical} " \
+          "multipv=#{matching.multipv}"
+        )
+        return true
+      end
+
+      false
+    end
+
+    def matching_succeeded_run(game_id)
+      AnalysisRun.succeeded.find_by(
+        game_id: game_id,
+        analysis_version: DEFAULT_ANALYSIS_VERSION,
+        engine_name: DEFAULT_ENGINE_NAME,
+        engine_version: DEFAULT_ENGINE_VERSION,
+        depth: DEFAULT_DEPTH,
+        depth_critical: DEFAULT_DEPTH_CRITICAL,
+        multipv: DEFAULT_MULTIPV
+      )
     end
   end
 end

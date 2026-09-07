@@ -163,8 +163,9 @@ def seed_game_with_analysis_run(
         """
         INSERT INTO analysis_runs (
           id, game_id, user_id, status, engine_name, engine_version,
-          analysis_version, depth, metadata, created_at, updated_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+          analysis_version, depth, depth_critical, multipv, metadata,
+          created_at, updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
         """,
         (
             analysis_run_id,
@@ -173,8 +174,10 @@ def seed_game_with_analysis_run(
             0,
             "Stockfish",
             "16.1",
-            "1.0.0",
-            15,
+            "1.1.0",
+            14,
+            20,
+            3,
             json.dumps({}),
             now,
             now,

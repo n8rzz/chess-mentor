@@ -36,7 +36,7 @@
             <td class="px-4 py-3 capitalize text-gray-700"><%= game.time_class %></td>
             <td class="px-4 py-3">
               <% if latest_run %>
-                <span class="capitalize text-gray-700"><%= latest_run.status.tr("_", " ") %></span>
+                <span class="text-gray-700"><%= latest_run.status_label %></span>
               <% else %>
                 <span class="text-gray-500">Not started</span>
               <% end %>

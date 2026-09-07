@@ -48,7 +48,8 @@ RSpec.describe AnalysisEvent, type: :model do
           king_safety: 3,
           pawn_structure: 4,
           endgame_phase: 5,
-          time_pressure: 6
+          time_pressure: 6,
+          critical_position: 7
         )
         .backed_by_column_of_type(:integer)
     end

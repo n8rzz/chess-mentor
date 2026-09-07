@@ -52,6 +52,7 @@ def test_repository_load_and_query_helpers(db_conn):
     loaded = repo.load_move_evaluation(partial["analysis_run_id"], user_move.id)
     assert loaded is not None
     assert loaded[1] == 20
+    assert loaded[2] is False
 
     assert repo.move_has_analysis_events(partial["analysis_run_id"], user_move.id)
     assert repo.count_analysis_events(partial["analysis_run_id"]) == 2

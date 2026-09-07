@@ -55,7 +55,25 @@ RSpec.describe "Games", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("rival_failed")
-      expect(response.body).to include("failed")
+      expect(response.body).to include("Failed")
+    end
+
+    it "shows the analysis phase while a run is in progress" do
+      game = create(:game, user: user, opponent_username: "rival_phase")
+      create(
+        :analysis_run,
+        :running,
+        game: game,
+        user: user,
+        metadata: { "phase" => "deepen" }
+      )
+
+      sign_in user
+      get games_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("rival_phase")
+      expect(response.body).to include("Critical deepen")
     end
   end
 
@@ -117,20 +135,20 @@ RSpec.describe "Games", type: :request do
       get game_path(game)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("pending")
-      expect(response.body).to include("Analysis is queued or in progress")
+      expect(response.body).to include("Queued")
+      expect(response.body).to include("Analysis is queued")
     end
 
     it "shows a progress hint when analysis is running" do
       game = create(:game, user: user)
-      create(:analysis_run, :running, game: game, user: user)
+      create(:analysis_run, :running, game: game, user: user, metadata: { "phase" => "scan" })
 
       sign_in user
       get game_path(game)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("running")
-      expect(response.body).to include("Analysis is queued or in progress")
+      expect(response.body).to include("Scan")
+      expect(response.body).to include("Analysis in progress: scan")
     end
 
     it "does not show the progress hint when analysis has succeeded" do
@@ -141,8 +159,9 @@ RSpec.describe "Games", type: :request do
       get game_path(game)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("succeeded")
-      expect(response.body).not_to include("Analysis is queued or in progress")
+      expect(response.body).to include("Succeeded")
+      expect(response.body).not_to include("Analysis is queued")
+      expect(response.body).not_to include("Analysis in progress")
     end
   end
 end

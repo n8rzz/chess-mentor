@@ -100,5 +100,60 @@ RSpec.describe AnalysisRuns::BulkEnqueueForImport do
         described_class.call(import_batch: import_batch)
       end.not_to change(AnalysisRun, :count)
     end
+
+    it "skips games that already have a matching succeeded analysis run" do
+      game = create(:game, user: user, provider_account: provider_account, import_batch: import_batch)
+      create(
+        :import_record,
+        import_batch: import_batch,
+        provider: :lichess,
+        provider_game_id: game.provider_game_id,
+        status: :imported,
+        game: game
+      )
+      create(
+        :analysis_run,
+        :succeeded,
+        game: game,
+        user: user,
+        analysis_version: described_class::DEFAULT_ANALYSIS_VERSION,
+        engine_name: described_class::DEFAULT_ENGINE_NAME,
+        engine_version: described_class::DEFAULT_ENGINE_VERSION,
+        depth: described_class::DEFAULT_DEPTH,
+        depth_critical: described_class::DEFAULT_DEPTH_CRITICAL,
+        multipv: described_class::DEFAULT_MULTIPV
+      )
+
+      expect do
+        described_class.call(import_batch: import_batch)
+      end.not_to change(AnalysisRun, :count)
+    end
+
+    it "enqueues a new run when analysis_version differs from the succeeded run" do
+      game = create(:game, user: user, provider_account: provider_account, import_batch: import_batch)
+      create(
+        :import_record,
+        import_batch: import_batch,
+        provider: :lichess,
+        provider_game_id: game.provider_game_id,
+        status: :imported,
+        game: game
+      )
+      create(
+        :analysis_run,
+        :succeeded,
+        game: game,
+        user: user,
+        analysis_version: "1.0.0",
+        depth: described_class::DEFAULT_DEPTH,
+        depth_critical: described_class::DEFAULT_DEPTH_CRITICAL,
+        multipv: described_class::DEFAULT_MULTIPV
+      )
+
+      expect do
+        described_class.call(import_batch: import_batch)
+      end.to change(AnalysisRun, :count).by(1)
+        .and change(SystemJob, :count).by(1)
+    end
   end
 end

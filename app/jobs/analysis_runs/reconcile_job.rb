@@ -12,6 +12,7 @@ module AnalysisRuns
 
     def perform(reschedule = true)
       ImportBatches::ReconcileStuck.call
+      SystemJobs::ReconcileStuckProcessing.call
       AnalysisRuns::ReconcileAll.call
       SystemJobs::ReconcileFailed.call
       self.class.perform_in(INTERVAL_SECONDS) if reschedule

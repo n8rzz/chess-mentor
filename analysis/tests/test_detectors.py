@@ -57,10 +57,12 @@ def test_time_pressure_detector_triggers_under_threshold():
         pgn="",
         user_color=USER_COLOR["white"],
         time_class=TIME_CLASS["blitz"],
-        depth=15,
+        depth=14,
+        depth_critical=20,
+        multipv=3,
         engine_name="Stockfish",
         engine_version="16.1",
-        analysis_version="1.0.0",
+        analysis_version="1.1.0",
         metadata={},
     )
     position = _position(
@@ -151,10 +153,12 @@ def test_king_safety_detector_flags_delayed_castling():
         pgn="",
         user_color=USER_COLOR["white"],
         time_class=TIME_CLASS["rapid"],
-        depth=15,
+        depth=14,
+        depth_critical=20,
+        multipv=3,
         engine_name="Stockfish",
         engine_version="16.1",
-        analysis_version="1.0.0",
+        analysis_version="1.1.0",
         metadata={},
     )
     fen_before = chess.STARTING_FEN

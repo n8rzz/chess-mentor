@@ -25,6 +25,8 @@ def upsert_analysis_run(game:, seed_key:, status:, **attrs)
     engine_version: AnalysisRuns::BulkEnqueueForImport::DEFAULT_ENGINE_VERSION,
     analysis_version: AnalysisRuns::BulkEnqueueForImport::DEFAULT_ANALYSIS_VERSION,
     depth: AnalysisRuns::BulkEnqueueForImport::DEFAULT_DEPTH,
+    depth_critical: AnalysisRuns::BulkEnqueueForImport::DEFAULT_DEPTH_CRITICAL,
+    multipv: AnalysisRuns::BulkEnqueueForImport::DEFAULT_MULTIPV,
     metadata: { "seed_key" => seed_key, "import_batch_id" => game.import_batch_id },
     **attrs
   )
@@ -51,12 +53,15 @@ def upsert_move_evaluation(analysis_run:, move:, classification:, centipawn_loss
     game: analysis_run.game,
     classification: classification,
     centipawn_loss: centipawn_loss,
-    depth: analysis_run.depth,
+    depth: attrs.fetch(:depth, analysis_run.depth),
     eval_before_cp: attrs.fetch(:eval_before_cp, 20),
     eval_after_cp: attrs.fetch(:eval_after_cp, 20 - centipawn_loss),
     best_move_san: attrs[:best_move_san],
     best_move_uci: attrs[:best_move_uci],
     principal_variation: attrs[:principal_variation],
+    candidates: attrs.fetch(:candidates, []),
+    critical_position: attrs.fetch(:critical_position, false),
+    criticality_score: attrs.fetch(:criticality_score, 0),
     metadata: attrs.fetch(:metadata, {})
   )
   evaluation.save!
@@ -102,7 +107,40 @@ evaluation_specs = [
   { classification: :good, centipawn_loss: 10 },
   { classification: :mistake, centipawn_loss: 95, best_move_san: "Re1", best_move_uci: "f1e1" },
   { classification: :good, centipawn_loss: 6 },
-  { classification: :blunder, centipawn_loss: 220, best_move_san: "Bxf7+", best_move_uci: "c4f7" },
+  {
+    classification: :blunder,
+    centipawn_loss: 220,
+    best_move_san: "Bxf7+",
+    best_move_uci: "c4f7",
+    depth: AnalysisVersions::DEPTH_CRITICAL,
+    critical_position: true,
+    criticality_score: 0.8,
+    candidates: [
+      {
+        "rank" => 1,
+        "move_uci" => "c4f7",
+        "move_san" => "Bxf7+",
+        "eval_cp" => 210,
+        "mate" => nil,
+        "pv_san" => "Bxf7+ Kxf7"
+      },
+      {
+        "rank" => 2,
+        "move_uci" => "c1g5",
+        "move_san" => "Bg5",
+        "eval_cp" => 20,
+        "mate" => nil,
+        "pv_san" => "Bg5 h6"
+      }
+    ],
+    metadata: {
+      "pass" => 2,
+      "critical_reasons" => %w[blunder_cpl candidate_dispersion],
+      "candidate_gap_cp" => 190,
+      "played_is_best" => false,
+      "scan_depth" => AnalysisVersions::DEPTH_SCAN
+    }
+  },
   { classification: :good, centipawn_loss: 14 },
   { classification: :good, centipawn_loss: 5 }
 ]
@@ -122,6 +160,26 @@ AnalysisEvent.find_or_initialize_by(
     severity: 0.72,
     confidence: 0.81,
     metadata: { "seed_key" => "demo_king_safety_event", "signal" => "king_exposed_after_castling" }
+  )
+  event.save!
+end
+
+critical_move = user_moves[6]
+AnalysisEvent.find_or_initialize_by(
+  analysis_run: succeeded_run,
+  move: critical_move,
+  event_type: :critical_position
+).tap do |event|
+  event.assign_attributes(
+    game: blitz_game,
+    severity: 0.8,
+    confidence: 0.9,
+    metadata: {
+      "seed_key" => "demo_critical_position_event",
+      "criticality_score" => 0.8,
+      "reasons" => %w[blunder_cpl candidate_dispersion],
+      "candidate_gap_cp" => 190
+    }
   )
   event.save!
 end

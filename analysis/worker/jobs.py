@@ -144,3 +144,18 @@ def mark_failed(
             job_id,
         ),
     )
+
+
+def heartbeat_job(conn: psycopg.Connection, job_id: str) -> bool:
+    """Bump updated_at for an in-progress job so Rails lease recovery keeps it alive."""
+    now = _utcnow()
+    row = conn.execute(
+        """
+        UPDATE system_jobs
+        SET updated_at = %s
+        WHERE id = %s AND status IN (%s, %s)
+        RETURNING id
+        """,
+        (now, job_id, STATUS_CLAIMED, STATUS_PROCESSING),
+    ).fetchone()
+    return row is not None

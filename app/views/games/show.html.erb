@@ -20,8 +20,8 @@
   </div>
   <div class="rounded-lg border border-gray-200 bg-white p-4">
     <p class="text-sm text-gray-500">Analysis</p>
-    <p class="mt-1 text-lg font-semibold capitalize text-gray-900">
-      <%= @analysis_run ? @analysis_run.status.tr("_", " ") : "Not started" %>
+    <p class="mt-1 text-lg font-semibold text-gray-900">
+      <%= @analysis_run ? @analysis_run.status_label : "Not started" %>
     </p>
   </div>
 </section>
@@ -29,7 +29,13 @@
 <% if @analysis_run&.pending? || @analysis_run&.running? %>
   <section class="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
     <p class="text-sm text-amber-900">
-      Analysis is queued or in progress...
+      <% if @analysis_run.pending? %>
+        Analysis is queued. Waiting for a worker to pick it up.
+      <% elsif @analysis_run.phase_label %>
+        Analysis in progress: <%= @analysis_run.phase_label.downcase %>.
+      <% else %>
+        Analysis is in progress…
+      <% end %>
     </p>
   </section>
 <% end %>

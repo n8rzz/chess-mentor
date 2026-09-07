@@ -7,6 +7,7 @@
 #  id                     :string           not null, primary key
 #  analysis_version       :string           not null
 #  depth                  :integer          not null
+#  depth_critical         :integer          default(20), not null
 #  engine_name            :string           not null
 #  engine_version         :string           not null
 #  error_details          :jsonb
@@ -14,6 +15,7 @@
 #  finished_at            :datetime
 #  metadata               :jsonb            not null
 #  metric_formula_version :string           default("1.0.0"), not null
+#  multipv                :integer          default(3), not null
 #  started_at             :datetime
 #  status                 :integer          default("pending"), not null
 #  created_at             :datetime         not null
@@ -34,6 +36,12 @@
 #
 class AnalysisRun < ApplicationRecord
   TERMINAL_STATUSES = %w[succeeded partially_succeeded failed cancelled].freeze
+  PHASE_LABELS = {
+    "scan" => "Scan",
+    "deepen" => "Critical deepen",
+    "detect" => "Detect",
+    "complete" => "Complete"
+  }.freeze
 
   belongs_to :game
   belongs_to :user
@@ -49,13 +57,30 @@ class AnalysisRun < ApplicationRecord
     cancelled: 5
   }, default: :pending, validate: true
 
-  validates :engine_name, :engine_version, :analysis_version, :depth, presence: true
+  validates :engine_name, :engine_version, :analysis_version, :depth, :depth_critical, :multipv, presence: true
 
   validate :immutable_when_terminal, on: :update
 
   scope :in_progress, -> { where(status: %i[pending running]) }
   scope :terminal, -> { where(status: TERMINAL_STATUSES.map(&:to_sym)) }
   scope :succeeded, -> { where(status: :succeeded) }
+
+  def phase
+    metadata["phase"].presence
+  end
+
+  def phase_label
+    PHASE_LABELS[phase]
+  end
+
+  def status_label
+    return "Queued" if pending?
+    return "Failed" if failed?
+    return "Cancelled" if cancelled?
+    return "Succeeded" if succeeded? || partially_succeeded?
+
+    phase_label.presence || status.to_s.tr("_", " ").capitalize
+  end
 
   private
 

@@ -7,8 +7,9 @@ from typing import Any
 
 import psycopg
 
+from worker.config import load_config
 from worker.eval_package.constants import ANALYSIS_RUN_STATUS
-from worker.eval_package.engine import EngineEvaluation
+from worker.eval_package.engine import CandidateLine, EngineEvaluation
 from worker.import_package.ids import new_ulid
 
 
@@ -21,6 +22,8 @@ class AnalysisContext:
     user_color: int
     time_class: int
     depth: int
+    depth_critical: int
+    multipv: int
     engine_name: str
     engine_version: str
     analysis_version: str
@@ -55,6 +58,8 @@ class AnalysisRepository:
               ar.game_id,
               ar.user_id,
               ar.depth,
+              ar.depth_critical,
+              ar.multipv,
               ar.engine_name,
               ar.engine_version,
               ar.analysis_version,
@@ -72,7 +77,7 @@ class AnalysisRepository:
         if row is None:
             raise ValueError(f"analysis run not found: {analysis_run_id}")
 
-        metadata = row[7]
+        metadata = row[9]
         if isinstance(metadata, str):
             metadata = json.loads(metadata)
 
@@ -81,13 +86,15 @@ class AnalysisRepository:
             game_id=row[1],
             user_id=row[2],
             depth=row[3],
-            engine_name=row[4],
-            engine_version=row[5],
-            analysis_version=row[6],
+            depth_critical=row[4],
+            multipv=row[5],
+            engine_name=row[6],
+            engine_version=row[7],
+            analysis_version=row[8],
             metadata=dict(metadata or {}),
-            pgn=row[8],
-            user_color=row[9],
-            time_class=row[10],
+            pgn=row[10],
+            user_color=row[11],
+            time_class=row[12],
         )
 
     def mark_running(self, analysis_run_id: str) -> None:
@@ -100,6 +107,22 @@ class AnalysisRepository:
             """,
             (ANALYSIS_RUN_STATUS["running"], now, now, analysis_run_id),
         )
+        # Commit immediately so Rails can show "running" while analysis continues.
+        self._conn.commit()
+
+    def set_phase(self, analysis_run_id: str, phase: str, **extra: Any) -> None:
+        """Publish phase progress on a separate connection so it is visible mid-transaction."""
+        patch = {"phase": phase, **extra}
+        now = _utcnow()
+        with psycopg.connect(load_config().database_url, autocommit=True) as progress_conn:
+            progress_conn.execute(
+                """
+                UPDATE analysis_runs
+                SET metadata = metadata || %s::jsonb, updated_at = %s
+                WHERE id = %s
+                """,
+                (json.dumps(patch), now, analysis_run_id),
+            )
 
     def mark_succeeded(self, analysis_run_id: str, *, metadata_patch: dict[str, Any] | None = None) -> None:
         now = _utcnow()
@@ -184,6 +207,9 @@ class AnalysisRepository:
             "moves_parsed": metadata.get("moves_parsed", 0),
             "user_moves_evaluated": metadata.get("user_moves_evaluated", 0),
             "events_detected": metadata.get("events_detected", 0),
+            "critical_positions": metadata.get("critical_positions", 0),
+            "cache_hits": metadata.get("cache_hits", 0),
+            "cache_misses": metadata.get("cache_misses", 0),
         }
 
     def has_move_evaluation(self, analysis_run_id: str, move_id: str) -> bool:
@@ -201,13 +227,14 @@ class AnalysisRepository:
         self,
         analysis_run_id: str,
         move_id: str,
-    ) -> tuple[EngineEvaluation, int] | None:
+    ) -> tuple[EngineEvaluation, int, bool, float] | None:
         row = self._conn.execute(
             """
             SELECT
               eval_before_cp, eval_after_cp, centipawn_loss,
               best_move_uci, best_move_san, principal_variation,
-              mate_before, mate_after
+              mate_before, mate_after, candidates, depth,
+              critical_position, criticality_score, metadata
             FROM move_evaluations
             WHERE analysis_run_id = %s AND move_id = %s
             LIMIT 1
@@ -217,6 +244,25 @@ class AnalysisRepository:
         if row is None:
             return None
 
+        candidates_raw = row[8]
+        if isinstance(candidates_raw, str):
+            candidates_raw = json.loads(candidates_raw)
+        candidates = tuple(
+            CandidateLine(
+                rank=int(item.get("rank", index)),
+                move_uci=item.get("move_uci"),
+                move_san=item.get("move_san"),
+                eval_cp=int(item.get("eval_cp", 0)),
+                mate=item.get("mate"),
+                pv_san=item.get("pv_san"),
+            )
+            for index, item in enumerate(candidates_raw or [], start=1)
+        )
+        metadata = row[12]
+        if isinstance(metadata, str):
+            metadata = json.loads(metadata)
+        metadata = dict(metadata or {})
+
         evaluation = EngineEvaluation(
             eval_before_cp=int(row[0]),
             eval_after_cp=int(row[1]),
@@ -225,8 +271,12 @@ class AnalysisRepository:
             best_move_uci=row[3],
             best_move_san=row[4],
             principal_variation=row[5],
+            candidates=candidates,
+            depth=row[9],
+            multipv=metadata.get("multipv"),
+            played_is_best=metadata.get("played_is_best"),
         )
-        return evaluation, int(row[2])
+        return evaluation, int(row[2]), bool(row[10]), float(row[11] or 0)
 
     def move_has_analysis_events(self, analysis_run_id: str, move_id: str) -> bool:
         row = self._conn.execute(
@@ -332,6 +382,10 @@ class AnalysisRepository:
         mate_before: int | None,
         mate_after: int | None,
         metadata: dict[str, Any],
+        candidates: list[dict[str, Any]] | None = None,
+        critical_position: bool = False,
+        criticality_score: float = 0.0,
+        multipv: int | None = None,
     ) -> None:
         now = _utcnow()
         self._conn.execute(
@@ -341,12 +395,14 @@ class AnalysisRepository:
               eval_before_cp, eval_after_cp, centipawn_loss, classification,
               best_move_uci, best_move_san, principal_variation,
               mate_before, mate_after, depth, metadata,
+              candidates, critical_position, criticality_score,
               created_at, updated_at
             ) VALUES (
               %s, %s, %s, %s,
               %s, %s, %s, %s,
               %s, %s, %s,
               %s, %s, %s, %s::jsonb,
+              %s::jsonb, %s, %s,
               %s, %s
             )
             ON CONFLICT (analysis_run_id, move_id) DO NOTHING
@@ -366,9 +422,74 @@ class AnalysisRepository:
                 mate_before,
                 mate_after,
                 depth,
+                json.dumps({**metadata, **({"multipv": multipv} if multipv is not None else {})}),
+                json.dumps(candidates or []),
+                critical_position,
+                criticality_score,
+                now,
+                now,
+            ),
+        )
+
+    def update_move_evaluation(
+        self,
+        *,
+        analysis_run_id: str,
+        move_id: str,
+        depth: int,
+        eval_before_cp: int,
+        eval_after_cp: int,
+        centipawn_loss: int,
+        classification: int,
+        best_move_uci: str | None,
+        best_move_san: str | None,
+        principal_variation: str | None,
+        mate_before: int | None,
+        mate_after: int | None,
+        metadata: dict[str, Any],
+        candidates: list[dict[str, Any]],
+        critical_position: bool,
+        criticality_score: float,
+    ) -> None:
+        now = _utcnow()
+        self._conn.execute(
+            """
+            UPDATE move_evaluations
+            SET eval_before_cp = %s,
+                eval_after_cp = %s,
+                centipawn_loss = %s,
+                classification = %s,
+                best_move_uci = %s,
+                best_move_san = %s,
+                principal_variation = %s,
+                mate_before = %s,
+                mate_after = %s,
+                depth = %s,
+                metadata = %s::jsonb,
+                candidates = %s::jsonb,
+                critical_position = %s,
+                criticality_score = %s,
+                updated_at = %s
+            WHERE analysis_run_id = %s AND move_id = %s
+            """,
+            (
+                eval_before_cp,
+                eval_after_cp,
+                centipawn_loss,
+                classification,
+                best_move_uci,
+                best_move_san,
+                principal_variation,
+                mate_before,
+                mate_after,
+                depth,
                 json.dumps(metadata),
+                json.dumps(candidates),
+                critical_position,
+                criticality_score,
                 now,
-                now,
+                analysis_run_id,
+                move_id,
             ),
         )
 

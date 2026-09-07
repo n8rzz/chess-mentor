@@ -7,6 +7,7 @@
 #  id                     :string           not null, primary key
 #  analysis_version       :string           not null
 #  depth                  :integer          not null
+#  depth_critical         :integer          default(20), not null
 #  engine_name            :string           not null
 #  engine_version         :string           not null
 #  error_details          :jsonb
@@ -14,6 +15,7 @@
 #  finished_at            :datetime
 #  metadata               :jsonb            not null
 #  metric_formula_version :string           default("1.0.0"), not null
+#  multipv                :integer          default(3), not null
 #  started_at             :datetime
 #  status                 :integer          default("pending"), not null
 #  created_at             :datetime         not null
@@ -41,7 +43,9 @@ FactoryBot.define do
     engine_version { "16.1" }
     analysis_version { AnalysisVersions::ANALYSIS_VERSION }
     metric_formula_version { AnalysisVersions::METRIC_FORMULA_VERSION }
-    depth { 15 }
+    depth { AnalysisVersions::DEPTH_SCAN }
+    depth_critical { AnalysisVersions::DEPTH_CRITICAL }
+    multipv { AnalysisVersions::MULTIPV }
     metadata { {} }
 
     trait :running do

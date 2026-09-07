@@ -7,8 +7,11 @@
 #  id                  :string           not null, primary key
 #  best_move_san       :string
 #  best_move_uci       :string
+#  candidates          :jsonb            not null
 #  centipawn_loss      :integer          not null
 #  classification      :integer          not null
+#  critical_position   :boolean          default(FALSE), not null
+#  criticality_score   :decimal(5, 2)    default(0.0), not null
 #  depth               :integer          not null
 #  eval_after_cp       :integer
 #  eval_before_cp      :integer
@@ -57,6 +60,7 @@ RSpec.describe MoveEvaluation, type: :model do
   describe "validations" do
     it { is_expected.to validate_presence_of(:centipawn_loss) }
     it { is_expected.to validate_presence_of(:depth) }
+    it { is_expected.to validate_numericality_of(:criticality_score).is_greater_than_or_equal_to(0).is_less_than_or_equal_to(1) }
 
     it "requires a unique move per analysis run" do
       existing = create(:move_evaluation)
@@ -64,6 +68,17 @@ RSpec.describe MoveEvaluation, type: :model do
 
       expect(duplicate).not_to be_valid
       expect(duplicate.errors[:move_id]).to include("has already been taken")
+    end
+  end
+
+  describe "critical trait" do
+    it "builds a critical evaluation with MultiPV candidates" do
+      evaluation = create(:move_evaluation, :critical)
+
+      expect(evaluation).to be_critical_position
+      expect(evaluation.criticality_score).to be > 0
+      expect(evaluation.candidates.size).to eq(2)
+      expect(evaluation.depth).to eq(AnalysisVersions::DEPTH_CRITICAL)
     end
   end
 

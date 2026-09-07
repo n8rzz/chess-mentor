@@ -131,6 +131,23 @@ RSpec.describe AnalysisRuns::ReconcileAll do
       end.not_to change(SystemJob.where(job_type: :analyze_game), :count)
     end
 
+    it "enqueues a new run when a succeeded run uses outdated analysis settings" do
+      game = create(:game, user: user, provider_account: provider_account, import_batch: import_batch)
+      create(
+        :analysis_run,
+        :succeeded,
+        game: game,
+        user: user,
+        analysis_version: "1.0.0",
+        depth: 15
+      )
+
+      expect do
+        described_class.call
+      end.to change(AnalysisRun, :count).by(1)
+        .and change(SystemJob.where(job_type: :analyze_game), :count).by(1)
+    end
+
     it "creates analysis runs and jobs for games missing runs" do
       game = create(:game, user: user, provider_account: provider_account, import_batch: import_batch)
 
