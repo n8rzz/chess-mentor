@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from worker.eval_package.constants import CLASSIFICATION, EVENT_TYPE
+from worker.eval_package.game_phase import classify_position_phase
 from worker.weakness_package.constants import (
     BAD_TRADE_MIN_MATERIAL_LOST,
     GAME_PHASE,
@@ -26,7 +27,7 @@ def classify_move(artifact: MoveArtifact) -> ClassifiedPattern | None:
         return None
 
     secondary = PATTERN["time_pressure"] if under_pressure and primary != PATTERN["time_pressure"] else None
-    phase = _derive_phase(artifact.move_number, events_by_type)
+    phase = _resolve_phase(artifact)
     severity = _event_severity(primary, events_by_type, cpl)
     pattern_key = _theme_key(primary)
 
@@ -39,7 +40,7 @@ def classify_move(artifact: MoveArtifact) -> ClassifiedPattern | None:
         severity=round(min(1.0, max(0.0, severity)), 2),
         phase=phase,
         occurred_under_time_pressure=under_pressure,
-            explanation_key=f"{pattern_key}.v1",
+        explanation_key=f"{pattern_key}.v1",
         metadata=_build_metadata(events_by_type, evaluation),
         played_at=artifact.played_at,
     )
@@ -75,7 +76,7 @@ def classify_time_pressure_standalone(
         primary_pattern=PATTERN["time_pressure"],
         secondary_pattern=None,
         severity=round(severity, 2),
-        phase=_derive_phase(artifact.move_number, events_by_type),
+        phase=_resolve_phase(artifact),
         occurred_under_time_pressure=True,
         explanation_key="time_pressure.v1",
         metadata={
@@ -103,7 +104,7 @@ def _resolve_primary_pattern(
         return PATTERN["ignored_threats"]
     if _matches_pawn_structure(events_by_type, cpl):
         return PATTERN["pawn_structure"]
-    if EVENT_TYPE["endgame_phase"] in events_by_type:
+    if _matches_endgame_technique(artifact, cpl):
         return PATTERN["endgame_technique"]
     if _matches_opening_development(artifact, events_by_type):
         return PATTERN["opening_development"]
@@ -177,6 +178,12 @@ def _matches_pawn_structure(
     return cpl >= INACCURACY_CPL and any(event.metadata.get("new_issues") for event in pawn_events)
 
 
+def _matches_endgame_technique(artifact: MoveArtifact, cpl: int) -> bool:
+    if _resolve_phase(artifact) != GAME_PHASE["endgame"]:
+        return False
+    return cpl >= MISTAKE_CPL
+
+
 def _matches_opening_development(
     artifact: MoveArtifact,
     events_by_type: dict[int, list[AnalysisEventRow]],
@@ -203,13 +210,13 @@ def _matches_king_safety(
     return bool(king_events)
 
 
-def _derive_phase(move_number: int, events_by_type: dict[int, list[AnalysisEventRow]]) -> int:
-    if EVENT_TYPE["endgame_phase"] in events_by_type:
-        return GAME_PHASE["endgame"]
-    if move_number <= OPENING_MOVE_LIMIT:
+def _resolve_phase(artifact: MoveArtifact) -> int:
+    if artifact.phase is not None:
+        return int(artifact.phase)
+    if artifact.fen_after:
+        return classify_position_phase(artifact.fen_after, artifact.move_number)
+    if artifact.move_number <= OPENING_MOVE_LIMIT:
         return GAME_PHASE["opening"]
-    if move_number >= 35:
-        return GAME_PHASE["endgame"]
     return GAME_PHASE["middlegame"]
 
 

@@ -12,6 +12,11 @@ Usage:
 """
 
 from worker.eval_package.constants import CPL_THRESHOLDS
+from worker.eval_package.game_phase import (
+    GAME_PHASE,
+    OPENING_MOVE_LIMIT,
+    PHASE_CLASSIFIER_VERSION,
+)
 
 # Maps weakness theme names to integers persisted on `pattern_occurrences.primary_pattern`,
 # `pattern_occurrences.secondary_pattern`, and `pattern_cycles.theme`.
@@ -27,15 +32,6 @@ PATTERN = {
     "pawn_structure": 6,
     "endgame_technique": 7,
     "time_pressure": 8,
-}
-
-# Game phase integers for `pattern_occurrences.phase`.
-# Derived from move number and endgame detector signals in `theme_rules.py`.
-# Must match `GamePhaseable::PHASES` in Rails.
-GAME_PHASE = {
-    "opening": 0,
-    "middlegame": 1,
-    "endgame": 2,
 }
 
 # Lifecycle states for `pattern_cycles.status`.
@@ -76,10 +72,6 @@ MIN_GAMES_FOR_ACTIVE = 2
 # `1 - (current_occurrences / baseline_occurrences)`.
 IMPROVING_THRESHOLD = 0.30
 MANAGED_THRESHOLD = 0.75
-
-# Last full move number treated as opening for `opening_development` vs `king_safety`.
-# Moves at or below this limit with delayed-castling signals map to opening development.
-OPENING_MOVE_LIMIT = 15
 
 # Minimum centipawn loss for a move to count as a missed tactic (~1.5 pawns in MVP).
 # Applied in `theme_rules._matches_missed_tactics` alongside tactical candidate events.

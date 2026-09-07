@@ -51,7 +51,7 @@ def upsert_pattern_occurrence(cycle:, game:, move:, primary_pattern:, **attrs)
   event
 end
 
-def ensure_user_move(game:, ply:, move_number:, san:, uci:)
+def ensure_user_move(game:, ply:, move_number:, san:, uci:, phase: :middlegame)
   move = Move.find_or_initialize_by(game: game, ply: ply)
   move.assign_attributes(
     move_number: move_number,
@@ -59,6 +59,7 @@ def ensure_user_move(game:, ply:, move_number:, san:, uci:)
     san: san,
     uci: uci,
     played_by_user: true,
+    phase: phase,
     fen_before: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     fen_after: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   )
@@ -71,11 +72,17 @@ rapid_game = find_demo_game(user: user, provider_game_id: "demo-rapid-loss")
 classical_game = find_demo_game(user: user, provider_game_id: "demo-classical-draw")
 
 blitz_mistake = Move.find_by(game: blitz_game, san: "O-O") ||
-  ensure_user_move(game: blitz_game, ply: 9, move_number: 5, san: "O-O", uci: "e1g1")
+  ensure_user_move(game: blitz_game, ply: 9, move_number: 5, san: "O-O", uci: "e1g1", phase: :opening)
 blitz_blunder = Move.find_by(game: blitz_game, san: "Bg5") ||
-  ensure_user_move(game: blitz_game, ply: 13, move_number: 7, san: "Bg5", uci: "c1g5")
-rapid_mistake = ensure_user_move(game: rapid_game, ply: 15, move_number: 8, san: "Bxc5", uci: "e3c5")
-classical_inaccuracy = ensure_user_move(game: classical_game, ply: 7, move_number: 4, san: "Bh4", uci: "g5h4")
+  ensure_user_move(game: blitz_game, ply: 13, move_number: 7, san: "Bg5", uci: "c1g5", phase: :middlegame)
+blitz_endgame = Move.find_by(game: blitz_game, san: "Ke2") ||
+  ensure_user_move(game: blitz_game, ply: 19, move_number: 36, san: "Ke2", uci: "g1e2", phase: :endgame)
+rapid_mistake = ensure_user_move(
+  game: rapid_game, ply: 15, move_number: 8, san: "Bxc5", uci: "e3c5", phase: :middlegame
+)
+classical_inaccuracy = ensure_user_move(
+  game: classical_game, ply: 7, move_number: 4, san: "Bh4", uci: "g5h4", phase: :opening
+)
 
 missed_tactics_cycle = upsert_pattern_cycle(
   user: user,
@@ -136,4 +143,21 @@ upsert_pattern_occurrence(
   phase: :opening
 )
 
-puts "Seeded demo weakness cycles for #{user.email}: missed tactics (2/3), king safety (1/3), opening development (1/3)"
+endgame_cycle = upsert_pattern_cycle(
+  user: user,
+  seed_key: "demo_endgame_technique_cycle",
+  pattern: :endgame_technique,
+  status: :detected,
+  games_affected: 1,
+  severity: 0.58
+)
+upsert_pattern_occurrence(
+  cycle: endgame_cycle,
+  game: blitz_game,
+  move: blitz_endgame,
+  primary_pattern: :endgame_technique,
+  severity: 0.58,
+  phase: :endgame
+)
+
+puts "Seeded demo weakness cycles for #{user.email}: missed tactics (2/3), king safety (1/3), opening development (1/3), endgame technique (1/3)"

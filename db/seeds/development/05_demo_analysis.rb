@@ -32,7 +32,7 @@ def upsert_analysis_run(game:, seed_key:, status:, **attrs)
   )
 end
 
-def upsert_move(game:, ply:, move_number:, color:, san:, uci:, played_by_user:)
+def upsert_move(game:, ply:, move_number:, color:, san:, uci:, played_by_user:, phase: nil)
   move = Move.find_or_initialize_by(game: game, ply: ply)
   move.assign_attributes(
     move_number: move_number,
@@ -40,12 +40,21 @@ def upsert_move(game:, ply:, move_number:, color:, san:, uci:, played_by_user:)
     san: san,
     uci: uci,
     played_by_user: played_by_user,
+    phase: phase || demo_phase_for(move_number),
     fen_before: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     fen_after: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
   )
   move.save!
   move
 end
+
+def demo_phase_for(move_number)
+  return :opening if move_number <= 6
+  return :middlegame if move_number <= 20
+
+  :endgame
+end
+
 
 def upsert_move_evaluation(analysis_run:, move:, classification:, centipawn_loss:, **attrs)
   evaluation = MoveEvaluation.find_or_initialize_by(analysis_run: analysis_run, move: move)
@@ -76,6 +85,12 @@ succeeded_run = upsert_analysis_run(
   started_at: 8.minutes.ago,
   finished_at: 5.minutes.ago
 )
+succeeded_run.update!(
+  metadata: succeeded_run.metadata.merge(
+    "phase" => "complete",
+    "phase_classifier_version" => AnalysisVersions::PHASE_CLASSIFIER_VERSION
+  )
+)
 
 blitz_moves = [
   { ply: 1, move_number: 1, color: :white, san: "e4", uci: "e2e4", played_by_user: true },
@@ -94,7 +109,10 @@ blitz_moves = [
   { ply: 14, move_number: 7, color: :black, san: "h6", uci: "h7h6", played_by_user: false },
   { ply: 15, move_number: 8, color: :white, san: "Bxf6", uci: "g5f6", played_by_user: true },
   { ply: 16, move_number: 8, color: :black, san: "Bxf6", uci: "e7f6", played_by_user: false },
-  { ply: 17, move_number: 9, color: :white, san: "Nd5", uci: "f3d5", played_by_user: true }
+  { ply: 17, move_number: 9, color: :white, san: "Nd5", uci: "f3d5", played_by_user: true },
+  # Illustrative late plies so local UI can show all three game phases.
+  { ply: 18, move_number: 35, color: :black, san: "Kf8", uci: "g8f8", played_by_user: false, phase: :endgame },
+  { ply: 19, move_number: 36, color: :white, san: "Ke2", uci: "g1e2", played_by_user: true, phase: :endgame }
 ]
 
 seeded_moves = blitz_moves.map { |attrs| upsert_move(game: blitz_game, **attrs) }
@@ -142,7 +160,14 @@ evaluation_specs = [
     }
   },
   { classification: :good, centipawn_loss: 14 },
-  { classification: :good, centipawn_loss: 5 }
+  { classification: :good, centipawn_loss: 5 },
+  {
+    classification: :mistake,
+    centipawn_loss: 120,
+    best_move_san: "Kd2",
+    best_move_uci: "e1d2",
+    metadata: { "seed_key" => "demo_endgame_mistake" }
+  }
 ]
 
 user_moves.zip(evaluation_specs).each do |move, spec|

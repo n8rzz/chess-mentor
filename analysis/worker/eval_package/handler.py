@@ -12,7 +12,7 @@ from worker.eval_package.classifier import (
     classify_move,
     evaluation_metadata,
 )
-from worker.eval_package.constants import ANALYSIS_PHASE, ANALYSIS_RUN_STATUS, USER_COLOR
+from worker.eval_package.constants import ANALYSIS_PHASE, ANALYSIS_RUN_STATUS, PHASE_CLASSIFIER_VERSION, USER_COLOR
 from worker.eval_package.critical import assess_criticality, critical_event_payload
 from worker.eval_package.detectors import run_detectors
 from worker.eval_package.detectors.types import AnalysisEventData
@@ -54,8 +54,8 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
     cache = EnginePositionCache(conn)
 
     with conn.transaction():
-        if not repo.game_has_moves(context.game_id):
-            repo.insert_moves(context.game_id, positions)
+        # Upsert moves and refresh phase classification on every analysis.
+        repo.insert_moves(context.game_id, positions)
 
         stored_moves = repo.load_moves(context.game_id)
         position_by_ply = {position.parsed.ply: position for position in positions}
@@ -352,6 +352,7 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
             metadata_patch={
                 "phase": ANALYSIS_PHASE["complete"],
                 "engine_version_observed": engine_version,
+                "phase_classifier_version": PHASE_CLASSIFIER_VERSION,
                 "moves_parsed": len(stored_moves),
                 "user_moves_evaluated": user_moves_evaluated,
                 "events_detected": total_events,

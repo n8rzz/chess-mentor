@@ -30,6 +30,8 @@ class MoveArtifact:
     san: str
     played_at: datetime
     time_class: int
+    phase: int | None = None
+    fen_after: str | None = None
     analysis_events: tuple[AnalysisEventRow, ...] = ()
     evaluation: MoveEvaluationRow | None = None
 

@@ -11,6 +11,7 @@
 #  fen_after      :string           not null
 #  fen_before     :string           not null
 #  move_number    :integer          not null
+#  phase          :integer
 #  played_by_user :boolean          default(FALSE), not null
 #  ply            :integer          not null
 #  san            :string           not null
@@ -38,6 +39,7 @@ FactoryBot.define do
     uci { "e2e4" }
     fen_before { "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" }
     fen_after { "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1" }
+    phase { :opening }
     played_by_user { true }
     clock_before { 300_000 }
     clock_after { 298_000 }

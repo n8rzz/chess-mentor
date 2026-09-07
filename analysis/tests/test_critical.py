@@ -40,6 +40,7 @@ def _move(**overrides):
         played_by_user=True,
         clock_before=120,
         clock_after=115,
+        phase=0,
     )
     base.update(overrides)
     return StoredMove(**base)

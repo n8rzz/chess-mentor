@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from worker.eval_package.constants import CLASSIFICATION, EVENT_TYPE
-from worker.weakness_package.constants import PATTERN
+from worker.weakness_package.constants import GAME_PHASE, PATTERN
 from worker.weakness_package.theme_rules import classify_move
 from worker.weakness_package.types import AnalysisEventRow, MoveArtifact, MoveEvaluationRow
 
@@ -13,6 +13,8 @@ def _artifact(
     events: list[AnalysisEventRow] | None = None,
     cpl: int = 120,
     classification: int = CLASSIFICATION["mistake"],
+    phase: int | None = None,
+    fen_after: str | None = None,
 ) -> MoveArtifact:
     return MoveArtifact(
         move_id="move-1",
@@ -22,6 +24,8 @@ def _artifact(
         san=san,
         played_at=datetime.now(timezone.utc),
         time_class=1,
+        phase=phase,
+        fen_after=fen_after,
         analysis_events=tuple(events or []),
         evaluation=MoveEvaluationRow(
             centipawn_loss=cpl,
@@ -139,19 +143,64 @@ def test_pawn_structure_requires_eval_worsening():
     assert result.primary_pattern == PATTERN["pawn_structure"]
 
 
-def test_endgame_technique_from_endgame_phase_event():
+def test_endgame_technique_from_stored_endgame_phase():
+    # Mid-endgame mistake: no transition event on this ply.
+    result = classify_move(
+        _artifact(
+            move_number=42,
+            phase=GAME_PHASE["endgame"],
+            cpl=150,
+            san="Ke2",
+        )
+    )
+    assert result is not None
+    assert result.primary_pattern == PATTERN["endgame_technique"]
+    assert result.phase == GAME_PHASE["endgame"]
+
+
+def test_endgame_technique_requires_mistake_cpl():
+    result = classify_move(
+        _artifact(
+            move_number=42,
+            phase=GAME_PHASE["endgame"],
+            cpl=40,
+            san="Ke2",
+        )
+    )
+    assert result is None
+
+
+def test_pattern_phase_matches_stored_move_phase():
     events = [
         AnalysisEventRow(
             id="e1",
-            event_type=EVENT_TYPE["endgame_phase"],
-            severity=0.5,
-            confidence=0.8,
-            metadata={"phase_before": "middlegame", "phase_after": "endgame"},
+            event_type=EVENT_TYPE["material"],
+            severity=0.6,
+            confidence=0.9,
+            metadata={"material_lost": 3},
         )
     ]
-    result = classify_move(_artifact(events=events, move_number=40))
+    result = classify_move(
+        _artifact(events=events, san="Qh5", phase=GAME_PHASE["middlegame"], move_number=22)
+    )
+    assert result is not None
+    assert result.phase == GAME_PHASE["middlegame"]
+
+
+def test_resolve_phase_falls_back_to_fen_when_phase_null():
+    endgame_fen = "4k3/8/8/8/8/8/4P3/4K3 w - - 0 40"
+    result = classify_move(
+        _artifact(
+            san="Ke2",
+            move_number=40,
+            phase=None,
+            fen_after=endgame_fen,
+            cpl=150,
+        )
+    )
     assert result is not None
     assert result.primary_pattern == PATTERN["endgame_technique"]
+    assert result.phase == GAME_PHASE["endgame"]
 
 
 def test_time_pressure_secondary_pattern():

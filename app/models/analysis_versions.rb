@@ -22,4 +22,7 @@ module AnalysisVersions
   PATTERN_CLASSIFIER_NAME = "rules_v1"
   PATTERN_CLASSIFIER_VERSION = "1.0.0"
   PATTERN_TAXONOMY_VERSION = "1.0.0"
+
+  # Opening / middlegame / endgame classifier stamped on analysis_runs.metadata.
+  PHASE_CLASSIFIER_VERSION = "1.0.0"
 end

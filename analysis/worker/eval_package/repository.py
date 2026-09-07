@@ -10,6 +10,7 @@ import psycopg
 from worker.config import load_config
 from worker.eval_package.constants import ANALYSIS_RUN_STATUS
 from worker.eval_package.engine import CandidateLine, EngineEvaluation
+from worker.eval_package.game_phase import classify_game_phases
 from worker.import_package.ids import new_ulid
 
 
@@ -44,6 +45,7 @@ class StoredMove:
     played_by_user: bool
     clock_before: int | None
     clock_after: int | None
+    phase: int | None
 
 
 class AnalysisRepository:
@@ -305,16 +307,19 @@ class AnalysisRepository:
 
     def insert_moves(self, game_id: str, positions: list) -> None:
         now = _utcnow()
-        for position in positions:
+        phases = classify_game_phases(positions)
+        for position, phase in zip(positions, phases, strict=True):
             parsed = position.parsed
             self._conn.execute(
                 """
                 INSERT INTO moves (
                   id, game_id, ply, move_number, color, san, uci,
-                  fen_before, fen_after, played_by_user,
+                  fen_before, fen_after, played_by_user, phase,
                   clock_before, clock_after, created_at, updated_at
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                ON CONFLICT (game_id, ply) DO NOTHING
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT (game_id, ply) DO UPDATE
+                  SET phase = EXCLUDED.phase,
+                      updated_at = EXCLUDED.updated_at
                 """,
                 (
                     new_ulid(),
@@ -327,6 +332,7 @@ class AnalysisRepository:
                     position.fen_before,
                     position.fen_after,
                     parsed.played_by_user,
+                    phase,
                     parsed.clock_before,
                     parsed.clock_after,
                     now,
@@ -339,7 +345,7 @@ class AnalysisRepository:
             """
             SELECT
               id, game_id, ply, move_number, color, san, uci,
-              fen_before, fen_after, played_by_user, clock_before, clock_after
+              fen_before, fen_after, played_by_user, clock_before, clock_after, phase
             FROM moves
             WHERE game_id = %s
             ORDER BY ply ASC
@@ -361,6 +367,7 @@ class AnalysisRepository:
                 played_by_user=row[9],
                 clock_before=row[10],
                 clock_after=row[11],
+                phase=row[12],
             )
             for row in rows
         ]

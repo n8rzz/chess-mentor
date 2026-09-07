@@ -83,6 +83,7 @@ module ChessBoardHelper
       fen_before: move.fen_before,
       fen_after: move.fen_after,
       played_by_user: move.played_by_user,
+      phase: move.phase,
       classification: evaluation&.classification,
       best_move_uci: evaluation&.best_move_uci,
       best_move_san: evaluation&.best_move_san,

@@ -47,8 +47,15 @@ def test_run_analysis_persists_moves_evaluations_and_events(db_conn):
     assert meta["depth_critical"] == 20
     assert meta["multipv"] == 3
     assert meta["phase"] == "complete"
+    assert meta["phase_classifier_version"] == "1.0.0"
     assert "cache_hits" in meta
     assert "cache_misses" in meta
+
+    phase_count = db_conn.execute(
+        "SELECT COUNT(*) FROM moves WHERE game_id = %s AND phase IS NOT NULL",
+        (seed["game_id"],),
+    ).fetchone()[0]
+    assert phase_count == 17
 
     critical_rows = db_conn.execute(
         """

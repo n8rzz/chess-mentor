@@ -4,14 +4,15 @@ import chess
 
 from worker.eval_package.constants import EVENT_TYPE
 from worker.eval_package.detectors.types import AnalysisEventData
+from worker.eval_package.game_phase import material_phase_label
 from worker.eval_package.positions import MovePosition
 
 
 def detect_endgame_phase(*, position: MovePosition) -> list[AnalysisEventData]:
     board_before = chess.Board(position.fen_before)
     board_after = chess.Board(position.fen_after)
-    phase_before = _phase(board_before)
-    phase_after = _phase(board_after)
+    phase_before = material_phase_label(board_before)
+    phase_after = material_phase_label(board_after)
 
     if phase_before == phase_after or phase_after != "endgame":
         return []
@@ -24,13 +25,3 @@ def detect_endgame_phase(*, position: MovePosition) -> list[AnalysisEventData]:
             metadata={"phase_before": phase_before, "phase_after": phase_after},
         )
     ]
-
-
-def _phase(board: chess.Board) -> str:
-    queens = len(board.pieces(chess.QUEEN, chess.WHITE)) + len(board.pieces(chess.QUEEN, chess.BLACK))
-    total_pieces = len(board.piece_map())
-    if queens == 0 or total_pieces <= 10:
-        return "endgame"
-    if total_pieces <= 20:
-        return "middlegame"
-    return "opening"

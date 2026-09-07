@@ -27,7 +27,7 @@ tags:
 ### Critical positions & game phases
 
 - [x] Detect critical positions beyond CPL alone (eval swings, forced lines, time pressure, candidate dispersion)
-- [ ] Classify positions as opening / middlegame / endgame
+- [x] Classify positions as opening / middlegame / endgame
 
 ### Performance metrics
 

@@ -11,6 +11,7 @@
 #  fen_after      :string           not null
 #  fen_before     :string           not null
 #  move_number    :integer          not null
+#  phase          :integer
 #  played_by_user :boolean          default(FALSE), not null
 #  ply            :integer          not null
 #  san            :string           not null
@@ -29,6 +30,8 @@
 #  fk_rails_...  (game_id => games.id) ON DELETE => cascade
 #
 class Move < ApplicationRecord
+  include GamePhaseable
+
   belongs_to :game
   has_one :move_evaluation, dependent: :destroy
   has_many :analysis_events, dependent: :destroy

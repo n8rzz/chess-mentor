@@ -11,6 +11,7 @@
 #  fen_after      :string           not null
 #  fen_before     :string           not null
 #  move_number    :integer          not null
+#  phase          :integer
 #  played_by_user :boolean          default(FALSE), not null
 #  ply            :integer          not null
 #  san            :string           not null
@@ -41,6 +42,17 @@ RSpec.describe Move, type: :model do
 
   describe "enums" do
     it { is_expected.to define_enum_for(:color).with_values(white: 0, black: 1).backed_by_column_of_type(:integer) }
+
+    it do
+      expect(move).to define_enum_for(:phase)
+        .with_values(opening: 0, middlegame: 1, endgame: 2)
+        .backed_by_column_of_type(:integer)
+    end
+
+    it "allows a null phase before analysis classifies the move" do
+      move.phase = nil
+      expect(move).to be_valid
+    end
   end
 
   describe "validations" do

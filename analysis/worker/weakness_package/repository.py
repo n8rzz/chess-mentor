@@ -245,7 +245,7 @@ class PatternRepository:
     def _load_game_artifacts(self, game: dict[str, Any]) -> list[MoveArtifact]:
         move_rows = self._conn.execute(
             """
-            SELECT id, move_number, san
+            SELECT id, move_number, san, phase, fen_after
             FROM moves
             WHERE game_id = %s AND played_by_user = TRUE
             ORDER BY ply ASC
@@ -254,7 +254,7 @@ class PatternRepository:
         ).fetchall()
 
         artifacts: list[MoveArtifact] = []
-        for move_id, move_number, san in move_rows:
+        for move_id, move_number, san, phase, fen_after in move_rows:
             events = self._load_analysis_events(game["analysis_run_id"], move_id)
             evaluation = self._load_move_evaluation(game["analysis_run_id"], move_id)
             artifacts.append(
@@ -266,6 +266,8 @@ class PatternRepository:
                     san=san,
                     played_at=game["played_at"],
                     time_class=game["time_class"],
+                    phase=phase,
+                    fen_after=fen_after,
                     analysis_events=tuple(events),
                     evaluation=evaluation,
                 )

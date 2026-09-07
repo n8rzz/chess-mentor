@@ -20,16 +20,22 @@ def test_repository_inserts_and_loads_moves(db_conn):
     assert moves[0].san == "e4"
 
 
-def test_insert_moves_is_idempotent_when_game_already_has_moves(db_conn):
+def test_insert_moves_persists_and_refreshes_phase(db_conn):
     seed = seed_game_with_analysis_run(db_conn)
     repo = AnalysisRepository(db_conn)
     positions = generate_positions(DEMO_BLITZ_PGN, user_color=USER_COLOR["white"])
 
     repo.insert_moves(seed["game_id"], positions)
-    repo.insert_moves(seed["game_id"], positions)
-
     moves = repo.load_moves(seed["game_id"])
-    assert len(moves) == 17
+    assert all(move.phase is not None for move in moves)
+    assert moves[0].phase == 0  # opening
+
+    # Re-insert must refresh phase without duplicating rows.
+    db_conn.execute("UPDATE moves SET phase = NULL WHERE game_id = %s", (seed["game_id"],))
+    repo.insert_moves(seed["game_id"], positions)
+    refreshed = repo.load_moves(seed["game_id"])
+    assert len(refreshed) == 17
+    assert all(move.phase is not None for move in refreshed)
 
 
 def test_insert_move_evaluation_is_idempotent(db_conn):
@@ -70,7 +76,13 @@ def test_repository_marks_analysis_run_succeeded(db_conn):
     repo = AnalysisRepository(db_conn)
 
     repo.mark_running(seed["analysis_run_id"])
-    repo.mark_succeeded(seed["analysis_run_id"], metadata_patch={"moves_parsed": 17})
+    repo.mark_succeeded(
+        seed["analysis_run_id"],
+        metadata_patch={
+            "moves_parsed": 17,
+            "phase_classifier_version": "1.0.0",
+        },
+    )
 
     row = db_conn.execute(
         "SELECT status, metadata FROM analysis_runs WHERE id = %s",
@@ -78,6 +90,7 @@ def test_repository_marks_analysis_run_succeeded(db_conn):
     ).fetchone()
     assert row[0] == ANALYSIS_RUN_STATUS["succeeded"]
     assert row[1]["moves_parsed"] == 17
+    assert row[1]["phase_classifier_version"] == "1.0.0"
 
 
 def test_set_phase_is_visible_outside_open_transaction(db_conn):

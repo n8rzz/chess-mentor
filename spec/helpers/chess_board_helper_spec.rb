@@ -28,6 +28,7 @@ RSpec.describe ChessBoardHelper, type: :helper do
         san: "Nf3",
         uci: "g1f3",
         played_by_user: true,
+        phase: "opening",
         classification: "mistake",
         best_move_uci: "d2d4",
         best_move_san: "d4",
@@ -40,6 +41,15 @@ RSpec.describe ChessBoardHelper, type: :helper do
 
       expect(payload[:starting_fen]).to eq(described_class::STARTING_FEN)
       expect(payload[:moves]).to eq([])
+    end
+
+    it "includes a null phase when the move has not been classified" do
+      game = create(:game)
+      move = create(:move, game: game, phase: nil)
+
+      payload = described_class.game_review_data([ move ], {})
+
+      expect(payload[:moves].first).to include(phase: nil, san: move.san)
     end
   end
 

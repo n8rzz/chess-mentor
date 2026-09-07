@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_07_070000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_07_204408) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -168,6 +168,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_070000) do
     t.string "fen_before", null: false
     t.string "game_id", null: false
     t.integer "move_number", null: false
+    t.integer "phase"
     t.boolean "played_by_user", default: false, null: false
     t.integer "ply", null: false
     t.string "san", null: false
