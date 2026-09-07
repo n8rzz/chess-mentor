@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "Full workflow pipeline", type: :integration do
+RSpec.describe "Full workflow pipeline", type: :request do
   include Devise::Test::IntegrationHelpers
 
   before { skip_unless_pipeline_ready! }

@@ -90,7 +90,7 @@ module PythonPipelineHelpers
 
     fixture_setup = if use_fixture
       <<~PY
-        from unittest.mock import patch
+        from unittest.mock import MagicMock, patch
         from worker.import_package.lichess_client import LichessGame
         from db_helpers import DEMO_BLITZ_PGN, sample_lichess_game_raw
 
@@ -99,9 +99,9 @@ module PythonPipelineHelpers
         raw["pgn"] = DEMO_BLITZ_PGN
         raw["players"]["white"]["user"]["name"] = "testuser"
         games = [LichessGame(raw=raw)]
-        patch_target = patch("worker.import_package.handler.LichessClient")
-        patch_target.return_value.fetch_games.return_value = games
-        patch_ctx = patch_target
+        client = MagicMock()
+        client.fetch_games.return_value = games
+        patch_ctx = patch("worker.import_package.handler.LichessClient", return_value=client)
       PY
     else
       <<~PY
