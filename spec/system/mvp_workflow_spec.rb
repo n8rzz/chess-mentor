@@ -2,7 +2,7 @@
 
 require "rails_helper"
 
-RSpec.describe "MVP workflow", type: :system do
+RSpec.describe "MVP workflow", type: :system, skip_database_cleaner: true do
   let(:password) { "password123" }
 
   before { skip_unless_pipeline_ready! }
