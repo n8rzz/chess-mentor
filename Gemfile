@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.3"
+gem "rails", "~> 8.1.3", ">= 8.1.3.1"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
@@ -40,8 +40,18 @@ gem "devise", "~> 5.0"
 gem "omniauth", "~> 2.1"
 gem "omniauth-rails_csrf_protection"
 gem "omniauth-oauth2", "~> 1.9"
-# Transitive via mail; pin for CVE-2026-47240/41/42 (bundler-audit)
+# Transitive pins for bundler-audit (CVE advisories on main CI)
 gem "net-imap", ">= 0.6.4.1"
+gem "concurrent-ruby", ">= 1.3.7"
+gem "crass", ">= 1.0.7"
+gem "faraday", ">= 2.14.3"
+gem "loofah", ">= 2.25.2"
+gem "mail", ">= 2.9.1"
+gem "msgpack", ">= 1.8.2"
+gem "nokogiri", ">= 1.19.4"
+gem "rails-html-sanitizer", ">= 1.7.1"
+gem "rubyzip", ">= 3.4.0"
+gem "websocket-driver", ">= 0.8.2"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem

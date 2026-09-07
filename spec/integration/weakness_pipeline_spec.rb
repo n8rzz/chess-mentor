@@ -27,8 +27,8 @@ RSpec.describe "Weakness pipeline", type: :integration do
 
     expect do
       run_python_classification(user_id: user.id)
-    end.to change(PatternCycle, :count).by(at_least: 0)
-      .and change(PatternOccurrence, :count).by(at_least: 0)
+    end.to change(PatternCycle, :count).by_at_least(0)
+      .and change(PatternOccurrence, :count).by_at_least(0)
 
     sign_in user
     get pattern_cycles_path

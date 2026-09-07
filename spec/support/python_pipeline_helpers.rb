@@ -67,7 +67,10 @@ module PythonPipelineHelpers
       "DATABASE_NAME" => db_config[:database],
       "REDIS_URL" => ENV.fetch("REDIS_URL", "redis://localhost:6379/0"),
       "STOCKFISH_PATH" => ENV.fetch("STOCKFISH_PATH", "/opt/homebrew/bin/stockfish"),
-      "PYTHONPATH" => Rails.root.join("analysis/worker").to_s
+      "PYTHONPATH" => [
+        Rails.root.join("analysis/worker"),
+        Rails.root.join("analysis/tests")
+      ].join(File::PATH_SEPARATOR)
     }
   end
 

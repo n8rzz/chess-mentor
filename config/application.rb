@@ -46,5 +46,10 @@ module ChessMentor
     end
 
     config.active_job.queue_adapter = :sidekiq
+
+    # Avoid eager-loading libvips/ruby-vips on boot; this app does not use variants yet.
+    # Rails 8.1.3.1 Active Storage loads the Vips transformer by default when
+    # image_processing is present.
+    config.active_storage.variant_processor = :disabled
   end
 end

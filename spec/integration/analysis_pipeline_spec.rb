@@ -25,7 +25,7 @@ RSpec.describe "Analysis pipeline", type: :integration, skip_database_cleaner: t
       run_python_analysis(analysis_run_id: analysis_run.id, game_id: game.id)
     end.to change(Move, :count).by(17)
       .and change(MoveEvaluation, :count).by(9)
-      .and change(AnalysisEvent, :count).by(at_least: 0)
+      .and change(AnalysisEvent, :count).by_at_least(0)
       .and change(GameMetric, :count).by(1)
       .and change { user.system_jobs.refresh_review_period_metrics.pending.count }.by(1)
 
