@@ -23,6 +23,7 @@ JOB_TYPE_KEYS = {
     2: "classify_patterns",
     3: "generate_training_plan",
     4: "update_progress_snapshots",
+    5: "refresh_review_period_metrics",
 }
 
 

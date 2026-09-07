@@ -58,6 +58,7 @@ class Game < ApplicationRecord
 
   has_many :moves, dependent: :destroy
   has_many :analysis_runs, dependent: :destroy
+  has_many :game_metrics, dependent: :destroy
   has_many :pattern_occurrences, dependent: :destroy
   has_many :review_period_games, dependent: :destroy
   has_many :review_periods, through: :review_period_games

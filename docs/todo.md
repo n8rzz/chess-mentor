@@ -31,8 +31,8 @@ tags:
 
 ### Performance metrics
 
-- [ ] Define and version core metrics (win/draw/loss, ACPL, mistakes/blunders, phase performance, conversion, time/fast-move error rates)
-- [ ] Aggregate metrics per game and per review period
+- [x] Define and version core metrics (win/draw/loss, ACPL, mistakes/blunders, phase performance, conversion, time/fast-move error rates)
+- [x] Aggregate metrics per game and per review period
 
 ### Theme system
 

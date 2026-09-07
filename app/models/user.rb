@@ -33,6 +33,8 @@ class User < ApplicationRecord
   has_many :training_plans, dependent: :destroy
   has_many :progress_snapshots, dependent: :destroy
   has_many :review_periods, dependent: :destroy
+  has_many :game_metrics, dependent: :destroy
+  has_many :review_period_metrics, dependent: :destroy
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable, :confirmable,

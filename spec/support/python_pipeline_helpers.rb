@@ -40,6 +40,14 @@ module PythonPipelineHelpers
     python_module_ready?("from worker.training_package.handler import run_plan_generation")
   end
 
+  def python_progress_ready?
+    python_module_ready?("from worker.progress_package.handler import run_snapshot_update")
+  end
+
+  def python_metrics_ready?
+    python_module_ready?("from worker.metrics_package.repository import persist_game_metrics")
+  end
+
   def python_pipeline_ready?
     python_available? &&
       python_import_ready? &&
@@ -171,9 +179,44 @@ module PythonPipelineHelpers
     run_python_script(script)
   end
 
+  def run_python_review_period_metrics(user_id:)
+    script = <<~PY
+      from worker.config import load_config
+      from worker.metrics_package.handler import run_period_metrics_refresh
+      import psycopg
+
+      config = load_config()
+      with psycopg.connect(config.database_url) as conn:
+          run_period_metrics_refresh(conn, "#{user_id}")
+    PY
+
+    run_python_script(script)
+  end
+
+  def run_python_persist_game_metrics(analysis_run_id:)
+    script = <<~PY
+      from worker.config import load_config
+      from worker.metrics_package.repository import persist_game_metrics
+      import psycopg
+
+      config = load_config()
+      with psycopg.connect(config.database_url) as conn:
+          with conn.transaction():
+              result = persist_game_metrics(conn, "#{analysis_run_id}")
+              if result is None:
+                  raise SystemExit("persist_game_metrics returned None")
+    PY
+
+    run_python_script(script)
+  end
+
   def skip_unless_pipeline_ready!
     skip "Stockfish not available" unless stockfish_available?
     skip "Python pipeline dependencies not available" unless python_pipeline_ready?
+  end
+
+  def skip_unless_metrics_ready!
+    skip "Python metrics dependencies not available" unless python_available? && python_metrics_ready?
   end
 
   def python_module_ready?(import_script)

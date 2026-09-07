@@ -14,7 +14,6 @@ from worker.progress_package.calculators import (
     compute_pattern_frequency,
 )
 from worker.progress_package.constants import (
-    ANALYSIS_RUN_SUCCEEDED,
     ASSIGNMENT_STATUS_COMPLETED,
     CYCLE_STATUS_TRACKED,
     JOB_STATUS_CLAIMED,
@@ -29,7 +28,6 @@ from worker.progress_package.constants import (
     SNAPSHOT_KIND_WEAKNESS,
     TIME_CLASS,
 )
-from worker.eval_package.constants import CLASSIFICATION
 
 
 def _utcnow() -> datetime:
@@ -97,51 +95,43 @@ class ProgressRepository:
         return [{"time_class": row[0], "rating": row[1]} for row in rows]
 
     def load_performance_metrics(self, user_id: str) -> dict[str, Any]:
-        analyzed_row = self._conn.execute(
-            """
-            SELECT COUNT(DISTINCT g.id)
-            FROM games g
-            INNER JOIN analysis_runs ar ON ar.game_id = g.id
-            WHERE g.user_id = %s
-              AND ar.status = %s
-            """,
-            (user_id, ANALYSIS_RUN_SUCCEEDED),
-        ).fetchone()
-        analyzed_game_count = int(analyzed_row[0]) if analyzed_row else 0
+        from worker.metrics_package.constants import METRIC_FORMULA_VERSION
 
-        blunder_row = self._conn.execute(
+        row = self._conn.execute(
             """
-            SELECT COUNT(*)
-            FROM move_evaluations me
-            INNER JOIN analysis_runs ar ON ar.id = me.analysis_run_id
-            WHERE ar.user_id = %s
-              AND ar.status = %s
-              AND me.classification = %s
+            SELECT
+              COUNT(*) AS games_analyzed_count,
+              COALESCE(SUM(blunders_count), 0) AS blunder_count,
+              COALESCE(SUM(mistakes_count), 0) AS mistake_count,
+              CASE
+                WHEN COALESCE(SUM(user_move_count), 0) > 0
+                THEN SUM(average_centipawn_loss * user_move_count) / SUM(user_move_count)
+                ELSE NULL
+              END AS average_centipawn_loss
+            FROM game_metrics
+            WHERE user_id = %s
+              AND metric_formula_version = %s
             """,
-            (user_id, ANALYSIS_RUN_SUCCEEDED, CLASSIFICATION["blunder"]),
+            (user_id, METRIC_FORMULA_VERSION),
         ).fetchone()
-        blunder_count = int(blunder_row[0]) if blunder_row else 0
 
-        cpl_row = self._conn.execute(
-            """
-            SELECT AVG(me.centipawn_loss)
-            FROM move_evaluations me
-            INNER JOIN analysis_runs ar ON ar.id = me.analysis_run_id
-            WHERE ar.user_id = %s
-              AND ar.status = %s
-            """,
-            (user_id, ANALYSIS_RUN_SUCCEEDED),
-        ).fetchone()
-        average_centipawn_loss = cpl_row[0] if cpl_row and cpl_row[0] is not None else None
+        analyzed_game_count = int(row[0]) if row else 0
+        blunder_count = int(row[1]) if row else 0
+        mistake_count = int(row[2]) if row else 0
+        average_centipawn_loss = row[3] if row and row[3] is not None else None
 
         blunders_per_game = None
+        mistakes_per_game = None
         if analyzed_game_count > 0:
             blunders_per_game = Decimal(blunder_count) / Decimal(analyzed_game_count)
+            mistakes_per_game = Decimal(mistake_count) / Decimal(analyzed_game_count)
 
         return {
             "games_analyzed_count": analyzed_game_count,
             "blunder_count": blunder_count,
+            "mistake_count": mistake_count,
             "blunders_per_game": blunders_per_game,
+            "mistakes_per_game": mistakes_per_game,
             "average_centipawn_loss": average_centipawn_loss,
         }
 

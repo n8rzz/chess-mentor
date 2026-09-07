@@ -140,6 +140,68 @@ def _seed_analyzed_game(
             now,
         ),
     )
+    conn.execute(
+        """
+        INSERT INTO game_metrics (
+          id, user_id, game_id, analysis_run_id, metric_formula_version,
+          average_centipawn_loss, user_move_count,
+          inaccuracies_count, mistakes_count, blunders_count,
+          phase_metrics,
+          winning_positions_reached, winning_positions_converted,
+          time_pressure_moves_count, time_pressure_mistakes_count,
+          time_pressure_error_rate,
+          fast_moves_count, fast_move_mistakes_count, fast_move_error_rate,
+          critical_moves_count, critical_accurate_count,
+          critical_position_accuracy, metadata,
+          created_at, updated_at
+        ) VALUES (
+          %s, %s, %s, %s, %s,
+          %s, %s,
+          %s, %s, %s,
+          %s::jsonb,
+          %s, %s,
+          %s, %s,
+          %s,
+          %s, %s, %s,
+          %s, %s,
+          %s, %s::jsonb,
+          %s, %s
+        )
+        """,
+        (
+            new_id(),
+            seed["user_id"],
+            game_id,
+            analysis_run_id,
+            "1.0.0",
+            350.0 if blunder else 20.0,
+            1,
+            0,
+            1 if blunder else 0,
+            1 if blunder else 0,
+            json.dumps(
+                {
+                    "opening": {"moves": 1, "acpl": 350.0 if blunder else 20.0, "mistakes": 1 if blunder else 0, "blunders": 1 if blunder else 0},
+                    "middlegame": {"moves": 0, "acpl": None, "mistakes": 0, "blunders": 0},
+                    "endgame": {"moves": 0, "acpl": None, "mistakes": 0, "blunders": 0},
+                }
+            ),
+            0,
+            0,
+            0,
+            0,
+            None,
+            0,
+            0,
+            None,
+            0,
+            0,
+            None,
+            json.dumps({}),
+            now,
+            now,
+        ),
+    )
     return game_id
 
 
@@ -280,7 +342,7 @@ def test_run_snapshot_update_writes_expected_rows(db_conn):
 
     performance_row = db_conn.execute(
         """
-        SELECT blunders_per_game, games_analyzed_count, metadata
+        SELECT blunders_per_game, games_analyzed_count, average_centipawn_loss, metadata
         FROM progress_snapshots
         WHERE user_id = %s AND metadata->>'kind' = %s
         """,
@@ -288,6 +350,8 @@ def test_run_snapshot_update_writes_expected_rows(db_conn):
     ).fetchone()
     assert performance_row[1] == 1
     assert float(performance_row[0]) == 1.0
+    assert float(performance_row[2]) == 350.0
+    assert float(performance_row[3]["mistakes_per_game"]) == 1.0
 
     training_row = db_conn.execute(
         """

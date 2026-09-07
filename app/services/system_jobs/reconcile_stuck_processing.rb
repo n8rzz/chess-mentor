@@ -13,7 +13,8 @@ module SystemJobs
       "analyze_game" => 30 * 60,
       "classify_patterns" => 15 * 60,
       "generate_training_plan" => 15 * 60,
-      "update_progress_snapshots" => 15 * 60
+      "update_progress_snapshots" => 15 * 60,
+      "refresh_review_period_metrics" => 15 * 60
     }.freeze
 
     FALLBACK_TIMEOUT_SECONDS = 15 * 60

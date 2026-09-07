@@ -95,6 +95,9 @@ class WorkflowDriver
     when "update_progress_snapshots"
       user_id = job.payload["user_id"] || job.user_id
       run_python_progress_snapshots(user_id: user_id)
+    when "refresh_review_period_metrics"
+      user_id = job.payload["user_id"] || job.user_id
+      run_python_review_period_metrics(user_id: user_id)
     else
       raise ArgumentError, "unsupported job type: #{job.job_type}"
     end

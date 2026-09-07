@@ -48,6 +48,11 @@ def db_conn():
                   puzzles,
                   pattern_occurrences,
                   pattern_cycles,
+                  progress_snapshots,
+                  review_period_metrics,
+                  review_period_games,
+                  review_periods,
+                  game_metrics,
                   analysis_events,
                   move_evaluations,
                   moves,
@@ -68,6 +73,16 @@ def db_conn():
                 conn.execute(
                     """
                     TRUNCATE TABLE
+                      training_assignments,
+                      training_plans,
+                      puzzles,
+                      pattern_occurrences,
+                      pattern_cycles,
+                      progress_snapshots,
+                      review_period_metrics,
+                      review_period_games,
+                      review_periods,
+                      game_metrics,
                       analysis_events,
                       move_evaluations,
                       moves,

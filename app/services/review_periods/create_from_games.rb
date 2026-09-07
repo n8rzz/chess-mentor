@@ -29,7 +29,7 @@ module ReviewPeriods
       ends_at = scoped_games.maximum(:played_at)
       label = @label.presence || default_label(starts_at, ends_at)
 
-      ActiveRecord::Base.transaction do
+      period = ActiveRecord::Base.transaction do
         period = ReviewPeriod.create!(
           user: @user,
           label: label,
@@ -47,6 +47,9 @@ module ReviewPeriods
 
         period
       end
+
+      ReviewPeriodMetrics::Enqueue.call(user: @user)
+      period
     end
 
     private

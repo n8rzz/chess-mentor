@@ -6,6 +6,7 @@ from typing import Any, Callable
 from worker.analyze_handlers import analyze_game_handler
 from worker.classify_handlers import classify_patterns_handler
 from worker.import_handlers import import_games_handler
+from worker.metrics_handlers import refresh_review_period_metrics_handler
 from worker.progress_handlers import update_progress_snapshots_handler
 from worker.training_handlers import generate_training_plan_handler
 from worker.jobs import SystemJobRow
@@ -26,6 +27,7 @@ HANDLERS: dict[str, Handler] = {
     "classify_patterns": classify_patterns_handler,
     "generate_training_plan": generate_training_plan_handler,
     "update_progress_snapshots": update_progress_snapshots_handler,
+    "refresh_review_period_metrics": refresh_review_period_metrics_handler,
 }
 
 

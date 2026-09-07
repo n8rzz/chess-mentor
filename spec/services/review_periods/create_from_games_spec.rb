@@ -17,6 +17,7 @@ RSpec.describe ReviewPeriods::CreateFromGames do
     expect(period.starts_at).to be_within(1.second).of(older_game.played_at)
     expect(period.ends_at).to be_within(1.second).of(newer_game.played_at)
     expect(period.label).to include(older_game.played_at.to_date.to_s)
+    expect(user.system_jobs.refresh_review_period_metrics.pending.count).to eq(1)
   end
 
   it "scopes games to the user" do

@@ -57,7 +57,7 @@ Lease timeouts (override with `SYSTEM_JOB_STUCK_TIMEOUT_<JOB_TYPE>_SECONDS`):
 | -------- | ------- |
 | `import_games` | 20 minutes |
 | `analyze_game` | 30 minutes |
-| `classify_patterns` / `generate_training_plan` / `update_progress_snapshots` | 15 minutes |
+| `classify_patterns` / `generate_training_plan` / `update_progress_snapshots` / `refresh_review_period_metrics` | 15 minutes |
 
 Python workers heartbeat in-progress jobs every `SYSTEM_JOB_HEARTBEAT_SECONDS` (default 30) by bumping `updated_at`, so live long Stockfish runs are not marked stuck.
 
@@ -67,13 +67,14 @@ Import handler idempotency: re-running `import_games` on a terminal `ImportBatch
 
 ## Job type enum
 
-| Integer | String                      |
-| ------- | --------------------------- |
-| 0       | `import_games`              |
-| 1       | `analyze_game`              |
-| 2       | `classify_patterns`       |
-| 3       | `generate_training_plan`    |
-| 4       | `update_progress_snapshots` |
+| Integer | String                          |
+| ------- | ------------------------------- |
+| 0       | `import_games`                  |
+| 1       | `analyze_game`                  |
+| 2       | `classify_patterns`             |
+| 3       | `generate_training_plan`        |
+| 4       | `update_progress_snapshots`     |
+| 5       | `refresh_review_period_metrics` |
 
 Python reads/writes **string** keys in SQL filters where noted below; Rails uses integer-backed enums with these keys.
 
@@ -88,6 +89,7 @@ JSON object, string keys. Required keys per type when parent tables exist:
 | `classify_patterns`       | optional `user_id` if not inferred from row   |
 | `generate_training_plan`    | `training_plan_id`                            |
 | `update_progress_snapshots` | optional `user_id` if not inferred from row   |
+| `refresh_review_period_metrics` | optional `user_id` if not inferred from row |
 
 MVP stubs may accept extra keys (e.g. `dry_run`) for smoke tests.
 

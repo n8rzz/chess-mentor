@@ -41,7 +41,8 @@ class SystemJob < ApplicationRecord
     analyze_game: 1,
     classify_patterns: 2,
     generate_training_plan: 3,
-    update_progress_snapshots: 4
+    update_progress_snapshots: 4,
+    refresh_review_period_metrics: 5
   }, validate: true
 
   enum :status, {

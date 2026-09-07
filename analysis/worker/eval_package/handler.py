@@ -22,6 +22,7 @@ from worker.eval_package.fen_cache import EnginePositionCache
 from worker.eval_package.logging_utils import log_run, log_verbose
 from worker.eval_package.positions import generate_positions
 from worker.eval_package.repository import AnalysisRepository
+from worker.metrics_package.repository import persist_game_metrics
 from worker.weakness_package.repository import PatternRepository
 
 logger = logging.getLogger(__name__)
@@ -368,6 +369,7 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
         )
 
         PatternRepository(conn).enqueue_classification_if_needed(context.user_id)
+        persist_game_metrics(conn, context.analysis_run_id)
 
     log_run(
         "complete",

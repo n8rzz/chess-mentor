@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_07_204408) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_07_212706) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -63,6 +63,38 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_204408) do
     t.jsonb "result", default: {}, null: false
     t.datetime "updated_at", null: false
     t.index ["position_key", "engine_name", "engine_version", "depth", "multipv", "analysis_version"], name: "index_engine_position_evals_on_cache_key", unique: true
+  end
+
+  create_table "game_metrics", id: :string, force: :cascade do |t|
+    t.string "analysis_run_id", null: false
+    t.decimal "average_centipawn_loss", precision: 8, scale: 2
+    t.integer "blunders_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.integer "critical_accurate_count", default: 0, null: false
+    t.integer "critical_moves_count", default: 0, null: false
+    t.decimal "critical_position_accuracy", precision: 8, scale: 4
+    t.decimal "fast_move_error_rate", precision: 8, scale: 4
+    t.integer "fast_move_mistakes_count", default: 0, null: false
+    t.integer "fast_moves_count", default: 0, null: false
+    t.string "game_id", null: false
+    t.integer "inaccuracies_count", default: 0, null: false
+    t.jsonb "metadata", default: {}, null: false
+    t.string "metric_formula_version", default: "1.0.0", null: false
+    t.integer "mistakes_count", default: 0, null: false
+    t.jsonb "phase_metrics", default: {}, null: false
+    t.decimal "time_pressure_error_rate", precision: 8, scale: 4
+    t.integer "time_pressure_mistakes_count", default: 0, null: false
+    t.integer "time_pressure_moves_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "user_id", null: false
+    t.integer "user_move_count", default: 0, null: false
+    t.integer "winning_positions_converted", default: 0, null: false
+    t.integer "winning_positions_reached", default: 0, null: false
+    t.index ["analysis_run_id"], name: "index_game_metrics_on_analysis_run_id", unique: true
+    t.index ["game_id"], name: "index_game_metrics_on_game_id"
+    t.index ["user_id", "game_id"], name: "index_game_metrics_on_user_id_and_game_id"
+    t.index ["user_id", "metric_formula_version"], name: "index_game_metrics_on_user_id_and_metric_formula_version"
+    t.index ["user_id"], name: "index_game_metrics_on_user_id"
   end
 
   create_table "games", id: :string, force: :cascade do |t|
@@ -283,6 +315,39 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_204408) do
     t.index ["review_period_id"], name: "index_review_period_games_on_review_period_id"
   end
 
+  create_table "review_period_metrics", id: :string, force: :cascade do |t|
+    t.integer "analyzed_games_count", default: 0, null: false
+    t.decimal "average_centipawn_loss", precision: 8, scale: 2
+    t.decimal "blunders_per_game", precision: 8, scale: 4
+    t.decimal "conversion_rate", precision: 8, scale: 4
+    t.datetime "created_at", null: false
+    t.integer "critical_accurate_count", default: 0, null: false
+    t.integer "critical_moves_count", default: 0, null: false
+    t.decimal "critical_position_accuracy", precision: 8, scale: 4
+    t.decimal "draw_rate", precision: 8, scale: 4
+    t.decimal "fast_move_error_rate", precision: 8, scale: 4
+    t.integer "fast_move_mistakes_count", default: 0, null: false
+    t.integer "fast_moves_count", default: 0, null: false
+    t.integer "games_count", default: 0, null: false
+    t.decimal "loss_rate", precision: 8, scale: 4
+    t.jsonb "metadata", default: {}, null: false
+    t.string "metric_formula_version", default: "1.0.0", null: false
+    t.decimal "mistakes_per_game", precision: 8, scale: 4
+    t.jsonb "phase_metrics", default: {}, null: false
+    t.string "review_period_id", null: false
+    t.decimal "time_pressure_error_rate", precision: 8, scale: 4
+    t.integer "time_pressure_mistakes_count", default: 0, null: false
+    t.integer "time_pressure_moves_count", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.string "user_id", null: false
+    t.integer "user_move_count", default: 0, null: false
+    t.decimal "win_rate", precision: 8, scale: 4
+    t.integer "winning_positions_converted", default: 0, null: false
+    t.integer "winning_positions_reached", default: 0, null: false
+    t.index ["review_period_id", "metric_formula_version"], name: "index_review_period_metrics_on_period_and_formula", unique: true
+    t.index ["user_id"], name: "index_review_period_metrics_on_user_id"
+  end
+
   create_table "review_periods", id: :string, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "ends_at", null: false
@@ -385,6 +450,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_204408) do
   add_foreign_key "analysis_events", "moves", on_delete: :cascade
   add_foreign_key "analysis_runs", "games", on_delete: :cascade
   add_foreign_key "analysis_runs", "users", on_delete: :cascade
+  add_foreign_key "game_metrics", "analysis_runs", on_delete: :cascade
+  add_foreign_key "game_metrics", "games", on_delete: :cascade
+  add_foreign_key "game_metrics", "users", on_delete: :cascade
   add_foreign_key "games", "import_batches", on_delete: :cascade
   add_foreign_key "games", "provider_accounts", on_delete: :cascade
   add_foreign_key "games", "users", on_delete: :cascade
@@ -407,6 +475,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_204408) do
   add_foreign_key "provider_accounts", "users", on_delete: :cascade
   add_foreign_key "review_period_games", "games", on_delete: :cascade
   add_foreign_key "review_period_games", "review_periods", on_delete: :cascade
+  add_foreign_key "review_period_metrics", "review_periods", on_delete: :cascade
+  add_foreign_key "review_period_metrics", "users", on_delete: :cascade
   add_foreign_key "review_periods", "users", on_delete: :cascade
   add_foreign_key "system_jobs", "users", on_delete: :cascade
   add_foreign_key "training_assignments", "games", column: "source_game_id", on_delete: :nullify

@@ -48,6 +48,11 @@ def run_snapshot_update(conn: psycopg.Connection, user_id: str) -> dict[str, Any
                     blunders_per_game=performance["blunders_per_game"],
                     average_centipawn_loss=performance["average_centipawn_loss"],
                     games_analyzed_count=performance["games_analyzed_count"],
+                    metadata={
+                        "mistakes_per_game": float(performance["mistakes_per_game"])
+                        if performance["mistakes_per_game"] is not None
+                        else None,
+                    },
                 )
             )
             kinds.append(SNAPSHOT_KIND_PERFORMANCE)

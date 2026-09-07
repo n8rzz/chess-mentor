@@ -29,6 +29,7 @@ class ReviewPeriod < ApplicationRecord
   belongs_to :user
   has_many :review_period_games, dependent: :destroy
   has_many :games, through: :review_period_games
+  has_many :review_period_metrics, dependent: :destroy
 
   enum :status, {
     draft: 0,

@@ -47,6 +47,7 @@ class AnalysisRun < ApplicationRecord
   belongs_to :user
   has_many :move_evaluations, dependent: :destroy
   has_many :analysis_events, dependent: :destroy
+  has_one :game_metric, dependent: :destroy
 
   enum :status, {
     pending: 0,
