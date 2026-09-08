@@ -17,6 +17,7 @@ def upsert_analysis_run(game:, seed_key:, status:, **attrs)
   existing = AnalysisRun.find_by("metadata->>'seed_key' = ?", seed_key)
   return existing if existing
 
+  extra_metadata = attrs.delete(:metadata) || {}
   AnalysisRun.create!(
     game: game,
     user: game.user,
@@ -27,7 +28,10 @@ def upsert_analysis_run(game:, seed_key:, status:, **attrs)
     depth: AnalysisRuns::BulkEnqueueForImport::DEFAULT_DEPTH,
     depth_critical: AnalysisRuns::BulkEnqueueForImport::DEFAULT_DEPTH_CRITICAL,
     multipv: AnalysisRuns::BulkEnqueueForImport::DEFAULT_MULTIPV,
-    metadata: { "seed_key" => seed_key, "import_batch_id" => game.import_batch_id },
+    metadata: {
+      "seed_key" => seed_key,
+      "import_batch_id" => game.import_batch_id
+    }.merge(extra_metadata.deep_stringify_keys),
     **attrs
   )
 end
@@ -83,13 +87,11 @@ succeeded_run = upsert_analysis_run(
   seed_key: "demo_blitz_analysis_succeeded",
   status: :succeeded,
   started_at: 8.minutes.ago,
-  finished_at: 5.minutes.ago
-)
-succeeded_run.update!(
-  metadata: succeeded_run.metadata.merge(
+  finished_at: 5.minutes.ago,
+  metadata: {
     "phase" => "complete",
     "phase_classifier_version" => AnalysisVersions::PHASE_CLASSIFIER_VERSION
-  )
+  }
 )
 
 blitz_moves = [

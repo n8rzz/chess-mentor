@@ -1,4 +1,4 @@
-.PHONY: test test-rails test-python test-db-python test-db-rails db-prepare workers-up workers-down workers-build stack-up
+.PHONY: test test-rails test-python test-db-python test-db-rails db-prepare workers-up workers-down workers-build workers-restart stack-up
 
 -include .env
 
@@ -45,3 +45,17 @@ workers-down:
 
 workers-build:
 	docker compose build worker
+
+# Bounce active Python worker containers. Rebuilds the image first so analysis/
+# code changes are picked up; use WORKER_REPLICAS to set count.
+# 
+# example: make workers-restart WORKER_REPLICAS=4
+workers-restart: workers-build
+	@ids=$$(docker compose ps -q worker 2>/dev/null); \
+	if [ -z "$$ids" ]; then \
+		echo "No active workers — starting $(WORKER_REPLICAS)"; \
+		$(MAKE) workers-up; \
+	else \
+		echo "Recreating $$(echo $$ids | wc -w | tr -d ' ') worker(s) with rebuilt image"; \
+		docker compose up -d --force-recreate --no-deps --scale worker=$(WORKER_REPLICAS) worker; \
+	fi

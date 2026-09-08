@@ -1,0 +1,24 @@
+<% if analysis_run.nil? %>
+  <span class="text-gray-500">Not started</span>
+<% elsif analysis_run.in_progress? %>
+  <div class="min-w-[10rem] space-y-1.5">
+    <div class="flex items-center justify-between gap-2">
+      <span class="font-medium text-amber-900"><%= analysis_run.status_label %></span>
+      <span class="tabular-nums text-xs text-amber-800"><%= analysis_run.progress_percent %>%</span>
+    </div>
+    <div class="h-1.5 overflow-hidden rounded-full bg-amber-100" role="progressbar"
+         aria-valuemin="0" aria-valuemax="100" aria-valuenow="<%= analysis_run.progress_percent %>"
+         aria-label="Analysis progress">
+      <div class="h-full rounded-full bg-amber-500 transition-[width] duration-500 ease-out <%= "animate-pulse" if analysis_run.pending? %>"
+           style="width: <%= analysis_run.progress_percent %>%"></div>
+    </div>
+  </div>
+<% elsif analysis_run.recently_finished? %>
+  <span class="font-medium text-emerald-700">Just finished</span>
+<% elsif analysis_run.succeeded? || analysis_run.partially_succeeded? %>
+  <span class="text-gray-700">Succeeded</span>
+<% elsif analysis_run.failed? %>
+  <span class="text-red-700">Failed</span>
+<% else %>
+  <span class="text-gray-700"><%= analysis_run.status_label %></span>
+<% end %>

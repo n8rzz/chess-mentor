@@ -30,23 +30,26 @@ logger = logging.getLogger(__name__)
 
 def run_analysis(conn: psycopg.Connection, analysis_run_id: str, game_id: str) -> dict[str, Any]:
     repo = AnalysisRepository(conn)
-    context = repo.load_context(analysis_run_id, game_id)
-
-    if repo.analysis_run_status(analysis_run_id) == ANALYSIS_RUN_STATUS["succeeded"]:
-        logger.info("Analysis run already succeeded analysis_run_id=%s", analysis_run_id)
-        return repo.load_succeeded_summary(analysis_run_id, game_id)
-
-    repo.mark_running(analysis_run_id)
-
     try:
-        return _analyze(conn, repo, context)
-    except AnalysisError as exc:
-        repo.mark_failed(
-            analysis_run_id,
-            error_message=exc.message,
-            error_details=exc.to_details(),
-        )
-        raise
+        context = repo.load_context(analysis_run_id, game_id)
+
+        if repo.analysis_run_status(analysis_run_id) == ANALYSIS_RUN_STATUS["succeeded"]:
+            logger.info("Analysis run already succeeded analysis_run_id=%s", analysis_run_id)
+            return repo.load_succeeded_summary(analysis_run_id, game_id)
+
+        repo.mark_running(analysis_run_id)
+
+        try:
+            return _analyze(conn, repo, context)
+        except AnalysisError as exc:
+            repo.mark_failed(
+                analysis_run_id,
+                error_message=exc.message,
+                error_details=exc.to_details(),
+            )
+            raise
+    finally:
+        repo.close()
 
 
 def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dict[str, Any]:
@@ -78,8 +81,24 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
         critical_count = 0
         pass2_count = 0
         evaluated: dict[str, dict[str, Any]] = {}
+        user_move_total = sum(1 for move in stored_moves if move.played_by_user)
+        last_progress_at = 0.0
 
-        repo.set_phase(context.analysis_run_id, ANALYSIS_PHASE["scan"])
+        def publish_progress(phase: str, *, force: bool = False, **extra: Any) -> None:
+            nonlocal last_progress_at
+            now = time.monotonic()
+            # Keep UI responsive without opening/contending on every move.
+            if not force and (now - last_progress_at) < 2.0:
+                return
+            last_progress_at = now
+            repo.set_phase(context.analysis_run_id, phase, **extra)
+
+        publish_progress(
+            ANALYSIS_PHASE["scan"],
+            force=True,
+            moves_done=0,
+            moves_total=user_move_total,
+        )
 
         with StockfishEvaluator(
             stockfish_path=config.stockfish_path,
@@ -174,6 +193,13 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
                 if critical_position:
                     critical_count += 1
 
+                publish_progress(
+                    ANALYSIS_PHASE["scan"],
+                    force=user_moves_evaluated >= user_move_total,
+                    moves_done=user_moves_evaluated,
+                    moves_total=user_move_total,
+                )
+
                 gap = None
                 if assessment is not None:
                     gap = assessment.candidate_gap_cp
@@ -203,19 +229,25 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
                     "assessment": assessment,
                 }
 
-            repo.set_phase(
-                context.analysis_run_id,
+            deepen_targets = [
+                payload
+                for payload in evaluated.values()
+                if payload["critical_position"]
+                and payload["evaluation"].depth != context.depth_critical
+            ]
+            publish_progress(
                 ANALYSIS_PHASE["deepen"],
+                force=True,
                 critical_positions=critical_count,
+                pass2_done=0,
+                pass2_total=len(deepen_targets),
+                moves_done=user_moves_evaluated,
+                moves_total=user_move_total,
             )
 
-            for move_id, payload in evaluated.items():
-                if not payload["critical_position"]:
-                    continue
-                if payload["evaluation"].depth == context.depth_critical:
-                    continue
-
+            for payload in deepen_targets:
                 move = payload["move"]
+                move_id = move.id
                 evaluation = engine.evaluate_user_move(
                     fen_before=move.fen_before,
                     fen_after=move.fen_after,
@@ -266,6 +298,15 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
                 )
 
                 pass2_count += 1
+                publish_progress(
+                    ANALYSIS_PHASE["deepen"],
+                    force=pass2_count >= len(deepen_targets),
+                    critical_positions=critical_count,
+                    pass2_done=pass2_count,
+                    pass2_total=len(deepen_targets),
+                    moves_done=user_moves_evaluated,
+                    moves_total=user_move_total,
+                )
                 log_verbose(
                     "pass2",
                     ply=move.ply,
@@ -285,10 +326,12 @@ def _analyze(conn: psycopg.Connection, repo: AnalysisRepository, context) -> dic
                 payload["metadata"] = metadata
                 payload["assessment"] = assessment
 
-            repo.set_phase(
-                context.analysis_run_id,
+            publish_progress(
                 ANALYSIS_PHASE["detect"],
+                force=True,
                 pass2_deepened=pass2_count,
+                moves_done=user_moves_evaluated,
+                moves_total=user_move_total,
             )
 
             events_detected = 0

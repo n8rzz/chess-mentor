@@ -67,3 +67,8 @@ tags:
 - [ ] Graph by game phase
   - show CPL by game phase [`opening`, `middlegame`, `endgame`]
 - [ ] Graph training program timeline and progress over time
+
+## Phase 1.2 - Cleanup
+
+- [ ] Show import date in games#index
+- [ ] Link to import from games#index

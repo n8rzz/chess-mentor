@@ -1,58 +1,86 @@
 <% content_for :title, "Games — Chess Mentor" %>
 
-<h1 class="text-3xl font-bold text-gray-900">Games</h1>
-<p class="mt-2 text-gray-600">Imported games and analysis status.</p>
+<% refresh = @analysis_refreshing %>
+<%= turbo_frame_tag "games_analysis_status" do %>
+  <div data-controller="auto-refresh"
+       data-auto-refresh-refresh-value="<%= refresh %>"
+       data-auto-refresh-interval-value="1000"
+       data-auto-refresh-src-value="<%= games_path %>">
+    <h1 class="text-3xl font-bold text-gray-900">Games</h1>
+    <p class="mt-2 text-gray-600">Imported games and analysis status.</p>
 
-<% if @pending_analysis_count.to_i.positive? %>
-  <p class="mt-2 text-sm text-gray-600">
-    <%= @pending_analysis_count %> game<%= @pending_analysis_count == 1 ? "" : "s" %> queued for analysis.
-    Ensure Sidekiq and the Python worker are running
-    (<code class="rounded bg-gray-100 px-1 py-0.5 text-xs">bin/dev</code> or
-    <code class="rounded bg-gray-100 px-1 py-0.5 text-xs">docker compose up worker</code>),
-    then refresh this page.
-  </p>
-<% end %>
-
-<% if @games.any? %>
-  <section class="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white">
-    <table class="min-w-full divide-y divide-gray-200 text-sm">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-3 text-left font-semibold text-gray-900">Played</th>
-          <th class="px-4 py-3 text-left font-semibold text-gray-900">Opponent</th>
-          <th class="px-4 py-3 text-left font-semibold text-gray-900">Result</th>
-          <th class="px-4 py-3 text-left font-semibold text-gray-900">Time class</th>
-          <th class="px-4 py-3 text-left font-semibold text-gray-900">Analysis</th>
-          <th class="px-4 py-3 text-left font-semibold text-gray-900"></th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-200">
-        <% @games.each do |game| %>
-          <% latest_run = game.analysis_runs.max_by(&:created_at) %>
-          <tr>
-            <td class="px-4 py-3 text-gray-700"><%= l(game.played_at.to_date) %></td>
-            <td class="px-4 py-3 text-gray-700"><%= game.opponent_username || "Unknown" %></td>
-            <td class="px-4 py-3 capitalize text-gray-700"><%= game.result %></td>
-            <td class="px-4 py-3 capitalize text-gray-700"><%= game.time_class %></td>
-            <td class="px-4 py-3">
-              <% if latest_run %>
-                <span class="text-gray-700"><%= latest_run.status_label %></span>
-              <% else %>
-                <span class="text-gray-500">Not started</span>
-              <% end %>
-            </td>
-            <td class="px-4 py-3">
-              <%= link_to "View", game_path(game), class: "text-gray-900 underline" %>
-            </td>
-          </tr>
+    <% if @queued_analysis_count.positive? || @running_analysis_count.positive? %>
+      <section class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4" aria-live="polite">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-500"></span>
+          </span>
+          <p class="text-sm text-amber-950">
+            <% parts = [] %>
+            <% if @running_analysis_count.positive? %>
+              <% parts << "#{@running_analysis_count} analyzing" %>
+            <% end %>
+            <% if @queued_analysis_count.positive? %>
+              <% parts << "#{@queued_analysis_count} queued" %>
+            <% end %>
+            <%= parts.join(" · ") %>. Updating automatically…
+          </p>
+        </div>
+        <% if Rails.env.development? && @queued_analysis_count.positive? && @running_analysis_count.zero? %>
+          <p class="mt-2 text-xs text-amber-800">
+            Ensure Sidekiq and the Python worker are running
+            (<code class="rounded bg-amber-100 px-1 py-0.5">bin/dev</code> or
+            <code class="rounded bg-amber-100 px-1 py-0.5">docker compose up worker</code>).
+          </p>
         <% end %>
-      </tbody>
-    </table>
-  </section>
-<% else %>
-  <p class="mt-8 text-gray-500">No games imported yet.</p>
-<% end %>
+      </section>
+    <% elsif @recently_succeeded_runs.any? %>
+      <section class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4" aria-live="polite">
+        <p class="text-sm text-emerald-900">
+          <%= pluralize(@recently_succeeded_runs.size, "game") %> finished analysis recently.
+        </p>
+      </section>
+    <% end %>
 
-<div class="mt-6">
-  <%= link_to "Dashboard", dashboard_path, class: "text-gray-900 underline" %>
-</div>
+    <% if @games.any? %>
+      <section class="mt-8 overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-4 py-3 text-left font-semibold text-gray-900">Played</th>
+              <th class="px-4 py-3 text-left font-semibold text-gray-900">Opponent</th>
+              <th class="px-4 py-3 text-left font-semibold text-gray-900">Result</th>
+              <th class="px-4 py-3 text-left font-semibold text-gray-900">Time class</th>
+              <th class="px-4 py-3 text-left font-semibold text-gray-900">Analysis</th>
+              <th class="px-4 py-3 text-left font-semibold text-gray-900"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200">
+            <% @games.each do |game| %>
+              <% latest_run = @latest_runs_by_game_id[game.id] %>
+              <tr>
+                <td class="px-4 py-3 text-gray-700"><%= l(game.played_at.to_date) %></td>
+                <td class="px-4 py-3 text-gray-700"><%= game.opponent_username || "Unknown" %></td>
+                <td class="px-4 py-3 capitalize text-gray-700"><%= game.result %></td>
+                <td class="px-4 py-3 capitalize text-gray-700"><%= game.time_class %></td>
+                <td class="px-4 py-3">
+                  <%= render "games/analysis_status", analysis_run: latest_run %>
+                </td>
+                <td class="px-4 py-3">
+                  <%= link_to "View", game_path(game), class: "text-gray-900 underline", data: { turbo_frame: "_top" } %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </section>
+    <% else %>
+      <p class="mt-8 text-gray-500">No games imported yet.</p>
+    <% end %>
+
+    <div class="mt-6">
+      <%= link_to "Dashboard", dashboard_path, class: "text-gray-900 underline", data: { turbo_frame: "_top" } %>
+    </div>
+  </div>
+<% end %>

@@ -11,7 +11,15 @@ class GamesController < ApplicationController
       .includes(:analysis_runs)
       .order(played_at: :desc)
       .limit(50)
-    @pending_analysis_count = @games.count { |game| game.analysis_runs.any?(&:pending?) }
+    @latest_runs_by_game_id = @games.to_h do |game|
+      [game.id, game.analysis_runs.max_by(&:created_at)]
+    end
+
+    latest_runs = @latest_runs_by_game_id.values.compact
+    @queued_analysis_count = latest_runs.count(&:pending?)
+    @running_analysis_count = latest_runs.count(&:running?)
+    @recently_succeeded_runs = latest_runs.select(&:recently_finished?)
+    @analysis_refreshing = latest_runs.any?(&:in_progress?)
   end
 
   def show

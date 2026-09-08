@@ -30,20 +30,71 @@ RSpec.describe "Games", type: :request do
       get games_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("1 game queued for analysis")
-      expect(response.body).to include("bin/dev")
-      expect(response.body).to include("docker compose up worker")
+      expect(response.body).to include("1 queued")
+      expect(response.body).to include("Updating automatically")
+      expect(response.body).to include('data-controller="auto-refresh"')
+      expect(response.body).to include('data-auto-refresh-refresh-value="true"')
+      expect(response.body).to include('data-auto-refresh-src-value="/games"')
     end
 
-    it "does not show the analysis hint when no games are pending" do
+    it "shows a development worker hint when analysis is only queued" do
       game = create(:game, user: user)
-      create(:analysis_run, :succeeded, game: game, user: user)
+      create(:analysis_run, game: game, user: user, status: :pending)
+      allow(Rails).to receive(:env).and_return(ActiveSupport::StringInquirer.new("development"))
 
       sign_in user
       get games_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).not_to include("queued for analysis")
+      expect(response.body).to include("bin/dev")
+      expect(response.body).to include("docker compose up worker")
+    end
+
+    it "shows analyzing progress for running evaluations" do
+      game = create(:game, user: user, opponent_username: "rival_running")
+      create(
+        :analysis_run,
+        :running,
+        game: game,
+        user: user,
+        metadata: { "phase" => "scan", "moves_done" => 8, "moves_total" => 32 }
+      )
+
+      sign_in user
+      get games_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("1 analyzing")
+      expect(response.body).to include("Scan 8/32")
+      expect(response.body).to include("30%")
+      expect(response.body).to include('role="progressbar"')
+    end
+
+    it "shows recently finished analysis feedback" do
+      game = create(:game, user: user, opponent_username: "rival_done")
+      create(:analysis_run, :succeeded, game: game, user: user, finished_at: 1.minute.ago)
+
+      sign_in user
+      get games_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("1 game finished analysis recently")
+      expect(response.body).to include("Just finished")
+      expect(response.body).to include('data-auto-refresh-refresh-value="false"')
+    end
+
+    it "does not show the analysis hint when no games are pending" do
+      game = create(:game, user: user)
+      create(:analysis_run, :succeeded, game: game, user: user, finished_at: 30.minutes.ago)
+
+      sign_in user
+      get games_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include("queued")
+      expect(response.body).not_to include("analyzing")
+      expect(response.body).not_to include("finished analysis recently")
+      expect(response.body).to include('data-auto-refresh-refresh-value="false"')
     end
 
     it "shows failed analysis status in the games list" do

@@ -125,6 +125,36 @@ RSpec.describe AnalysisRun, type: :model do
     end
   end
 
+  describe "#progress_percent" do
+    it "returns a low percent while queued" do
+      expect(build(:analysis_run).progress_percent).to eq(5)
+    end
+
+    it "advances during scan based on moves evaluated" do
+      run = build(
+        :analysis_run,
+        :running,
+        metadata: { "phase" => "scan", "moves_done" => 10, "moves_total" => 40 }
+      )
+
+      expect(run.progress_percent).to eq(30)
+    end
+
+    it "advances during deepen based on critical positions" do
+      run = build(
+        :analysis_run,
+        :running,
+        metadata: { "phase" => "deepen", "pass2_done" => 2, "pass2_total" => 4 }
+      )
+
+      expect(run.progress_percent).to eq(81)
+    end
+
+    it "returns 100 when succeeded" do
+      expect(build(:analysis_run, :succeeded).progress_percent).to eq(100)
+    end
+  end
+
   describe "#status_label" do
     it "returns Queued for pending runs" do
       expect(build(:analysis_run).status_label).to eq("Queued")
@@ -136,12 +166,36 @@ RSpec.describe AnalysisRun, type: :model do
       expect(run.status_label).to eq("Detect")
     end
 
+    it "includes move progress during scan" do
+      run = build(
+        :analysis_run,
+        :running,
+        metadata: { "phase" => "scan", "moves_done" => 12, "moves_total" => 40 }
+      )
+
+      expect(run.status_label).to eq("Scan 12/40")
+    end
+
     it "returns Running when no phase is set" do
       expect(build(:analysis_run, :running).status_label).to eq("Running")
     end
 
     it "returns Succeeded for completed runs" do
       expect(build(:analysis_run, :succeeded).status_label).to eq("Succeeded")
+    end
+  end
+
+  describe "#recently_finished?" do
+    it "is true for runs that finished within the recent window" do
+      run = build(:analysis_run, :succeeded, finished_at: 1.minute.ago)
+
+      expect(run).to be_recently_finished
+    end
+
+    it "is false for older successes" do
+      run = build(:analysis_run, :succeeded, finished_at: 20.minutes.ago)
+
+      expect(run).not_to be_recently_finished
     end
   end
 end

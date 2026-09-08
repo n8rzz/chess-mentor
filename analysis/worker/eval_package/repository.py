@@ -51,6 +51,19 @@ class StoredMove:
 class AnalysisRepository:
     def __init__(self, conn: psycopg.Connection) -> None:
         self._conn = conn
+        self._progress_conn: psycopg.Connection | None = None
+
+    def close(self) -> None:
+        if self._progress_conn is not None and not self._progress_conn.closed:
+            self._progress_conn.close()
+        self._progress_conn = None
+
+    def _progress_connection(self) -> psycopg.Connection:
+        if self._progress_conn is None or self._progress_conn.closed:
+            self._progress_conn = psycopg.connect(load_config().database_url, autocommit=True)
+            # Never block the engine loop waiting on the open analysis transaction.
+            self._progress_conn.execute("SET lock_timeout = '250ms'")
+        return self._progress_conn
 
     def load_context(self, analysis_run_id: str, game_id: str) -> AnalysisContext:
         row = self._conn.execute(
@@ -113,10 +126,15 @@ class AnalysisRepository:
         self._conn.commit()
 
     def set_phase(self, analysis_run_id: str, phase: str, **extra: Any) -> None:
-        """Publish phase progress on a separate connection so it is visible mid-transaction."""
+        """Publish phase progress on a separate connection so it is visible mid-transaction.
+
+        Uses a reused autocommit connection with a short lock_timeout so progress
+        publishing never stalls the Stockfish loop if the analysis row is locked.
+        """
         patch = {"phase": phase, **extra}
         now = _utcnow()
-        with psycopg.connect(load_config().database_url, autocommit=True) as progress_conn:
+        progress_conn = self._progress_connection()
+        try:
             progress_conn.execute(
                 """
                 UPDATE analysis_runs
@@ -125,6 +143,9 @@ class AnalysisRepository:
                 """,
                 (json.dumps(patch), now, analysis_run_id),
             )
+        except psycopg.errors.LockNotAvailable:
+            # Skip this progress tick; the next one (or terminal status write) will catch up.
+            return
 
     def mark_succeeded(self, analysis_run_id: str, *, metadata_patch: dict[str, Any] | None = None) -> None:
         now = _utcnow()
