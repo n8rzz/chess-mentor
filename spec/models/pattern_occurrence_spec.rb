@@ -7,6 +7,7 @@
 #  id                           :string           not null, primary key
 #  classifier                   :string
 #  classifier_version           :string
+#  confidence                   :decimal(5, 2)    default(0.75), not null
 #  explanation_key              :string
 #  metadata                     :jsonb            not null
 #  occurred_under_time_pressure :boolean          default(FALSE), not null
@@ -60,7 +61,9 @@ RSpec.describe PatternOccurrence, type: :model do
           bad_trades: 5,
           pawn_structure: 6,
           endgame_technique: 7,
-          time_pressure: 8
+          time_pressure: 8,
+          moving_too_quickly: 9,
+          lost_winning_positions: 10
         )
         .backed_by_column_of_type(:integer)
     end
@@ -74,8 +77,10 @@ RSpec.describe PatternOccurrence, type: :model do
 
   describe "validations" do
     it { is_expected.to validate_presence_of(:severity) }
+    it { is_expected.to validate_presence_of(:confidence) }
     it { is_expected.to validate_presence_of(:phase) }
     it { is_expected.to validate_numericality_of(:severity).is_greater_than_or_equal_to(0).is_less_than_or_equal_to(1) }
+    it { is_expected.to validate_numericality_of(:confidence).is_greater_than_or_equal_to(0).is_less_than_or_equal_to(1) }
 
     it "rejects invalid phase values" do
       pattern_occurrence[:phase] = 99

@@ -9,6 +9,8 @@ tags:
 
 # Theme Detection Specification
 
+> **Implementation note (2026-09-08):** Shipped via `weakness_package` taxonomy `1.1.0` as eleven `Patternable` patterns (Phase 1.2 eight plus king safety, bad trades, pawn structure). Multi-label occurrences with confidence + evidence. See [weakness-classifier-engine.md](weakness-classifier-engine.md).
+
 ## 1. Purpose
 
 This document defines how the MVP identifies recurring chess themes from analyzed games.

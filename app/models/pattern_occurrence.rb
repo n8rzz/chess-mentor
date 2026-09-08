@@ -7,6 +7,7 @@
 #  id                           :string           not null, primary key
 #  classifier                   :string
 #  classifier_version           :string
+#  confidence                   :decimal(5, 2)    default(0.75), not null
 #  explanation_key              :string
 #  metadata                     :jsonb            not null
 #  occurred_under_time_pressure :boolean          default(FALSE), not null
@@ -47,8 +48,8 @@ class PatternOccurrence < ApplicationRecord
   enum :primary_pattern, Patternable::PATTERNS, validate: true
   enum :secondary_pattern, Patternable::PATTERNS, validate: { allow_nil: true }, prefix: :secondary
 
-  validates :severity, :phase, presence: true
-  validates :severity, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 1 }
+  validates :severity, :confidence, :phase, presence: true
+  validates :severity, :confidence, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 1 }
 
   def primary_pattern_label
     Patternable::PATTERN_LABELS.fetch(primary_pattern.to_sym)

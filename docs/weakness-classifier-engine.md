@@ -1,6 +1,6 @@
 ---
 title: Weakness classifier engine
-last_modified: 2026-06-10
+last_modified: 2026-09-08
 tags:
   - python
   - weaknesses
@@ -13,6 +13,9 @@ tags:
 The weakness classifier turns evaluation artifacts (`analysis_events`, `move_evaluations`) into player-facing weakness patterns: `pattern_occurrences` and `pattern_cycles`. It runs inside the Python worker when a `classify_patterns` system job is claimed.
 
 Design spec (requirements and non-goals): [planning/weakness-classifier.md](planning/weakness-classifier.md).
+Theme detection product contract: [theme-detection-specification.md](theme-detection-specification.md).
+
+**Classifier / taxonomy version:** `1.1.0` (`AnalysisVersions::PATTERN_*` / `weakness_package.constants`).
 
 ## End-to-end flow
 
@@ -22,8 +25,10 @@ flowchart TD
     Job[classify_patterns system job] --> Handler[classify_handlers.py]
     Handler --> Run[weakness_package.handler.run_classification]
     Run --> Load[repository.load_window_artifacts]
-    Load --> Rules[theme_rules.classify_move]
+    Load --> Rules[theme_rules.classify_move multi-label]
+    Load --> Episodes[lost_winning + time_pressure passes]
     Rules --> Agg[aggregator.classify_artifacts]
+    Episodes --> Agg
     Agg --> Cycles[cycles.build_cycle]
     Cycles --> WE[(pattern_occurrences)]
     Cycles --> WC[(pattern_cycles)]
@@ -31,10 +36,11 @@ flowchart TD
 ```
 
 1. After each successful game analysis, the evaluation handler enqueues a deduped `classify_patterns` job for the user.
-2. The classifier loads the last 30 analyzed games within 30 days.
-3. Per-move theme rules map candidate events + evaluations → classified weaknesses.
-4. Events aggregate by theme; cycles receive frequency, severity, and lifecycle status.
-5. Rails displays the weakness report at `/weaknesses`.
+2. The classifier loads the last 30 analyzed games within 30 days (clocks, evals, best moves, opening labels included).
+3. Per-move theme rules emit **zero or more** independent diagnoses (multi-label).
+4. Game-scoped passes add `lost_winning_positions` and elevated-rate `time_pressure`.
+5. Only occurrences with `confidence >= 0.65` are persisted; events aggregate by theme; cycles receive frequency, severity, and lifecycle status.
+6. Rails displays the weakness report at `/weaknesses` with severity + confidence evidence links.
 
 Each classification run is a **full recompute** for the user (non-archived cycles). Re-running with identical artifacts produces identical metrics.
 
@@ -46,31 +52,42 @@ All code lives under [`analysis/worker/weakness_package/`](../analysis/worker/we
 | ---------------- | -------------------------------------------------------------------- |
 | `handler.py`     | Orchestrates load → classify → aggregate → persist                   |
 | `repository.py`  | Read window artifacts; write cycles/events; enqueue classify jobs    |
-| `theme_rules.py` | Map candidate events + CPL → primary/secondary theme per move        |
-| `aggregator.py`  | Group by theme; severity scoring; standalone time-pressure detection |
+| `theme_rules.py` | Multi-label rules + evidence/confidence + new theme detectors        |
+| `aggregator.py`  | Multi-label classify; game+theme dedupe; severity; episode passes    |
 | `cycles.py`      | Activation thresholds and lifecycle status                           |
 | `constants.py`   | Rails-aligned enums and tunable thresholds                           |
 | `types.py`       | Dataclasses for artifacts, classified events, and cycle metrics      |
 
 Job entry point: [`analysis/worker/classify_handlers.py`](../analysis/worker/classify_handlers.py).
 
-## Theme classification
+## Theme classification (v1.1)
 
-Nine MVP themes (integers in `PATTERN`, matching `Patternable` in Rails):
+Eleven patterns (integers in `PATTERN`, matching `Patternable` in Rails):
 
-| Theme                 | Primary signals from evaluation engine                          |
-| --------------------- | --------------------------------------------------------------- |
-| Hanging pieces        | Material loss; threat with ignored hanging pieces               |
-| Missed tactics        | Tactical event + minimum CPL (~1.5 pawns)                       |
-| Ignored threats       | Threat event + eval worsening                                   |
-| Opening development   | King-safety signals in opening (e.g. delayed castling)            |
-| King safety           | King-safety signals outside opening window                        |
-| Bad trades            | Material loss on captures with eval worsening                     |
-| Pawn structure        | Pawn-structure issues + eval worsening                            |
-| Endgame technique     | Endgame-phase transition events                                   |
-| Time pressure         | Secondary modifier on other themes; standalone when mistake rate under pressure exceeds baseline |
+| Theme                    | Primary signals                                                    |
+| ------------------------ | ------------------------------------------------------------------ |
+| Hanging pieces           | Material loss; threat with ignored hanging pieces                  |
+| Missed tactics           | Tactical event + minimum CPL (~1.5 pawns)                          |
+| Ignored threats          | Threat event + eval worsening                                      |
+| Opening development      | King-safety signals in opening (e.g. delayed castling)             |
+| King safety              | King-safety signals outside opening window                         |
+| Bad trades               | Material loss on captures with eval worsening                      |
+| Pawn structure           | Pawn-structure issues + eval worsening                             |
+| Endgame technique        | Endgame phase + mistake CPL                                        |
+| Time pressure            | Standalone when mistake rate under pressure exceeds baseline       |
+| Moving too quickly       | Fast think time with adequate clock + mistake (non-opening)        |
+| Lost winning positions   | Winning episode (`eval ≥ +200` × 2) collapses below equal floor    |
 
-Opening family performance is **not** tracked (reporting-only in the planning doc, excluded from MVP training plans).
+Phase 1.2’s eight MVP themes are covered; king safety, bad trades, and pawn structure are retained beyond that set.
+
+### Multi-label + confidence
+
+- One `pattern_occurrences` row per matching theme on a move (`primary_pattern` = that theme).
+- `secondary_pattern` is no longer written for new classifications (column retained for old rows).
+- Every occurrence has `confidence` (0–1) and structured `metadata.evidence` (played/best move, evals, CPL, clocks, detection reason).
+- Persist threshold: `MIN_CONFIDENCE_TO_PERSIST = 0.65`.
+
+Classifier policy: deterministic rules over engine events/evals only — no model-assisted labels.
 
 ## Recurring patterns and cycles
 
@@ -84,7 +101,7 @@ Opening family performance is **not** tracked (reporting-only in the planning do
 ## Rails consumption
 
 - **Enqueue:** automatically after each `analyze_game` success (deduped per user).
-- **UI:** [`PatternCyclesController`](../app/controllers/weaknesses_controller.rb) index (top weaknesses) and show (linked games/moves).
+- **UI:** [`PatternCyclesController`](../app/controllers/pattern_cycles_controller.rb) index (top weaknesses) and show (linked games/moves + confidence).
 
 ## Configuration
 
@@ -98,6 +115,7 @@ Thresholds live in [`analysis/worker/weakness_package/constants.py`](../analysis
 | `MIN_GAMES_FOR_ACTIVE`         | 2       | Spread across games required         |
 | `IMPROVING_THRESHOLD`          | 0.30    | Frequency reduction for improving    |
 | `MANAGED_THRESHOLD`            | 0.75    | Frequency reduction for managed      |
+| `MIN_CONFIDENCE_TO_PERSIST`    | 0.65    | Minimum confidence to store/cycle    |
 
 ## Testing
 

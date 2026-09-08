@@ -24,7 +24,7 @@ RSpec.describe "Puzzle seeds" do
   it "assigns unique seed keys and required metadata" do
     puzzles = Puzzle.curated.where("metadata ? 'seed_key'")
 
-    expect(puzzles.count).to be >= 45
+    expect(puzzles.count).to be >= 55
 
     seed_keys = puzzles.pluck(Arel.sql("metadata->>'seed_key'"))
     expect(seed_keys.uniq.size).to eq(seed_keys.size)

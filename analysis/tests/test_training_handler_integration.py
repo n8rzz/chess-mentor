@@ -137,8 +137,8 @@ def _seed_training_plan(conn) -> dict[str, str]:
         """
         INSERT INTO pattern_occurrences (
           id, user_id, pattern_cycle_id, game_id, move_id,
-          primary_pattern, phase, severity, metadata, created_at, updated_at
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
+          primary_pattern, phase, severity, confidence, metadata, created_at, updated_at
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s)
         """,
         (
             new_id(),
@@ -149,6 +149,7 @@ def _seed_training_plan(conn) -> dict[str, str]:
             pattern,
             1,
             0.7,
+            0.85,
             json.dumps({}),
             now,
             now,

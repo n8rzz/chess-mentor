@@ -39,7 +39,9 @@ RSpec.describe Puzzle, type: :model do
           bad_trades: 5,
           pawn_structure: 6,
           endgame_technique: 7,
-          time_pressure: 8
+          time_pressure: 8,
+          moving_too_quickly: 9,
+          lost_winning_positions: 10
         )
         .backed_by_column_of_type(:integer)
     end

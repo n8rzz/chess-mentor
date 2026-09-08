@@ -20,8 +20,8 @@ module AnalysisVersions
   DEFAULT_DEPTH = DEPTH_SCAN
 
   PATTERN_CLASSIFIER_NAME = "rules_v1"
-  PATTERN_CLASSIFIER_VERSION = "1.0.0"
-  PATTERN_TAXONOMY_VERSION = "1.0.0"
+  PATTERN_CLASSIFIER_VERSION = "1.1.0"
+  PATTERN_TAXONOMY_VERSION = "1.1.0"
 
   # Opening / middlegame / endgame classifier stamped on analysis_runs.metadata.
   PHASE_CLASSIFIER_VERSION = "1.0.0"

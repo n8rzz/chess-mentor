@@ -18,6 +18,7 @@ def _classified(
     move_id: str,
     played_at: datetime,
     severity: float = 0.7,
+    confidence: float = 0.85,
 ) -> ClassifiedPattern:
     return ClassifiedPattern(
         user_id="user-1",
@@ -26,6 +27,7 @@ def _classified(
         primary_pattern=theme,
         secondary_pattern=None,
         severity=severity,
+        confidence=confidence,
         phase=1,
         occurred_under_time_pressure=False,
         explanation_key="test.v1",
@@ -115,3 +117,79 @@ def test_build_cycles_frequency_is_capped_by_games_analyzed():
 
     assert cycles[0].frequency == round(5 / 12, 4)
     assert cycles[0].current_occurrences == 5
+
+
+def test_dedupe_keeps_multiple_themes_on_same_move():
+    now = datetime.now(timezone.utc)
+    events = [
+        _classified(
+            theme=PATTERN["hanging_pieces"],
+            game_id="g1",
+            move_id="m1",
+            played_at=now,
+            severity=0.7,
+        ),
+        _classified(
+            theme=PATTERN["moving_too_quickly"],
+            game_id="g1",
+            move_id="m1",
+            played_at=now,
+            severity=0.65,
+        ),
+        _classified(
+            theme=PATTERN["hanging_pieces"],
+            game_id="g1",
+            move_id="m2",
+            played_at=now,
+            severity=0.9,
+        ),
+    ]
+
+    deduped = dedupe_by_game_and_theme(events)
+
+    assert len(deduped) == 2
+    by_theme = {event.primary_pattern: event for event in deduped}
+    assert by_theme[PATTERN["hanging_pieces"]].move_id == "m2"
+    assert by_theme[PATTERN["hanging_pieces"]].severity == 0.9
+    assert by_theme[PATTERN["moving_too_quickly"]].move_id == "m1"
+
+
+def test_classify_artifacts_drops_low_confidence(monkeypatch):
+    now = datetime.now(timezone.utc)
+    artifact = MoveArtifact(
+        move_id="move-1",
+        game_id="game-1",
+        user_id="user-1",
+        move_number=20,
+        san="Qh5",
+        played_at=now,
+        time_class=1,
+        ply=39,
+        phase=1,
+    )
+
+    def fake_classify(_artifact):
+        return [
+            _classified(
+                theme=PATTERN["hanging_pieces"],
+                game_id="game-1",
+                move_id="move-1",
+                played_at=now,
+                confidence=0.5,
+            )
+        ]
+
+    monkeypatch.setattr(
+        "worker.weakness_package.aggregator.classify_move",
+        fake_classify,
+    )
+    monkeypatch.setattr(
+        "worker.weakness_package.aggregator.classify_lost_winning_positions",
+        lambda _artifacts: [],
+    )
+    monkeypatch.setattr(
+        "worker.weakness_package.aggregator._standalone_time_pressure_qualifies",
+        lambda *_args, **_kwargs: False,
+    )
+
+    assert classify_artifacts([artifact]) == []

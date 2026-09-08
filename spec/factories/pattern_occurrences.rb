@@ -7,6 +7,7 @@
 #  id                           :string           not null, primary key
 #  classifier                   :string
 #  classifier_version           :string
+#  confidence                   :decimal(5, 2)    default(0.75), not null
 #  explanation_key              :string
 #  metadata                     :jsonb            not null
 #  occurred_under_time_pressure :boolean          default(FALSE), not null
@@ -43,8 +44,9 @@ FactoryBot.define do
     move { association :move, game: game }
     pattern_cycle { association :pattern_cycle, user: user, pattern: primary_pattern }
     primary_pattern { :missed_tactics }
-    secondary_pattern { :ignored_threats }
+    secondary_pattern { nil }
     severity { 0.75 }
+    confidence { 0.85 }
     phase { :middlegame }
     occurred_under_time_pressure { false }
     explanation_key { "missed_tactics.v1" }

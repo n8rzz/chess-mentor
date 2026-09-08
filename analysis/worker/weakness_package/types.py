@@ -19,6 +19,12 @@ class MoveEvaluationRow:
     centipawn_loss: int
     classification: int
     metadata: dict[str, Any]
+    eval_before_cp: int | None = None
+    eval_after_cp: int | None = None
+    best_move_san: str | None = None
+    best_move_uci: str | None = None
+    critical_position: bool = False
+    candidates: Any = None
 
 
 @dataclass(frozen=True)
@@ -30,8 +36,15 @@ class MoveArtifact:
     san: str
     played_at: datetime
     time_class: int
+    ply: int = 0
     phase: int | None = None
+    fen_before: str | None = None
     fen_after: str | None = None
+    clock_before: int | None = None
+    clock_after: int | None = None
+    time_control: str | None = None
+    opening_eco: str | None = None
+    opening_name: str | None = None
     analysis_events: tuple[AnalysisEventRow, ...] = ()
     evaluation: MoveEvaluationRow | None = None
 
@@ -44,6 +57,7 @@ class ClassifiedPattern:
     primary_pattern: int
     secondary_pattern: int | None
     severity: float
+    confidence: float
     phase: int
     occurred_under_time_pressure: bool
     explanation_key: str

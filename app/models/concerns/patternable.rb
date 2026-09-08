@@ -12,7 +12,9 @@ module Patternable
     bad_trades: 5,
     pawn_structure: 6,
     endgame_technique: 7,
-    time_pressure: 8
+    time_pressure: 8,
+    moving_too_quickly: 9,
+    lost_winning_positions: 10
   }.freeze
 
   PATTERN_LABELS = PATTERNS.keys.index_with { |key| key.to_s.humanize }.freeze

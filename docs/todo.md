@@ -36,9 +36,9 @@ tags:
 
 ### Theme system
 
-- [ ] Ship MVP theme taxonomy (hanging pieces, missed tactics/threats, poor opening, time trouble, moving too quickly, lost winning positions, endgame mistakes)
-- [ ] Prefer deterministic rules, then engine-based classification; treat model-assisted labels as lower confidence
-- [ ] Attach confidence scores and link every diagnosis to supporting positions (evidence)
+- [x] Ship MVP theme taxonomy (hanging pieces, missed tactics/threats, poor opening, time trouble, moving too quickly, lost winning positions, endgame mistakes)
+- [x] Prefer deterministic rules, then engine-based classification; treat model-assisted labels as lower confidence
+- [x] Attach confidence scores and link every diagnosis to supporting positions (evidence)
 
 ### Strengths, trends & normalization
 

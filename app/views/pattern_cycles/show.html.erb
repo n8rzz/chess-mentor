@@ -45,6 +45,7 @@
           <th class="px-4 py-3 text-left font-semibold text-gray-900">Move</th>
           <th class="px-4 py-3 text-left font-semibold text-gray-900">Phase</th>
           <th class="px-4 py-3 text-left font-semibold text-gray-900">Severity</th>
+          <th class="px-4 py-3 text-left font-semibold text-gray-900">Confidence</th>
           <th class="px-4 py-3 text-left font-semibold text-gray-900">Time pressure</th>
         </tr>
       </thead>
@@ -68,6 +69,7 @@
             </td>
             <td class="px-4 py-3 capitalize text-gray-700"><%= event.phase %></td>
             <td class="px-4 py-3 text-gray-700"><%= number_with_precision(event.severity, precision: 2) %></td>
+            <td class="px-4 py-3 text-gray-700"><%= number_with_precision(event.confidence, precision: 2) %></td>
             <td class="px-4 py-3 text-gray-700"><%= event.occurred_under_time_pressure? ? "Yes" : "No" %></td>
           </tr>
         <% end %>

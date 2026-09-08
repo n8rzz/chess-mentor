@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_07_212706) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_08_023435) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -235,6 +235,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_07_212706) do
   create_table "pattern_occurrences", id: :string, force: :cascade do |t|
     t.string "classifier"
     t.string "classifier_version"
+    t.decimal "confidence", precision: 5, scale: 2, default: "0.75", null: false
     t.datetime "created_at", null: false
     t.string "explanation_key"
     t.string "game_id", null: false

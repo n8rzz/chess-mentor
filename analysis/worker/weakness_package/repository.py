@@ -177,13 +177,13 @@ class PatternRepository:
             """
             INSERT INTO pattern_occurrences (
               id, user_id, game_id, move_id, pattern_cycle_id,
-              primary_pattern, secondary_pattern, severity, phase,
+              primary_pattern, secondary_pattern, severity, confidence, phase,
               occurred_under_time_pressure, explanation_key, metadata,
               classifier, classifier_version, pattern_taxonomy_version,
               created_at, updated_at
             ) VALUES (
               %s, %s, %s, %s, %s,
-              %s, %s, %s, %s,
+              %s, %s, %s, %s, %s,
               %s, %s, %s::jsonb,
               %s, %s, %s,
               %s, %s
@@ -196,8 +196,9 @@ class PatternRepository:
                 event.move_id,
                 cycle_id,
                 event.primary_pattern,
-                event.secondary_pattern,
+                None,
                 event.severity,
+                event.confidence,
                 event.phase,
                 event.occurred_under_time_pressure,
                 event.explanation_key,
@@ -219,6 +220,9 @@ class PatternRepository:
               g.user_id,
               g.played_at,
               g.time_class,
+              g.time_control,
+              g.opening_eco,
+              g.opening_name,
               ar.id AS analysis_run_id
             FROM games g
             JOIN analysis_runs ar ON ar.game_id = g.id AND ar.status = 2
@@ -235,7 +239,10 @@ class PatternRepository:
                 "user_id": row[1],
                 "played_at": row[2],
                 "time_class": row[3],
-                "analysis_run_id": row[4],
+                "time_control": row[4],
+                "opening_eco": row[5],
+                "opening_name": row[6],
+                "analysis_run_id": row[7],
             }
             for row in rows
         ]
@@ -245,7 +252,8 @@ class PatternRepository:
     def _load_game_artifacts(self, game: dict[str, Any]) -> list[MoveArtifact]:
         move_rows = self._conn.execute(
             """
-            SELECT id, move_number, san, phase, fen_after
+            SELECT id, ply, move_number, san, phase, fen_before, fen_after,
+                   clock_before, clock_after
             FROM moves
             WHERE game_id = %s AND played_by_user = TRUE
             ORDER BY ply ASC
@@ -254,7 +262,17 @@ class PatternRepository:
         ).fetchall()
 
         artifacts: list[MoveArtifact] = []
-        for move_id, move_number, san, phase, fen_after in move_rows:
+        for (
+            move_id,
+            ply,
+            move_number,
+            san,
+            phase,
+            fen_before,
+            fen_after,
+            clock_before,
+            clock_after,
+        ) in move_rows:
             events = self._load_analysis_events(game["analysis_run_id"], move_id)
             evaluation = self._load_move_evaluation(game["analysis_run_id"], move_id)
             artifacts.append(
@@ -266,8 +284,15 @@ class PatternRepository:
                     san=san,
                     played_at=game["played_at"],
                     time_class=game["time_class"],
+                    ply=int(ply),
                     phase=phase,
+                    fen_before=fen_before,
                     fen_after=fen_after,
+                    clock_before=clock_before,
+                    clock_after=clock_after,
+                    time_control=game.get("time_control"),
+                    opening_eco=game.get("opening_eco"),
+                    opening_name=game.get("opening_name"),
                     analysis_events=tuple(events),
                     evaluation=evaluation,
                 )
@@ -289,7 +314,9 @@ class PatternRepository:
     def _load_move_evaluation(self, analysis_run_id: str, move_id: str) -> MoveEvaluationRow | None:
         row = self._conn.execute(
             """
-            SELECT centipawn_loss, classification, metadata
+            SELECT centipawn_loss, classification, metadata,
+                   eval_before_cp, eval_after_cp,
+                   best_move_san, best_move_uci, critical_position, candidates
             FROM move_evaluations
             WHERE analysis_run_id = %s AND move_id = %s
             LIMIT 1
@@ -302,10 +329,19 @@ class PatternRepository:
         metadata = row[2]
         if isinstance(metadata, str):
             metadata = json.loads(metadata)
+        candidates = row[8]
+        if isinstance(candidates, str):
+            candidates = json.loads(candidates)
         return MoveEvaluationRow(
             centipawn_loss=int(row[0]),
             classification=int(row[1]),
             metadata=dict(metadata or {}),
+            eval_before_cp=row[3],
+            eval_after_cp=row[4],
+            best_move_san=row[5],
+            best_move_uci=row[6],
+            critical_position=bool(row[7]) if row[7] is not None else False,
+            candidates=candidates,
         )
 
 

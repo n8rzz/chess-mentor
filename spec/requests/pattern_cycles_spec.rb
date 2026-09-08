@@ -36,7 +36,15 @@ RSpec.describe "PatternCycles", type: :request do
       cycle = create(:pattern_cycle, :active, user: user, pattern: :missed_tactics)
       game = create(:game, user: user, opponent_username: "rival_one")
       move = create(:move, game: game, san: "Qh5", played_by_user: true, ply: 5, move_number: 3, color: :white)
-      create(:pattern_occurrence, user: user, game: game, move: move, pattern_cycle: cycle, primary_pattern: :missed_tactics)
+      create(
+        :pattern_occurrence,
+        user: user,
+        game: game,
+        move: move,
+        pattern_cycle: cycle,
+        primary_pattern: :missed_tactics,
+        confidence: 0.86
+      )
 
       sign_in user
       get pattern_cycle_path(cycle)
@@ -45,6 +53,8 @@ RSpec.describe "PatternCycles", type: :request do
       expect(response.body).to include("Missed tactics")
       expect(response.body).to include("rival_one")
       expect(response.body).to include("Qh5")
+      expect(response.body).to include("Confidence")
+      expect(response.body).to include("0.86")
       expect(response.body).to include(game_path(game, ply: move.ply))
     end
 

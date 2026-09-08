@@ -408,6 +408,96 @@ puzzles = [
     rating: 1300,
     fen: "r2qkb1r/ppp2ppp/2n1n3/3p4/3P4/2NBPN2/PPP3PP/R1BQ1RK1 w - - 0 9",
     solution: "d3h7"
+  },
+  {
+    key: "moving_too_quickly_01",
+    pattern: :moving_too_quickly,
+    difficulty: :easy,
+    motif: :one_move_win,
+    rating: 900,
+    fen: "6k1/5ppp/8/8/8/8/5PPP/5RK1 w - - 0 1",
+    solution: "f1f8"
+  },
+  {
+    key: "moving_too_quickly_02",
+    pattern: :moving_too_quickly,
+    difficulty: :medium,
+    motif: :undefended_piece,
+    rating: 1050,
+    fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 4",
+    solution: "f6e4"
+  },
+  {
+    key: "moving_too_quickly_03",
+    pattern: :moving_too_quickly,
+    difficulty: :medium,
+    motif: :forcing_line,
+    rating: 1150,
+    fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 4",
+    solution: "f6g4"
+  },
+  {
+    key: "moving_too_quickly_04",
+    pattern: :moving_too_quickly,
+    difficulty: :hard,
+    motif: :zwischenzug,
+    rating: 1300,
+    fen: "r2qkb1r/ppp2ppp/2n1n3/3p4/3P4/2NBPN2/PPP3PP/R1BQ1RK1 w - - 0 9",
+    solution: "d3h7"
+  },
+  {
+    key: "moving_too_quickly_05",
+    pattern: :moving_too_quickly,
+    difficulty: :hard,
+    motif: :forcing_line,
+    rating: 1400,
+    fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 4",
+    solution: "f6g4 h5f7"
+  },
+  {
+    key: "lost_winning_positions_01",
+    pattern: :lost_winning_positions,
+    difficulty: :easy,
+    motif: :king_and_pawn,
+    rating: 950,
+    fen: "8/4k3/8/4P3/8/8/8/4K3 w - - 0 1",
+    solution: "e5e6"
+  },
+  {
+    key: "lost_winning_positions_02",
+    pattern: :lost_winning_positions,
+    difficulty: :medium,
+    motif: :one_move_win,
+    rating: 1100,
+    fen: "6k1/5ppp/8/8/8/8/5PPP/5RK1 w - - 0 1",
+    solution: "f1f8"
+  },
+  {
+    key: "lost_winning_positions_03",
+    pattern: :lost_winning_positions,
+    difficulty: :medium,
+    motif: :forcing_line,
+    rating: 1200,
+    fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 4",
+    solution: "f6e4"
+  },
+  {
+    key: "lost_winning_positions_04",
+    pattern: :lost_winning_positions,
+    difficulty: :hard,
+    motif: :zwischenzug,
+    rating: 1350,
+    fen: "r2qkb1r/ppp2ppp/2n1n3/3p4/3P4/2NBPN2/PPP3PP/R1BQ1RK1 w - - 0 9",
+    solution: "d3h7"
+  },
+  {
+    key: "lost_winning_positions_05",
+    pattern: :lost_winning_positions,
+    difficulty: :hard,
+    motif: :forcing_line,
+    rating: 1450,
+    fen: "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 1 4",
+    solution: "f6g4 h5f7"
   }
 ]
 

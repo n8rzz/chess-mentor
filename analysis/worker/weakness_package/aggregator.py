@@ -5,31 +5,32 @@ from datetime import datetime, timezone
 
 from worker.eval_package.constants import CLASSIFICATION, EVENT_TYPE
 from worker.weakness_package.constants import (
+    DETECTION_WINDOW_DAYS,
+    DETECTION_WINDOW_GAMES,
+    MIN_CONFIDENCE_TO_PERSIST,
     RECENCY_HALF_LIFE_DAYS,
     SEVERITY_WEIGHTS,
     TIME_PRESSURE_MISTAKE_RATE_MULTIPLIER,
     TIME_PRESSURE_MIN_MISTAKES,
 )
 from worker.weakness_package.cycles import build_cycle
-from worker.weakness_package.theme_rules import classify_move, classify_time_pressure_standalone
+from worker.weakness_package.theme_rules import (
+    classify_lost_winning_positions,
+    classify_move,
+    classify_time_pressure_standalone,
+)
 from worker.weakness_package.types import ClassifiedPattern, CycleBuildResult, MoveArtifact, PatternAggregation
 
 
 def classify_artifacts(artifacts: list[MoveArtifact]) -> list[ClassifiedPattern]:
     classified: list[ClassifiedPattern] = []
-    seen_moves: set[str] = set()
 
     for artifact in artifacts:
-        weakness = classify_move(artifact)
-        if weakness is not None and artifact.move_id not in seen_moves:
-            classified.append(weakness)
-            seen_moves.add(artifact.move_id)
+        classified.extend(classify_move(artifact))
 
     baseline_rate, pressure_rate = _time_pressure_mistake_rates(artifacts)
     if _standalone_time_pressure_qualifies(artifacts, baseline_rate, pressure_rate):
         for artifact in artifacts:
-            if artifact.move_id in seen_moves:
-                continue
             weakness = classify_time_pressure_standalone(
                 artifact,
                 baseline_mistake_rate=baseline_rate,
@@ -37,9 +38,11 @@ def classify_artifacts(artifacts: list[MoveArtifact]) -> list[ClassifiedPattern]
             )
             if weakness is not None:
                 classified.append(weakness)
-                seen_moves.add(artifact.move_id)
 
-    return dedupe_by_game_and_theme(classified)
+    classified.extend(classify_lost_winning_positions(artifacts))
+
+    filtered = [event for event in classified if event.confidence >= MIN_CONFIDENCE_TO_PERSIST]
+    return dedupe_by_game_and_theme(filtered)
 
 
 def dedupe_by_game_and_theme(classified: list[ClassifiedPattern]) -> list[ClassifiedPattern]:

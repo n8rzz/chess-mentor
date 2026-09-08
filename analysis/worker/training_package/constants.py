@@ -53,6 +53,8 @@ HABIT_PROMPTS = {
     "pawn_structure": "Before every pawn move ask: How does this affect my structure?",
     "endgame_technique": "Before every move ask: What is the winning technique here?",
     "time_pressure": "Before every move ask: What is the one critical thing to calculate?",
+    "moving_too_quickly": "Before every move ask: Have I spent enough time on this decision?",
+    "lost_winning_positions": "Before every move in a winning position ask: How do I simplify safely?",
 }
 
 DEFAULT_HABIT_PROMPT = "Before every move ask: What is the best candidate move?"

@@ -32,6 +32,8 @@ PATTERN = {
     "pawn_structure": 6,
     "endgame_technique": 7,
     "time_pressure": 8,
+    "moving_too_quickly": 9,
+    "lost_winning_positions": 10,
 }
 
 # Lifecycle states for `pattern_cycles.status`.
@@ -102,8 +104,14 @@ RECENCY_HALF_LIFE_DAYS = 10
 
 # Version stamps persisted on pattern_occurrences (keep in sync with Rails AnalysisVersions).
 PATTERN_CLASSIFIER_NAME = "rules_v1"
-PATTERN_CLASSIFIER_VERSION = "1.0.0"
-PATTERN_TAXONOMY_VERSION = "1.0.0"
+PATTERN_CLASSIFIER_VERSION = "1.1.0"
+PATTERN_TAXONOMY_VERSION = "1.1.0"
+
+# Persist / cycle membership only for diagnoses at or above this confidence.
+MIN_CONFIDENCE_TO_PERSIST = 0.65
+
+# Moving-too-quickly: minimum CPL when classification alone is borderline.
+MOVING_TOO_QUICKLY_MIN_CPL = 150
 
 # Re-exported CPL cutoffs from the evaluation engine for theme rule consistency.
 # `INACCURACY_CPL`: minimum eval loss for positional/threat themes.
